@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# admin panel
+admin/node_modules/
+admin/.next/
+admin/*.db
+admin/src/generated/

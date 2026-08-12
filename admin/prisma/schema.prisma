@@ -1,0 +1,158 @@
+// Minax Music — admin panel database.
+//
+// SQLite keeps the deliverable self-contained (no server to provision). Swap `provider` to
+// "postgresql" and re-run `prisma migrate` to move to a hosted database; no model changes
+// are needed beyond that.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// Someone who can sign in to the admin panel.
+model Admin {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         String    @default("admin") // admin | superadmin
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@index([email])
+}
+
+/// An app user. Registered through the mobile app, never created from the panel.
+model User {
+  id           String    @id @default(cuid())
+  email        String?   @unique
+  name         String
+  passwordHash String?
+  /// Anonymous "continue without an account" installs still get a row so install
+  /// counts are accurate; they have no email and cannot sign in on another device.
+  isGuest      Boolean   @default(false)
+  status       String    @default("active") // active | suspended | deleted
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastSeenAt   DateTime?
+  /// Denormalised counters, updated on each heartbeat, so the dashboard never has to
+  /// aggregate the full event table.
+  totalListens Int       @default(0)
+  listeningMs  BigInt    @default(0)
+  uniqueTracks Int       @default(0)
+
+  devices  Device[]
+  sessions Session[]
+  events   UsageEvent[]
+
+  @@index([createdAt])
+  @@index([lastSeenAt])
+  @@index([status])
+}
+
+/// One physical install. A user may have several.
+model Device {
+  id             String    @id @default(cuid())
+  userId         String
+  installationId String?
+  platform       String    @default("android")
+  osVersion      String?
+  appVersion     String?
+  buildNumber    Int       @default(0)
+  deviceName     String?
+  lastSeenAt     DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, installationId])
+  @@index([lastSeenAt])
+  @@index([appVersion])
+}
+
+/// An issued mobile token. Rows are deleted on sign-out and expiry.
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+/// Buffered analytics forwarded by the app. Feeds the Reports page.
+model UsageEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // play | skip | session | search | playlist_created
+  value     Int      @default(1)
+  metadata  String? // JSON blob
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([userId, createdAt])
+}
+
+/// Releases the app checks against on "Check for updates".
+model AppVersion {
+  id            String   @id @default(cuid())
+  platform      String   @default("android")
+  version       String
+  buildNumber   Int
+  releaseNotes  String   @default("")
+  downloadUrl   String?
+  /// Blocks the app until the user updates.
+  isMandatory   Boolean  @default(false)
+  /// Only one version per platform may be current; the API returns it as `latestVersion`.
+  isCurrent     Boolean  @default(false)
+  minSupported  Int      @default(1)
+  releasedAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@unique([platform, buildNumber])
+  @@index([platform, isCurrent])
+}
+
+/// Key/value application settings, editable from Settings Management and readable by the app.
+model Setting {
+  key         String   @id
+  value       String
+  type        String   @default("string") // string | number | boolean | json
+  label       String   @default("")
+  description String   @default("")
+  group       String   @default("general")
+  /// Exposed to the mobile app through the unauthenticated /api/mobile/settings endpoint.
+  isPublic    Boolean  @default(false)
+  updatedAt   DateTime @updatedAt @default(now())
+
+  @@index([group])
+}
+
+/// Every state-changing action an admin takes.
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String?
+  action    String
+  target    String   @default("")
+  detail    String   @default("")
+  ip        String   @default("")
+  createdAt DateTime @default(now())
+
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+}
