@@ -6,6 +6,26 @@ import { useTheme } from '../context/SettingsContext';
 import { formatDuration } from '../utils/format';
 import { Artwork } from './Artwork';
 
+/** Three stacked bars marking the row that is currently playing. */
+function NowPlayingGlyph({ color, paused }) {
+  return (
+    <View style={styles.glyph}>
+      {[11, 17, 13].map((height, i) => (
+        <View
+          key={i}
+          style={{
+            width: 3,
+            height: paused ? 7 : height,
+            borderRadius: 2,
+            backgroundColor: color,
+            marginHorizontal: 1.5,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
 /**
  * One row in every track list in the app.
  *
@@ -23,9 +43,13 @@ function TrackRowComponent({
   index,
   showIndex = false,
   showArtwork = true,
+  showAlbum = false,
+  subtitle,
   trailing,
+  moreIcon = 'ellipsis-vertical',
 }) {
   const theme = useTheme();
+  const titleColor = isActive ? theme.colors.accent : theme.colors.text;
 
   return (
     <Pressable
@@ -33,40 +57,47 @@ function TrackRowComponent({
       onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.row,
+        showAlbum && styles.rowTall,
         { backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent' },
       ]}
     >
       {showIndex ? (
         <View style={styles.indexBox}>
           {isActive ? (
-            <Ionicons
-              name={isPlaying ? 'volume-high' : 'pause'}
-              size={16}
-              color={theme.colors.accent}
-            />
+            <NowPlayingGlyph color={theme.colors.accent} paused={!isPlaying} />
           ) : (
-            <Text style={[theme.font.caption, { color: theme.colors.textTertiary }]}>
-              {index + 1}
-            </Text>
+            <Text style={[theme.font.body, { color: theme.colors.textTertiary }]}>{index + 1}</Text>
           )}
         </View>
       ) : null}
 
       {showArtwork ? (
-        <Artwork uri={track.artworkUri} name={track.album || track.title} size={48} />
+        <Artwork
+          uri={track.artworkUri}
+          name={track.album || track.title}
+          size={52}
+          radius={theme.radius.sm}
+        />
       ) : null}
 
       <View style={styles.meta}>
-        <Text
-          numberOfLines={1}
-          style={[theme.font.title, { color: isActive ? theme.colors.accent : theme.colors.text }]}
-        >
+        <Text numberOfLines={1} style={[theme.font.title, { color: titleColor }]}>
           {track.title}
         </Text>
-        <Text numberOfLines={1} style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}>
-          {track.artist}
-          {track.album ? ` · ${track.album}` : ''}
+        <Text
+          numberOfLines={1}
+          style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}
+        >
+          {subtitle ?? track.artist}
         </Text>
+        {showAlbum && track.album ? (
+          <Text
+            numberOfLines={1}
+            style={[theme.font.caption, { color: theme.colors.textTertiary, marginTop: 2 }]}
+          >
+            {track.album}
+          </Text>
+        ) : null}
       </View>
 
       {isFavorite ? (
@@ -74,14 +105,14 @@ function TrackRowComponent({
       ) : null}
 
       {trailing ?? (
-        <Text style={[theme.font.caption, { color: theme.colors.textTertiary, marginRight: 4 }]}>
+        <Text style={[theme.font.body, { color: theme.colors.textSecondary, marginRight: 4 }]}>
           {formatDuration(track.duration)}
         </Text>
       )}
 
       {onPressMore ? (
         <Pressable onPress={onPressMore} hitSlop={10} style={styles.more}>
-          <Ionicons name="ellipsis-vertical" size={18} color={theme.colors.textTertiary} />
+          <Ionicons name={moreIcon} size={18} color={theme.colors.textTertiary} />
         </Pressable>
       ) : null}
     </Pressable>
@@ -97,10 +128,13 @@ export const TrackRow = memo(
     prev.isFavorite === next.isFavorite &&
     prev.index === next.index &&
     prev.showIndex === next.showIndex &&
-    prev.showArtwork === next.showArtwork
+    prev.showArtwork === next.showArtwork &&
+    prev.showAlbum === next.showAlbum &&
+    prev.subtitle === next.subtitle
 );
 
-export const TRACK_ROW_HEIGHT = 68;
+export const TRACK_ROW_HEIGHT = 72;
+export const TRACK_ROW_TALL_HEIGHT = 88;
 
 const styles = StyleSheet.create({
   row: {
@@ -109,7 +143,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: TRACK_ROW_HEIGHT,
   },
-  indexBox: { width: 28, alignItems: 'center', justifyContent: 'center' },
-  meta: { flex: 1, marginLeft: 12, marginRight: 8 },
+  rowTall: { height: TRACK_ROW_TALL_HEIGHT },
+  indexBox: { width: 30, alignItems: 'center', justifyContent: 'center' },
+  glyph: { flexDirection: 'row', alignItems: 'flex-end', height: 18 },
+  meta: { flex: 1, marginLeft: 14, marginRight: 8 },
   more: { paddingHorizontal: 4, paddingVertical: 8 },
 });

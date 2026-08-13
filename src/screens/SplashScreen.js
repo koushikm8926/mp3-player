@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Animated, Easing, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { useSettings, useTheme } from '../context/SettingsContext';
+
+const BAR_COUNT = 5;
 
 /**
  * Branded splash shown while the library scan and session restore run.
@@ -14,10 +17,11 @@ import { useSettings, useTheme } from '../context/SettingsContext';
 export function SplashScreen({ statusLabel }) {
   const theme = useTheme();
   const { t } = useSettings();
+  const { width, height } = useWindowDimensions();
 
   const scale = useRef(new Animated.Value(0.82)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  const pulse = useRef(new Animated.Value(0)).current;
+  const bars = useRef(Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.35))).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -25,71 +29,145 @@ export function SplashScreen({ statusLabel }) {
       Animated.timing(opacity, { toValue: 1, duration: 420, useNativeDriver: true }),
     ]).start();
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 1100,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0,
-          duration: 1100,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [scale, opacity, pulse]);
+    // Each bar breathes on its own offset so the equaliser reads as motion, not a pulse.
+    const loops = bars.map((bar, index) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(index * 110),
+          Animated.timing(bar, {
+            toValue: 1,
+            duration: 480,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bar, {
+            toValue: 0.35,
+            duration: 480,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      )
+    );
+    loops.forEach((loop) => loop.start());
+    return () => loops.forEach((loop) => loop.stop());
+  }, [scale, opacity, bars]);
 
-  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] });
-  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] });
+  // The wave sits just below the midpoint, sweeping up to the right like the reference.
+  const waveTop = height * 0.52;
+  const wavePath = useMemo(() => {
+    const w = width;
+    return `M0,60 C${w * 0.22},10 ${w * 0.42},96 ${w * 0.66},52 C${w * 0.84},20 ${w * 0.94},34 ${w},22 L${w},220 L0,220 Z`;
+  }, [width]);
+
+  const deep = theme.colors.isDark ? theme.colors.background : theme.colors.accentDark;
 
   return (
-    <LinearGradient colors={theme.colors.gradient} style={styles.container}>
-      <View style={styles.center}>
-        <Animated.View
-          style={[
-            styles.ring,
-            { borderColor: theme.colors.accent, transform: [{ scale: ringScale }], opacity: ringOpacity },
-          ]}
-        />
-        <Animated.View
-          style={[
-            styles.logo,
-            { backgroundColor: theme.colors.accent, opacity, transform: [{ scale }] },
-          ]}
-        >
-          <Ionicons name="musical-notes" size={44} color={theme.colors.onAccent} />
-        </Animated.View>
+    <View style={[styles.container, { backgroundColor: theme.colors.backgroundElevated }]}>
+      {/* Lower band: the deep accent field the wave rises out of. */}
+      <LinearGradient
+        colors={[theme.colors.accent, deep]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.4, y: 1 }}
+        style={[styles.lowerBand, { top: waveTop + 60 }]}
+      />
 
-        <Animated.View style={{ opacity, alignItems: 'center' }}>
-          <Text style={[theme.font.h1, { color: theme.colors.text, marginTop: 28 }]}>
-            {t('appName')}
-          </Text>
-          <Text
-            style={[
-              theme.font.body,
-              { color: theme.colors.textSecondary, marginTop: 8, textAlign: 'center' },
-            ]}
-          >
-            {t('splashTagline')}
-          </Text>
-        </Animated.View>
+      <View style={[styles.wave, { top: waveTop, width, height: 220 }]} pointerEvents="none">
+        <Svg width={width} height={220} viewBox={`0 0 ${width} 220`}>
+          <Path d={wavePath} fill={theme.colors.accent} opacity={0.92} />
+          <Path
+            d={wavePath}
+            fill="none"
+            stroke="#FFFFFF"
+            strokeOpacity={0.35}
+            strokeWidth={1.5}
+            transform="translate(0,-10)"
+          />
+        </Svg>
       </View>
 
-      <Text style={[theme.font.caption, styles.status, { color: theme.colors.textTertiary }]}>
-        {statusLabel ?? t('loading')}
-      </Text>
-    </LinearGradient>
+      <Animated.View style={[styles.center, { opacity, transform: [{ scale }] }]}>
+        <View style={[styles.logoRing, { borderColor: theme.colors.accent }]}>
+          <View style={styles.logoBars}>
+            {[10, 18, 26, 18, 12].map((barHeight, index) => (
+              <View
+                key={index}
+                style={{
+                  width: 2.5,
+                  height: barHeight,
+                  borderRadius: 2,
+                  marginHorizontal: 1.5,
+                  backgroundColor: theme.colors.accent,
+                }}
+              />
+            ))}
+          </View>
+          <Ionicons
+            name="musical-note"
+            size={54}
+            color={theme.colors.accent}
+            style={styles.logoNote}
+          />
+        </View>
+
+        <Text style={[theme.font.display, { color: theme.colors.text, marginTop: 26 }]}>
+          {t('appName')}
+        </Text>
+        <Text
+          style={[
+            theme.font.caption,
+            { color: theme.colors.accent, marginTop: 8, letterSpacing: 4, fontWeight: '700' },
+          ]}
+        >
+          {t('splashTagline').toUpperCase()}
+        </Text>
+      </Animated.View>
+
+      <View style={styles.status}>
+        <View style={styles.statusBars}>
+          {bars.map((bar, index) => (
+            <Animated.View
+              key={index}
+              style={{
+                width: 4,
+                height: 26,
+                borderRadius: 3,
+                marginHorizontal: 3,
+                backgroundColor: '#FFFFFF',
+                transform: [{ scaleY: bar }],
+              }}
+            />
+          ))}
+        </View>
+        <Text style={[theme.font.body, { color: '#FFFFFF', opacity: 0.9, marginTop: 16 }]}>
+          {statusLabel ?? t('loading')}
+        </Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  center: { alignItems: 'center', justifyContent: 'center' },
-  ring: { position: 'absolute', top: 0, width: 104, height: 104, borderRadius: 52, borderWidth: 2 },
-  logo: { width: 104, height: 104, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
-  status: { position: 'absolute', bottom: 48 },
+  container: { flex: 1 },
+  lowerBand: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  wave: { position: 'absolute', left: 0 },
+  center: {
+    position: 'absolute',
+    top: '18%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  logoRing: {
+    width: 132,
+    height: 132,
+    borderRadius: 66,
+    borderWidth: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoBars: { flexDirection: 'row', alignItems: 'center', position: 'absolute', left: 22 },
+  logoNote: { position: 'absolute', right: 24, top: 30 },
+  status: { position: 'absolute', left: 0, right: 0, bottom: 70, alignItems: 'center' },
+  statusBars: { flexDirection: 'row', alignItems: 'center', height: 30 },
 });

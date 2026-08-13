@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MiniPlayer, MINI_PLAYER_HEIGHT } from '../components/MiniPlayer';
@@ -25,6 +25,14 @@ import {
 import { EqualizerScreen } from '../screens/EqualizerScreen';
 import { HiddenMusicScreen } from '../screens/HiddenMusicScreen';
 import { HomeScreen } from '../screens/HomeScreen';
+import {
+  AlbumsScreen,
+  ArtistsScreen,
+  FoldersScreen,
+  GenresScreen,
+} from '../screens/library/BrowseScreens';
+import { LibraryScreen } from '../screens/library/LibraryScreen';
+import { SongsScreen } from '../screens/library/SongsScreen';
 import { AboutScreen, LanguageScreen, ServerSettingsScreen } from '../screens/MiscScreens';
 import { NowPlayingScreen } from '../screens/NowPlayingScreen';
 import { PermissionScreen } from '../screens/PermissionScreen';
@@ -34,16 +42,20 @@ import { SearchScreen } from '../screens/SearchScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { SleepTimerScreen } from '../screens/SleepTimerScreen';
 import { SplashScreen } from '../screens/SplashScreen';
-import { LibraryTabs } from './LibraryTabs';
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 
+/** [focused, unfocused] icon pair per tab. */
 const TAB_ICONS = {
   HomeTab: ['home', 'home-outline'],
-  LibraryTab: ['musical-notes', 'musical-notes-outline'],
-  PlaylistsTab: ['albums', 'albums-outline'],
+  LibraryTab: ['albums', 'albums-outline'],
+  Search: ['search', 'search-outline'],
+  PlaylistsTab: ['list', 'list-outline'],
+  Settings: ['settings', 'settings-outline'],
 };
+
+const TAB_BAR_HEIGHT = 62;
 
 function MainTabs() {
   const theme = useTheme();
@@ -51,7 +63,7 @@ function MainTabs() {
   const insets = useSafeAreaInsets();
   const { hasQueue } = usePlayer();
 
-  const tabBarHeight = 56 + insets.bottom;
+  const tabBarHeight = TAB_BAR_HEIGHT + insets.bottom;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -62,26 +74,34 @@ function MainTabs() {
           tabBarInactiveTintColor: theme.colors.textTertiary,
           tabBarStyle: {
             backgroundColor: theme.colors.tabBar,
+            borderTopWidth: StyleSheet.hairlineWidth,
             borderTopColor: theme.colors.border,
             height: tabBarHeight,
             paddingBottom: insets.bottom,
-            paddingTop: 6,
+            paddingTop: 8,
+            elevation: 0,
           },
-          tabBarLabelStyle: { ...theme.font.tiny, marginTop: 2 },
-          tabBarIcon: ({ focused, color, size }) => {
+          tabBarLabelStyle: { ...theme.font.tiny, marginTop: 3 },
+          tabBarIcon: ({ focused, color }) => {
             const [active, inactive] = TAB_ICONS[route.name];
-            return <Ionicons name={focused ? active : inactive} size={size - 2} color={color} />;
+            return <Ionicons name={focused ? active : inactive} size={23} color={color} />;
           },
         })}
       >
         <Tabs.Screen name="HomeTab" component={HomeScreen} options={{ title: t('home') }} />
-        <Tabs.Screen name="LibraryTab" component={LibraryTabs} options={{ title: t('library') }} />
-        <Tabs.Screen name="PlaylistsTab" component={PlaylistsScreen} options={{ title: t('playlists') }} />
+        <Tabs.Screen name="LibraryTab" component={LibraryScreen} options={{ title: t('library') }} />
+        <Tabs.Screen name="Search" component={SearchScreen} options={{ title: t('search') }} />
+        <Tabs.Screen
+          name="PlaylistsTab"
+          component={PlaylistsScreen}
+          options={{ title: t('playlists') }}
+        />
+        <Tabs.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings') }} />
       </Tabs.Navigator>
 
       {/* The mini player floats just above the tab bar rather than inside it, so it can
           overlay any tab's content without each screen having to reserve space. */}
-      {hasQueue ? <MiniPlayer bottomOffset={tabBarHeight + 6} /> : null}
+      {hasQueue ? <MiniPlayer bottomOffset={tabBarHeight + 8} /> : null}
     </View>
   );
 }
@@ -134,11 +154,7 @@ export function RootNavigator() {
   }, [theme]);
 
   if (bootstrapping || !splashDone) {
-    return (
-      <SplashScreen
-        statusLabel={library.scanning ? t('scanning') : t('loading')}
-      />
-    );
+    return <SplashScreen statusLabel={library.scanning ? t('scanning') : t('loading')} />;
   }
 
   return (
@@ -157,6 +173,14 @@ export function RootNavigator() {
         ) : (
           <>
             <Stack.Screen name="Main" component={MainTabs} options={{ animation: 'fade' }} />
+
+            {/* Library browse destinations — pushed so the back arrow in each header works. */}
+            <Stack.Screen name="Songs" component={SongsScreen} />
+            <Stack.Screen name="Albums" component={AlbumsScreen} />
+            <Stack.Screen name="Artists" component={ArtistsScreen} />
+            <Stack.Screen name="Genres" component={GenresScreen} />
+            <Stack.Screen name="Folders" component={FoldersScreen} />
+
             <Stack.Screen name="AlbumDetail" component={AlbumDetailScreen} />
             <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} />
             <Stack.Screen name="GenreDetail" component={GenreDetailScreen} />
@@ -164,11 +188,7 @@ export function RootNavigator() {
             <Stack.Screen name="PlaylistDetail" component={PlaylistDetailScreen} />
             <Stack.Screen name="Favorites" component={FavoritesScreen} />
             <Stack.Screen name="RecentlyPlayed" component={RecentlyPlayedScreen} />
-            <Stack.Screen
-              name="Search"
-              component={SearchScreen}
-              options={{ animation: 'fade_from_bottom' }}
-            />
+
             <Stack.Screen
               name="NowPlaying"
               component={NowPlayingScreen}
@@ -181,7 +201,6 @@ export function RootNavigator() {
             />
             <Stack.Screen name="Equalizer" component={EqualizerScreen} />
             <Stack.Screen name="SleepTimer" component={SleepTimerScreen} />
-            <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="Language" component={LanguageScreen} />
             <Stack.Screen name="ServerSettings" component={ServerSettingsScreen} />
             <Stack.Screen name="HiddenMusic" component={HiddenMusicScreen} />

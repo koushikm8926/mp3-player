@@ -6,7 +6,7 @@ import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useTheme } from '../context/SettingsContext';
 import { TrackOptionsSheet } from './TrackOptionsSheet';
-import { TrackRow, TRACK_ROW_HEIGHT } from './TrackRow';
+import { TrackRow, TRACK_ROW_HEIGHT, TRACK_ROW_TALL_HEIGHT } from './TrackRow';
 
 /**
  * The list every track-showing screen renders.
@@ -22,11 +22,13 @@ export function TrackList({
   ListFooterComponent,
   showIndex = false,
   showArtwork = true,
+  showAlbum = false,
   contentContainerStyle,
   onRefresh,
   refreshing = false,
   optionsContextFor,
   onTrackPress,
+  subtitleFor,
 }) {
   const theme = useTheme();
   const player = usePlayer();
@@ -51,6 +53,8 @@ export function TrackList({
         index={index}
         showIndex={showIndex}
         showArtwork={showArtwork}
+        showAlbum={showAlbum}
+        subtitle={subtitleFor ? subtitleFor(item) : undefined}
         isActive={player.currentTrack?.id === item.id}
         isPlaying={player.isPlaying}
         isFavorite={library.isFavorite(item.id)}
@@ -59,7 +63,16 @@ export function TrackList({
         onPressMore={() => setSheetTrack(item)}
       />
     ),
-    [showIndex, showArtwork, player.currentTrack?.id, player.isPlaying, library, handlePress]
+    [
+      showIndex,
+      showArtwork,
+      showAlbum,
+      subtitleFor,
+      player.currentTrack?.id,
+      player.isPlaying,
+      library,
+      handlePress,
+    ]
   );
 
   return (
@@ -68,7 +81,7 @@ export function TrackList({
         data={tracks}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={TRACK_ROW_HEIGHT}
+        estimatedItemSize={showAlbum ? TRACK_ROW_TALL_HEIGHT : TRACK_ROW_HEIGHT}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={ListFooterComponent ?? <View style={{ height: 120 }} />}

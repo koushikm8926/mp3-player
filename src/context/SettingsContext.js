@@ -9,8 +9,8 @@ const SettingsContext = createContext(null);
 
 export const DEFAULT_SETTINGS = {
   // appearance
-  themeMode: 'system', // system | dark | light | amoled
-  accentColor: 'green',
+  themeMode: 'light', // system | light | dark | amoled
+  accentColor: 'blue',
   language: null, // null = follow device
   gridColumns: 2,
 

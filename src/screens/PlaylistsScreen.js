@@ -1,62 +1,99 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CollectionRow } from '../components/cards';
-import { EmptyState } from '../components/common';
+import { ChipRow, EmptyState, ScreenHeader, SearchBar } from '../components/common';
 import { PromptDialog } from '../components/PromptDialog';
 import { Sheet, SheetItem } from '../components/Sheet';
 import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
-import { formatDate } from '../utils/format';
+import { formatDate, normalizeForSearch } from '../utils/format';
 
 /** Playlist management: create, rename, delete, and the built-in smart lists. */
 export function PlaylistsScreen({ navigation }) {
   const theme = useTheme();
   const { t } = useSettings();
-  const insets = useSafeAreaInsets();
   const player = usePlayer();
   const library = useLibrary();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null);
   const [menuTarget, setMenuTarget] = useState(null);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
 
   const { playlists, favoriteTracks, recentTracks, mostPlayedTracks, recentlyAddedTracks } = library;
 
-  const smartLists = [
-    {
-      key: 'favorites',
-      label: t('favorites'),
-      icon: 'heart',
-      count: favoriteTracks.length,
-      onPress: () => navigation.navigate('Favorites'),
-    },
-    {
-      key: 'recent',
-      label: t('recentlyPlayed'),
-      icon: 'time-outline',
-      count: recentTracks.length,
-      onPress: () => navigation.navigate('RecentlyPlayed'),
-    },
-    {
-      key: 'mostPlayed',
-      label: t('mostPlayed'),
-      icon: 'trending-up-outline',
-      count: mostPlayedTracks.length,
-      onPress: () => player.playQueue(mostPlayedTracks, 0, { shuffled: false }),
-    },
-    {
-      key: 'recentlyAdded',
-      label: t('recentlyAdded'),
-      icon: 'sparkles-outline',
-      count: recentlyAddedTracks.length,
-      onPress: () => player.playQueue(recentlyAddedTracks, 0, { shuffled: false }),
-    },
-  ];
+  /**
+   * The four built-in collections. They are not rows in the playlists table — they are
+   * derived views — so they carry `smart: true` and are filtered out of "My Playlists".
+   */
+  const smartLists = useMemo(
+    () => [
+      {
+        id: 'smart:favorites',
+        smart: true,
+        name: t('favorites'),
+        icon: 'heart',
+        count: favoriteTracks.length,
+        onPress: () => navigation.navigate('Favorites'),
+      },
+      {
+        id: 'smart:recent',
+        smart: true,
+        name: t('recentlyPlayed'),
+        icon: 'time',
+        count: recentTracks.length,
+        onPress: () => navigation.navigate('RecentlyPlayed'),
+      },
+      {
+        id: 'smart:most',
+        smart: true,
+        name: t('mostPlayed'),
+        icon: 'trending-up',
+        count: mostPlayedTracks.length,
+        onPress: () => player.playQueue(mostPlayedTracks, 0, { shuffled: false }),
+      },
+      {
+        id: 'smart:added',
+        smart: true,
+        name: t('recentlyAdded'),
+        icon: 'sparkles',
+        count: recentlyAddedTracks.length,
+        onPress: () => player.playQueue(recentlyAddedTracks, 0, { shuffled: false }),
+      },
+    ],
+    [t, favoriteTracks, recentTracks, mostPlayedTracks, recentlyAddedTracks, navigation, player]
+  );
+
+  const userLists = useMemo(
+    () =>
+      playlists.map((playlist) => ({
+        id: playlist.id,
+        smart: false,
+        name: playlist.name,
+        count: playlist.track_count ?? 0,
+        updatedAt: playlist.updated_at,
+        raw: playlist,
+      })),
+    [playlists]
+  );
+
+  const listed = useMemo(() => {
+    let base;
+    if (filter === 'mine') base = userLists;
+    else if (filter === 'smart') base = smartLists;
+    else if (filter === 'recent')
+      base = [...userLists].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+    else base = [...smartLists, ...userLists];
+
+    if (!query) return base;
+    const needle = normalizeForSearch(query);
+    return base.filter((item) => normalizeForSearch(item.name).includes(needle));
+  }, [filter, query, smartLists, userLists]);
 
   const create = async (name) => {
     const trimmed = name.trim();
@@ -74,47 +111,75 @@ export function PlaylistsScreen({ navigation }) {
   const confirmDelete = (playlist) => {
     Alert.alert(t('deletePlaylist'), t('deletePlaylistConfirm', { name: playlist.name }), [
       { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: () => library.deletePlaylist(playlist.id),
-      },
+      { text: t('delete'), style: 'destructive', onPress: () => library.deletePlaylist(playlist.id) },
     ]);
+  };
+
+  const playPlaylist = async (id, shuffled) => {
+    const tracks = await library.getPlaylistTracks(id);
+    if (!tracks.length) return;
+    if (shuffled) player.shuffleAndPlay(tracks);
+    else player.playQueue(tracks, 0, { shuffled: false });
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={[theme.font.h1, { color: theme.colors.text, flex: 1 }]}>{t('playlists')}</Text>
-        <Pressable
-          onPress={() => setCreateOpen(true)}
-          style={({ pressed }) => [
-            styles.addButton,
-            { backgroundColor: theme.colors.accent, opacity: pressed ? 0.85 : 1 },
-          ]}
-        >
-          <Ionicons name="add" size={22} color={theme.colors.onAccent} />
-        </Pressable>
-      </View>
-
       <FlashList
-        data={playlists}
+        data={listed}
         keyExtractor={(item) => String(item.id)}
-        estimatedItemSize={72}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        estimatedItemSize={76}
+        contentContainerStyle={{ paddingBottom: 170 }}
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
-          <View style={{ paddingBottom: 8 }}>
-            {smartLists.map((item) => (
-              <CollectionRow
-                key={item.key}
-                title={item.label}
-                subtitle={t('songCount', { count: item.count })}
-                icon={item.icon}
-                accentIcon
-                onPress={item.onPress}
+          <View style={{ backgroundColor: theme.colors.background }}>
+            <ScreenHeader
+              title={t('playlists')}
+              glyph="musical-notes"
+              subtitle={`${userLists.length} ${t('playlists')}`}
+              actions={[
+                { icon: 'search', onPress: () => navigation.navigate('Search') },
+                { icon: 'ellipsis-vertical', onPress: () => navigation.navigate('Settings') },
+              ]}
+            />
+
+            <View style={styles.searchRow}>
+              <SearchBar
+                placeholder={t('searchPlaylists')}
+                value={query}
+                onChangeText={setQuery}
+                onClear={() => setQuery('')}
+                style={{ flex: 1, marginHorizontal: 0 }}
               />
-            ))}
-            <View style={[styles.separator, { backgroundColor: theme.colors.border }]} />
+              <Pressable
+                onPress={() => setCreateOpen(true)}
+                style={({ pressed }) => [
+                  styles.newButton,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.accent,
+                    borderRadius: theme.radius.pill,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}
+              >
+                <Ionicons name="add" size={19} color={theme.colors.accent} />
+                <Text style={[theme.font.title, { color: theme.colors.accent, marginLeft: 4 }]}>
+                  {t('newPlaylist')}
+                </Text>
+              </Pressable>
+            </View>
+
+            <ChipRow
+              style={{ marginTop: 16, marginBottom: 8 }}
+              value={filter}
+              onChange={setFilter}
+              options={[
+                { key: 'all', label: t('allPlaylists'), icon: 'list' },
+                { key: 'mine', label: t('myPlaylists'), icon: 'person-outline' },
+                { key: 'smart', label: t('smartPlaylists'), icon: 'sparkles-outline' },
+                { key: 'recent', label: t('recentlyAdded'), icon: 'time-outline' },
+              ]}
+            />
           </View>
         }
         ListEmptyComponent={
@@ -126,19 +191,32 @@ export function PlaylistsScreen({ navigation }) {
             onAction={() => setCreateOpen(true)}
           />
         }
-        renderItem={({ item }) => (
-          <CollectionRow
-            title={item.name}
-            subtitle={`${t('trackCount', { count: item.track_count ?? 0 })} · ${formatDate(
-              item.updated_at
-            )}`}
-            icon="musical-notes-outline"
-            onPress={() =>
-              navigation.navigate('PlaylistDetail', { playlistId: item.id, name: item.name })
-            }
-            onLongPress={() => setMenuTarget(item)}
-          />
-        )}
+        renderItem={({ item }) =>
+          item.smart ? (
+            <CollectionRow
+              title={item.name}
+              subtitle={t('songCount', { count: item.count })}
+              caption={t('autoPlaylist')}
+              icon={item.icon}
+              accentIcon
+              onPress={item.onPress}
+            />
+          ) : (
+            <CollectionRow
+              title={item.name}
+              subtitle={t('trackCount', { count: item.count })}
+              caption={`${t('createdByYou')} · ${formatDate(item.updatedAt)}`}
+              icon="musical-notes"
+              accentIcon
+              onPress={() =>
+                navigation.navigate('PlaylistDetail', { playlistId: item.id, name: item.name })
+              }
+              onLongPress={() => setMenuTarget(item.raw)}
+              onPressPlay={() => playPlaylist(item.id, false)}
+              onPressMore={() => setMenuTarget(item.raw)}
+            />
+          )
+        }
       />
 
       <PromptDialog
@@ -170,21 +248,19 @@ export function PlaylistsScreen({ navigation }) {
         <SheetItem
           icon="play-outline"
           label={t('play')}
-          onPress={async () => {
+          onPress={() => {
             const target = menuTarget;
             setMenuTarget(null);
-            const tracks = await library.getPlaylistTracks(target.id);
-            if (tracks.length) player.playQueue(tracks, 0, { shuffled: false });
+            playPlaylist(target.id, false);
           }}
         />
         <SheetItem
           icon="shuffle"
           label={t('shuffle')}
-          onPress={async () => {
+          onPress={() => {
             const target = menuTarget;
             setMenuTarget(null);
-            const tracks = await library.getPlaylistTracks(target.id);
-            if (tracks.length) player.shuffleAndPlay(tracks);
+            playPlaylist(target.id, true);
           }}
         />
         <SheetItem
@@ -212,12 +288,12 @@ export function PlaylistsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  header: {
+  searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 10 },
+  newButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    height: 52,
+    borderWidth: 1.5,
   },
-  addButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  separator: { height: StyleSheet.hairlineWidth, marginHorizontal: 16, marginTop: 8 },
 });

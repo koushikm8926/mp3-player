@@ -1,10 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AlbumCard, ShortcutTile } from '../components/cards';
-import { EmptyState, SectionHeader } from '../components/common';
+import { AlbumCard, CategoryTile, TileGrid } from '../components/cards';
+import { EmptyState, SearchBar, SectionHeader } from '../components/common';
 import { TrackOptionsSheet } from '../components/TrackOptionsSheet';
 import { TrackRow } from '../components/TrackRow';
 import { useAuth } from '../context/AuthContext';
@@ -13,8 +23,8 @@ import { usePlayer } from '../context/PlayerContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
 
 /**
- * The dashboard: a greeting, quick shortcuts, and the three collections a listener actually
- * comes back for — recently played, recently added and most played.
+ * The dashboard: greeting, hero call-to-action, resume rail, the browse grid and the
+ * recently played list.
  */
 export function HomeScreen({ navigation }) {
   const theme = useTheme();
@@ -30,11 +40,11 @@ export function HomeScreen({ navigation }) {
     tracks,
     albums,
     artists,
+    genres,
+    folders,
     playlists,
     favoriteTracks,
     recentTracks,
-    recentlyAddedTracks,
-    mostPlayedTracks,
   } = library;
 
   const greeting = useMemo(() => {
@@ -44,18 +54,16 @@ export function HomeScreen({ navigation }) {
     return t('goodEvening');
   }, [t]);
 
-  const quickPicks = useMemo(() => {
-    // A stable slice: favourites first, then anything else, capped at six tiles.
-    const seen = new Set();
-    const picks = [];
-    for (const track of [...favoriteTracks, ...recentTracks, ...tracks]) {
-      if (seen.has(track.id)) continue;
-      seen.add(track.id);
-      picks.push(track);
-      if (picks.length === 6) break;
-    }
-    return picks;
-  }, [favoriteTracks, recentTracks, tracks]);
+  // The design shows a resume bar under each card, but `track_stats` only aggregates play
+  // counts — there is no saved per-track offset. Only the track actually loaded in the player
+  // has a real position, so that is the only card that gets a bar.
+  const continueListening = useMemo(
+    () => recentTracks.slice(0, 12),
+    [recentTracks]
+  );
+
+  const activeProgress =
+    player.durationMs > 0 ? Math.min(1, player.positionMs / player.durationMs) : 0;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -81,7 +89,8 @@ export function HomeScreen({ navigation }) {
     <>
       <ScrollView
         style={{ backgroundColor: theme.colors.background }}
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 140 }}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 170 }}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -93,138 +102,66 @@ export function HomeScreen({ navigation }) {
         }
       >
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={[theme.font.caption, { color: theme.colors.textSecondary }]}>{greeting}</Text>
-            <Text style={[theme.font.h1, { color: theme.colors.text, marginTop: 2 }]} numberOfLines={1}>
-              {user?.name?.split(' ')[0] ?? t('appName')}
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => navigation.navigate('Search')}
-            hitSlop={8}
-            style={[styles.headerButton, { backgroundColor: theme.colors.surface }]}
-          >
-            <Ionicons name="search" size={20} color={theme.colors.text} />
+          <Pressable onPress={() => navigation.navigate('Settings')} hitSlop={12}>
+            <Ionicons name="menu" size={28} color={theme.colors.accent} />
           </Pressable>
-          <Pressable
-            onPress={() => navigation.navigate('Settings')}
-            hitSlop={8}
-            style={[styles.headerButton, { backgroundColor: theme.colors.surface, marginLeft: 8 }]}
-          >
-            <Ionicons name="settings-outline" size={20} color={theme.colors.text} />
-          </Pressable>
-        </View>
 
-        <Pressable
-          onPress={() => player.shuffleAndPlay(tracks)}
-          style={({ pressed }) => [
-            styles.shuffleAll,
-            {
-              backgroundColor: theme.colors.accent,
-              borderRadius: theme.radius.md,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          <Ionicons name="shuffle" size={20} color={theme.colors.onAccent} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={[theme.font.title, { color: theme.colors.onAccent }]}>{t('shuffleAll')}</Text>
-            <Text style={[theme.font.caption, { color: theme.colors.onAccent, opacity: 0.85, marginTop: 2 }]}>
-              {t('songCount', { count: tracks.length })}
-            </Text>
-          </View>
-          <Ionicons name="play" size={22} color={theme.colors.onAccent} />
-        </Pressable>
-
-        <View style={styles.shortcutGrid}>
-          <ShortcutTile
-            label={t('favorites')}
-            icon="heart"
-            tint="#EC4899"
-            count={t('songCount', { count: favoriteTracks.length })}
-            onPress={() => navigation.navigate('Favorites')}
-            style={styles.shortcutTile}
-          />
-          <ShortcutTile
-            label={t('recentlyPlayed')}
-            icon="time-outline"
-            tint="#3B82F6"
-            count={t('songCount', { count: recentTracks.length })}
-            onPress={() => navigation.navigate('RecentlyPlayed')}
-            style={styles.shortcutTile}
-          />
-          <ShortcutTile
-            label={t('playlists')}
-            icon="albums-outline"
-            tint="#F59E0B"
-            count={t('playlistCount', { count: playlists.length })}
-            onPress={() => navigation.navigate('PlaylistsTab')}
-            style={styles.shortcutTile}
-          />
-          <ShortcutTile
-            label={t('artists')}
-            icon="person-outline"
-            tint="#8B5CF6"
-            count={String(artists.length)}
-            onPress={() => navigation.navigate('LibraryTab', { screen: 'Artists' })}
-            style={styles.shortcutTile}
-          />
-        </View>
-
-        {quickPicks.length > 0 ? (
-          <>
-            <SectionHeader title={t('quickPicks')} />
-            {quickPicks.map((track) => (
-              <TrackRow
-                key={track.id}
-                track={track}
-                isActive={player.currentTrack?.id === track.id}
-                isPlaying={player.isPlaying}
-                isFavorite={library.isFavorite(track.id)}
-                onPress={() => player.playQueue(quickPicks, quickPicks.indexOf(track))}
-                onLongPress={() => setSheetTrack(track)}
-                onPressMore={() => setSheetTrack(track)}
+          <View style={styles.headerTitles}>
+            <Text style={[theme.font.body, { color: theme.colors.textSecondary }]}>{greeting}</Text>
+            <View style={styles.brandRow}>
+              <Text style={[theme.font.h1, { color: theme.colors.text }]} numberOfLines={1}>
+                {user?.name?.split(' ')[0] ?? t('appName')}
+              </Text>
+              <Ionicons
+                name="musical-notes"
+                size={19}
+                color={theme.colors.accent}
+                style={{ marginLeft: 8 }}
               />
-            ))}
-          </>
-        ) : null}
+            </View>
+          </View>
 
-        {recentTracks.length > 0 ? (
+          <Pressable onPress={onRefresh} hitSlop={12} disabled={library.scanning}>
+            {library.scanning ? (
+              <ActivityIndicator size="small" color={theme.colors.accent} />
+            ) : (
+              <Ionicons name="sync-outline" size={25} color={theme.colors.text} />
+            )}
+          </Pressable>
+        </View>
+
+        <SearchBar
+          placeholder={t('searchPlaceholder')}
+          onPress={() => navigation.navigate('Search')}
+          onPressTrailing={() => navigation.navigate('Search')}
+        />
+
+        <HeroBanner
+          onPlay={() => player.shuffleAndPlay(tracks)}
+          subtitle={t('songCount', { count: tracks.length })}
+        />
+
+        {continueListening.length > 0 ? (
           <>
             <SectionHeader
               title={t('jumpBackIn')}
               actionLabel={t('seeAll')}
               onPressAction={() => navigation.navigate('RecentlyPlayed')}
             />
-            <HorizontalTrackRail
-              tracks={recentTracks.slice(0, 12)}
-              onPressTrack={(track, index) => player.playQueue(recentTracks.slice(0, 12), index)}
-            />
-          </>
-        ) : null}
-
-        {albums.length > 0 ? (
-          <>
-            <SectionHeader
-              title={t('albums')}
-              actionLabel={t('seeAll')}
-              onPressAction={() => navigation.navigate('LibraryTab', { screen: 'Albums' })}
-            />
             <FlatList
               horizontal
-              data={albums.slice(0, 15)}
+              data={continueListening}
               keyExtractor={(item) => item.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.rail}
-              renderItem={({ item }) => (
+              renderItem={({ item, index }) => (
                 <View style={{ marginRight: 14 }}>
                   <AlbumCard
-                    album={item}
-                    size={132}
-                    subtitle={t('songCount', { count: item.trackCount })}
-                    onPress={() =>
-                      navigation.navigate('AlbumDetail', { albumId: item.id, name: item.name })
-                    }
+                    album={{ name: item.title, artist: item.artist, artworkUri: item.artworkUri }}
+                    size={148}
+                    playBadge
+                    progress={player.currentTrack?.id === item.id ? activeProgress : undefined}
+                    onPress={() => player.playQueue(continueListening, index)}
                   />
                 </View>
               )}
@@ -232,34 +169,97 @@ export function HomeScreen({ navigation }) {
           </>
         ) : null}
 
-        {recentlyAddedTracks.length > 0 ? (
-          <>
-            <SectionHeader title={t('recentlyAdded')} />
-            <HorizontalTrackRail
-              tracks={recentlyAddedTracks.slice(0, 12)}
-              onPressTrack={(track, index) =>
-                player.playQueue(recentlyAddedTracks.slice(0, 12), index)
-              }
-            />
-          </>
-        ) : null}
+        <SectionHeader title={t('quickAccess')} />
+        <TileGrid columns={4} gap={12}>
+          <CategoryTile
+            label={t('songs')}
+            icon="musical-notes"
+            count={String(tracks.length)}
+            compact
+            onPress={() => navigation.navigate('Songs')}
+          />
+          <CategoryTile
+            label={t('albums')}
+            icon="disc"
+            count={String(albums.length)}
+            compact
+            onPress={() => navigation.navigate('Albums')}
+          />
+          <CategoryTile
+            label={t('artists')}
+            icon="person"
+            count={String(artists.length)}
+            compact
+            onPress={() => navigation.navigate('Artists')}
+          />
+          <CategoryTile
+            label={t('folders')}
+            icon="folder"
+            count={String(folders.length)}
+            compact
+            onPress={() => navigation.navigate('Folders')}
+          />
+          <CategoryTile
+            label={t('playlists')}
+            icon="list"
+            count={String(playlists.length)}
+            compact
+            onPress={() => navigation.navigate('PlaylistsTab')}
+          />
+          <CategoryTile
+            label={t('genres')}
+            icon="pricetag"
+            count={String(genres.length)}
+            compact
+            onPress={() => navigation.navigate('Genres')}
+          />
+          <CategoryTile
+            label={t('favorites')}
+            icon="heart"
+            count={String(favoriteTracks.length)}
+            compact
+            onPress={() => navigation.navigate('Favorites')}
+          />
+          <CategoryTile
+            label={t('recentlyPlayed')}
+            icon="time"
+            count={String(recentTracks.length)}
+            compact
+            onPress={() => navigation.navigate('RecentlyPlayed')}
+          />
+        </TileGrid>
 
-        {mostPlayedTracks.length > 0 ? (
+        {recentTracks.length > 0 ? (
           <>
-            <SectionHeader title={t('mostPlayed')} />
-            {mostPlayedTracks.slice(0, 5).map((track, index) => (
+            <SectionHeader
+              title={t('recentlyPlayed')}
+              actionLabel={t('seeAll')}
+              onPressAction={() => navigation.navigate('RecentlyPlayed')}
+            />
+            {recentTracks.slice(0, 5).map((track, index) => (
               <TrackRow
                 key={track.id}
                 track={track}
-                index={index}
-                showIndex
-                showArtwork={false}
                 isActive={player.currentTrack?.id === track.id}
                 isPlaying={player.isPlaying}
                 isFavorite={library.isFavorite(track.id)}
-                onPress={() => player.playQueue(mostPlayedTracks, index)}
+                onPress={() => player.playQueue(recentTracks, index)}
                 onLongPress={() => setSheetTrack(track)}
                 onPressMore={() => setSheetTrack(track)}
+                trailing={
+                  <Pressable
+                    onPress={() => player.playQueue(recentTracks, index)}
+                    hitSlop={8}
+                    style={[styles.rowPlay, { borderColor: theme.colors.accent }]}
+                  >
+                    <Ionicons
+                      name="play"
+                      size={15}
+                      color={theme.colors.accent}
+                      style={{ marginLeft: 2 }}
+                    />
+                  </Pressable>
+                }
               />
             ))}
           </>
@@ -276,29 +276,68 @@ export function HomeScreen({ navigation }) {
   );
 }
 
-function HorizontalTrackRail({ tracks, onPressTrack }) {
+/**
+ * Accent-gradient hero with the app promise and a shuffle-everything CTA.
+ *
+ * The mockup fills this with a studio photograph; a local player has no such asset, so the
+ * gradient carries it and a drawn waveform stands in for the artwork.
+ */
+function HeroBanner({ onPlay, subtitle }) {
   const theme = useTheme();
+  const { t } = useSettings();
+
+  // A fixed, hand-tuned silhouette — deterministic so the banner doesn't flicker on re-render.
+  const bars = [14, 26, 38, 22, 46, 58, 34, 50, 68, 44, 30, 54, 40, 24, 36, 18, 28, 12];
+
   return (
-    <FlatList
-      horizontal
-      data={tracks}
-      keyExtractor={(item) => item.id}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.rail}
-      renderItem={({ item, index }) => (
-        <Pressable
-          onPress={() => onPressTrack(item, index)}
-          style={({ pressed }) => [{ width: 116, marginRight: 14, opacity: pressed ? 0.75 : 1 }]}
+    <LinearGradient
+      colors={theme.accentGradient}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.hero, { borderRadius: theme.radius.xl }, theme.shadow.floating]}
+    >
+      <View style={styles.heroCopy}>
+        <Text style={[theme.font.h2, { color: '#FFFFFF' }]}>{t('heroTitle')}</Text>
+        <Text
+          style={[theme.font.body, { color: '#FFFFFF', opacity: 0.88, marginTop: 8, lineHeight: 20 }]}
         >
-          <AlbumCard
-            album={{ ...item, name: item.title, artworkUri: item.artworkUri }}
-            size={116}
-            subtitle={item.artist}
-            onPress={() => onPressTrack(item, index)}
-          />
+          {t('heroSubtitle')}
+        </Text>
+
+        <Pressable
+          onPress={onPlay}
+          style={({ pressed }) => [
+            styles.heroButton,
+            { backgroundColor: '#FFFFFF', borderRadius: theme.radius.pill, opacity: pressed ? 0.9 : 1 },
+          ]}
+        >
+          <Ionicons name="play" size={17} color={theme.colors.accent} />
+          <Text style={[theme.font.title, { color: theme.colors.accent, marginLeft: 8 }]}>
+            {t('playNow')}
+          </Text>
         </Pressable>
-      )}
-    />
+
+        <Text style={[theme.font.caption, { color: '#FFFFFF', opacity: 0.75, marginTop: 10 }]}>
+          {subtitle}
+        </Text>
+      </View>
+
+      <View style={styles.heroWave} pointerEvents="none">
+        {bars.map((height, index) => (
+          <View
+            key={index}
+            style={{
+              width: 3,
+              height,
+              borderRadius: 2,
+              marginHorizontal: 2,
+              backgroundColor: '#FFFFFF',
+              opacity: 0.28,
+            }}
+          />
+        ))}
+      </View>
+    </LinearGradient>
   );
 }
 
@@ -309,20 +348,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 18,
   },
-  headerButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  shuffleAll: {
+  headerTitles: { flex: 1, marginLeft: 14 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', marginTop: 1 },
+  hero: {
+    marginHorizontal: 16,
+    marginTop: 18,
+    padding: 22,
+    minHeight: 190,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  heroCopy: { maxWidth: '68%' },
+  heroButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    padding: 14,
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    marginTop: 18,
   },
-  shortcutGrid: {
+  heroWave: {
+    position: 'absolute',
+    right: 18,
+    bottom: 26,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 12,
-    marginTop: 16,
-    gap: 8,
+    alignItems: 'center',
+    height: 70,
   },
-  shortcutTile: { flexBasis: '47%', flexGrow: 1 },
   rail: { paddingHorizontal: 16, paddingTop: 2 },
+  rowPlay: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
 });
