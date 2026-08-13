@@ -291,7 +291,11 @@ export const GenreRow = memo(function GenreRow({ title, subtitle, count, icon, t
  */
 export function TileGrid({ children, columns = 4, gap = 12, paddingHorizontal = 16, style }) {
   const { width: windowWidth } = useWindowDimensions();
-  const tileWidth = (windowWidth - paddingHorizontal * 2 - gap * (columns - 1)) / columns;
+  // Floored: an exact division leaves zero slack, and rounding each tile up to a whole
+  // device pixel then overflows the row by a hair, wrapping the last tile onto its own line.
+  const tileWidth = Math.floor(
+    (windowWidth - paddingHorizontal * 2 - gap * (columns - 1)) / columns
+  );
 
   return (
     <View style={[styles.grid, { paddingHorizontal, gap }, style]}>
@@ -329,10 +333,10 @@ export function CategoryTile({ label, icon, count, onPress, tint, width, compact
     >
       <Ionicons name={icon} size={compact ? 26 : 30} color={color} />
       <Text
-        numberOfLines={1}
+        numberOfLines={2}
         style={[
           compact ? theme.font.caption : theme.font.title,
-          { color: theme.colors.text, marginTop: compact ? 8 : 12 },
+          { color: theme.colors.text, marginTop: compact ? 8 : 12, textAlign: 'center' },
         ]}
       >
         {label}

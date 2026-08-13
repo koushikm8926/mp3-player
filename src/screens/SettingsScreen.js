@@ -107,7 +107,13 @@ export function SettingsScreen({ navigation }) {
         <Section title={t('appearance')}>
           <Row icon="contrast-outline" label={t('theme')} value={themeLabel} onPress={() => setThemeSheet(true)} />
           <View style={styles.accentRow}>
-            <Text style={[theme.font.body, { color: theme.colors.text, flex: 1 }]}>
+            <Ionicons
+              name="color-palette-outline"
+              size={21}
+              color={theme.colors.accent}
+              style={{ width: 34 }}
+            />
+            <Text style={[theme.font.title, { color: theme.colors.text, flex: 1 }]}>
               {t('accentColor')}
             </Text>
             <View style={{ flexDirection: 'row' }}>

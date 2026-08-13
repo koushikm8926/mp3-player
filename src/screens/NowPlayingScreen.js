@@ -406,7 +406,7 @@ function ActionTile({ icon, label, onPress, active }) {
     >
       <Ionicons name={icon} size={21} color={theme.colors.accent} />
       <Text
-        numberOfLines={1}
+        numberOfLines={2}
         style={[theme.font.tiny, { color: theme.colors.text, marginTop: 6, textAlign: 'center' }]}
       >
         {label}

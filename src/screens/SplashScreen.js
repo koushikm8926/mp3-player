@@ -55,33 +55,42 @@ export function SplashScreen({ statusLabel }) {
 
   // The wave sits just below the midpoint, sweeping up to the right like the reference.
   const waveTop = height * 0.52;
-  const wavePath = useMemo(() => {
+  const WAVE_HEIGHT = 220;
+
+  // The crest is kept as its own open path: stroking the closed fill path would also draw
+  // the rectangle's bottom and side edges as visible seams.
+  const crest = useMemo(() => {
     const w = width;
-    return `M0,60 C${w * 0.22},10 ${w * 0.42},96 ${w * 0.66},52 C${w * 0.84},20 ${w * 0.94},34 ${w},22 L${w},220 L0,220 Z`;
+    return `M0,60 C${w * 0.22},10 ${w * 0.42},96 ${w * 0.66},52 C${w * 0.84},20 ${w * 0.94},34 ${w},22`;
   }, [width]);
+  const wavePath = `${crest} L${width},${WAVE_HEIGHT} L0,${WAVE_HEIGHT} Z`;
 
   const deep = theme.colors.isDark ? theme.colors.background : theme.colors.accentDark;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.backgroundElevated }]}>
       {/* Lower band: the deep accent field the wave rises out of. */}
+      {/* Starts on the accent so it meets the wave's fill with no visible seam. */}
       <LinearGradient
         colors={[theme.colors.accent, deep]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.4, y: 1 }}
-        style={[styles.lowerBand, { top: waveTop + 60 }]}
+        style={[styles.lowerBand, { top: waveTop + WAVE_HEIGHT - 1 }]}
       />
 
-      <View style={[styles.wave, { top: waveTop, width, height: 220 }]} pointerEvents="none">
-        <Svg width={width} height={220} viewBox={`0 0 ${width} 220`}>
-          <Path d={wavePath} fill={theme.colors.accent} opacity={0.92} />
+      <View
+        style={[styles.wave, { top: waveTop, width, height: WAVE_HEIGHT }]}
+        pointerEvents="none"
+      >
+        <Svg width={width} height={WAVE_HEIGHT} viewBox={`0 0 ${width} ${WAVE_HEIGHT}`}>
+          <Path d={wavePath} fill={theme.colors.accent} />
           <Path
-            d={wavePath}
+            d={crest}
             fill="none"
             stroke="#FFFFFF"
-            strokeOpacity={0.35}
+            strokeOpacity={0.4}
             strokeWidth={1.5}
-            transform="translate(0,-10)"
+            transform="translate(0,-11)"
           />
         </Svg>
       </View>

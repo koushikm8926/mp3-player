@@ -75,13 +75,16 @@ export function CollectionScreen({
 
   const allFavorite = tracks.length > 0 && tracks.every((track) => library.isFavorite(track.id));
 
-  const meta = [
-    subtitle,
+  const counts = [
     t('songCount', { count: tracks.length }),
     totalDuration > 0 ? formatLongDuration(totalDuration) : null,
   ]
     .filter(Boolean)
     .join(' · ');
+
+  // The media hero already shows the subtitle on its own line, so only the centred-icon
+  // layout folds it into the counts.
+  const meta = heroIcon && subtitle ? `${subtitle} · ${counts}` : counts;
 
   const playAll = useCallback(
     () => player.playQueue(sorted, 0, { shuffled: false }),

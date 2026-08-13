@@ -61,7 +61,6 @@ function MainTabs() {
   const theme = useTheme();
   const { t } = useSettings();
   const insets = useSafeAreaInsets();
-  const { hasQueue } = usePlayer();
 
   const tabBarHeight = TAB_BAR_HEIGHT + insets.bottom;
 
@@ -98,12 +97,28 @@ function MainTabs() {
         />
         <Tabs.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings') }} />
       </Tabs.Navigator>
-
-      {/* The mini player floats just above the tab bar rather than inside it, so it can
-          overlay any tab's content without each screen having to reserve space. */}
-      {hasQueue ? <MiniPlayer bottomOffset={tabBarHeight + 8} /> : null}
     </View>
   );
+}
+
+/** Routes that own the whole screen and must not have the mini player floating over them. */
+const MINI_PLAYER_HIDDEN_ON = new Set(['NowPlaying', 'Queue', 'Auth', 'Permission']);
+
+/**
+ * Renders the mini player once, above the entire stack, so it persists across pushed
+ * screens like Songs and Album detail — not just the tab screens.
+ */
+function GlobalMiniPlayer({ routeName }) {
+  const insets = useSafeAreaInsets();
+  const { hasQueue } = usePlayer();
+
+  if (!hasQueue || MINI_PLAYER_HIDDEN_ON.has(routeName)) return null;
+
+  // On the tab screens it clears the tab bar; on a pushed screen it sits near the edge.
+  const onTabs = routeName === 'Main';
+  const bottomOffset = onTabs ? TAB_BAR_HEIGHT + insets.bottom + 8 : insets.bottom + 12;
+
+  return <MiniPlayer bottomOffset={bottomOffset} />;
 }
 
 /**
@@ -118,6 +133,7 @@ export function RootNavigator() {
   const player = usePlayer();
 
   const [splashDone, setSplashDone] = useState(false);
+  const [routeName, setRouteName] = useState('Main');
   const queueRestored = useRef(false);
 
   const bootstrapping = !settingsReady || status === 'loading' || !library.initialised;
@@ -158,7 +174,12 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer
+      theme={navigationTheme}
+      onStateChange={(state) => {
+        if (state?.routes?.length) setRouteName(state.routes[state.index]?.name);
+      }}
+    >
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
@@ -209,6 +230,8 @@ export function RootNavigator() {
           </>
         )}
       </Stack.Navigator>
+
+      <GlobalMiniPlayer routeName={routeName} />
     </NavigationContainer>
   );
 }
