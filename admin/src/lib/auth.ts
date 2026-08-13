@@ -4,15 +4,18 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
+import { verifyIdToken } from './firebaseAdmin';
 import { prisma } from './prisma';
 
 /**
- * Two separate credentials live here:
+ * Three credentials live here:
  *
  *  - Admins sign in to the panel and get a short-lived JWT in an httpOnly cookie.
- *  - App users sign in from the phone and get an opaque bearer token whose SHA-256 hash is
- *    stored in `Session`. Opaque tokens can be revoked server-side (sign-out, suspension),
- *    which a stateless JWT cannot.
+ *  - App users sign in through Firebase Authentication and present a Firebase ID token.
+ *    Firebase owns their password/Google identity; this service only verifies the token and
+ *    maps the UID onto a local `User` row so the dashboard has something to show.
+ *  - Guests ("continue without an account") have no Firebase identity, so they keep the
+ *    opaque device-bound bearer token whose SHA-256 hash is stored in `Session`.
  */
 
 export const ADMIN_COOKIE = 'minax_admin_session';
@@ -102,17 +105,55 @@ export async function issueMobileSession(userId: string): Promise<string> {
   return token;
 }
 
-export type MobilePrincipal = { userId: string; sessionId: string };
+export type MobilePrincipal = {
+  userId: string;
+  /** Present only for guest sessions, which are the sole remaining opaque-token holders. */
+  sessionId?: string;
+  firebaseUid?: string;
+};
 
-/** Resolves an `Authorization: Bearer <token>` header to a user, or null. */
+/** Extracts the raw bearer token, or null when the header is missing or malformed. */
+export function bearerToken(request: Request): string | null {
+  const header = request.headers.get('authorization');
+  if (!header?.toLowerCase().startsWith('bearer ')) return null;
+  const token = header.slice(7).trim();
+  return token || null;
+}
+
+/**
+ * Firebase ID tokens are JWTs, so they always carry two dots; the guest tokens this service
+ * issues are 64 hex characters and never do. That is enough to route a bearer token to the
+ * right verifier without trying both on every request.
+ */
+function looksLikeJwt(token: string): boolean {
+  return token.split('.').length === 3;
+}
+
+/**
+ * Resolves an `Authorization: Bearer <token>` header to a user, or null.
+ *
+ * Accepts a Firebase ID token (signed-in users) or an opaque guest session token. A verified
+ * Firebase token whose UID has no local row yet resolves to null — the app is expected to
+ * call `POST /api/mobile/session` once after sign-in to create it.
+ */
 export async function authenticateMobileRequest(
   request: Request
 ): Promise<MobilePrincipal | null> {
-  const header = request.headers.get('authorization');
-  if (!header?.toLowerCase().startsWith('bearer ')) return null;
-
-  const token = header.slice(7).trim();
+  const token = bearerToken(request);
   if (!token) return null;
+
+  if (looksLikeJwt(token)) {
+    const decoded = await verifyIdToken(token);
+    if (!decoded) return null;
+
+    const user = await prisma.user.findUnique({
+      where: { firebaseUid: decoded.uid },
+      select: { id: true, status: true },
+    });
+    if (!user || user.status !== 'active') return null;
+
+    return { userId: user.id, firebaseUid: decoded.uid };
+  }
 
   const session = await prisma.session.findUnique({
     where: { tokenHash: hashToken(token) },

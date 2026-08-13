@@ -35,7 +35,14 @@ model User {
   id           String    @id @default(cuid())
   email        String?   @unique
   name         String
+  /// Legacy: passwords moved to Firebase Authentication. Retained so historical rows are
+  /// readable, but nothing writes or verifies it any more.
   passwordHash String?
+  /// Firebase Authentication UID — the identity of record for signed-in app users.
+  /// Null only for guest installs, which are still identified by an opaque device session.
+  firebaseUid  String?   @unique
+  /// How the account signs in: password | google | guest.
+  provider     String    @default("password")
   /// Anonymous "continue without an account" installs still get a row so install
   /// counts are accurate; they have no email and cannot sign in on another device.
   isGuest      Boolean   @default(false)

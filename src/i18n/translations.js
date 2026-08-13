@@ -6,6 +6,19 @@
  */
 
 export const en = {
+  // firebase auth strings
+  continueWithGoogle: "Continue with Google",
+  forgotPassword: "Forgot password?",
+  resetEmailSent: "Check your inbox for a password reset link.",
+  or: "or",
+  invalidCredentials: "Those credentials are not valid",
+  emailAlreadyInUse: "That email already has an account",
+  accountDisabled: "This account has been disabled",
+  tooManyAttempts: "Too many attempts. Try again in a few minutes.",
+  signInFailed: "Sign in failed. Please try again.",
+  firebaseNotConfigured: "Sign-in is not configured in this build yet.",
+  googleNotConfigured: "Google sign-in is not configured in this build yet.",
+
   // redesign UI strings
   searchPlaceholder: "Search songs, albums, artists, playlists…",
   searchSongs: "Search songs…",
@@ -328,6 +341,19 @@ export const en = {
 };
 
 export const hi = {
+  // firebase auth strings
+  continueWithGoogle: "Google से जारी रखें",
+  forgotPassword: "पासवर्ड भूल गए?",
+  resetEmailSent: "पासवर्ड रीसेट लिंक के लिए अपना इनबॉक्स देखें।",
+  or: "या",
+  invalidCredentials: "ये क्रेडेंशियल मान्य नहीं हैं",
+  emailAlreadyInUse: "इस ईमेल का खाता पहले से मौजूद है",
+  accountDisabled: "यह खाता अक्षम कर दिया गया है",
+  tooManyAttempts: "बहुत अधिक प्रयास। कुछ मिनट बाद पुनः प्रयास करें।",
+  signInFailed: "साइन इन विफल। कृपया पुनः प्रयास करें।",
+  firebaseNotConfigured: "इस बिल्ड में साइन-इन अभी कॉन्फ़िगर नहीं है।",
+  googleNotConfigured: "इस बिल्ड में Google साइन-इन अभी कॉन्फ़िगर नहीं है।",
+
   // redesign UI strings
   searchPlaceholder: "गाने, एल्बम, कलाकार, प्लेलिस्ट खोजें…",
   searchSongs: "गाने खोजें…",
@@ -617,6 +643,19 @@ export const hi = {
 };
 
 export const es = {
+  // firebase auth strings
+  continueWithGoogle: "Continuar con Google",
+  forgotPassword: "¿Olvidaste tu contraseña?",
+  resetEmailSent: "Revisa tu correo para restablecer la contraseña.",
+  or: "o",
+  invalidCredentials: "Esas credenciales no son válidas",
+  emailAlreadyInUse: "Ese correo ya tiene una cuenta",
+  accountDisabled: "Esta cuenta ha sido deshabilitada",
+  tooManyAttempts: "Demasiados intentos. Inténtalo en unos minutos.",
+  signInFailed: "No se pudo iniciar sesión. Inténtalo de nuevo.",
+  firebaseNotConfigured: "El inicio de sesión aún no está configurado en esta versión.",
+  googleNotConfigured: "El acceso con Google aún no está configurado en esta versión.",
+
   // redesign UI strings
   searchPlaceholder: "Busca canciones, álbumes, artistas, listas…",
   searchSongs: "Buscar canciones…",
@@ -906,6 +945,19 @@ export const es = {
 };
 
 export const fr = {
+  // firebase auth strings
+  continueWithGoogle: "Continuer avec Google",
+  forgotPassword: "Mot de passe oublié ?",
+  resetEmailSent: "Consultez votre boîte mail pour réinitialiser le mot de passe.",
+  or: "ou",
+  invalidCredentials: "Ces identifiants ne sont pas valides",
+  emailAlreadyInUse: "Cette adresse a déjà un compte",
+  accountDisabled: "Ce compte a été désactivé",
+  tooManyAttempts: "Trop de tentatives. Réessayez dans quelques minutes.",
+  signInFailed: "Échec de la connexion. Veuillez réessayer.",
+  firebaseNotConfigured: "La connexion n'est pas encore configurée dans cette version.",
+  googleNotConfigured: "La connexion Google n'est pas encore configurée dans cette version.",
+
   // redesign UI strings
   searchPlaceholder: "Rechercher titres, albums, artistes, playlists…",
   searchSongs: "Rechercher des titres…",
@@ -1196,6 +1248,19 @@ export const fr = {
 };
 
 export const de = {
+  // firebase auth strings
+  continueWithGoogle: "Mit Google fortfahren",
+  forgotPassword: "Passwort vergessen?",
+  resetEmailSent: "Prüfe dein Postfach für den Link zum Zurücksetzen.",
+  or: "oder",
+  invalidCredentials: "Diese Zugangsdaten sind ungültig",
+  emailAlreadyInUse: "Für diese E-Mail gibt es bereits ein Konto",
+  accountDisabled: "Dieses Konto wurde deaktiviert",
+  tooManyAttempts: "Zu viele Versuche. Versuche es in ein paar Minuten erneut.",
+  signInFailed: "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+  firebaseNotConfigured: "Die Anmeldung ist in diesem Build noch nicht konfiguriert.",
+  googleNotConfigured: "Google-Anmeldung ist in diesem Build noch nicht konfiguriert.",
+
   // redesign UI strings
   searchPlaceholder: "Titel, Alben, Künstler, Playlists suchen…",
   searchSongs: "Titel suchen…",
@@ -1486,6 +1551,19 @@ export const de = {
 };
 
 export const pt = {
+  // firebase auth strings
+  continueWithGoogle: "Continuar com o Google",
+  forgotPassword: "Esqueceu a senha?",
+  resetEmailSent: "Confira seu e-mail para redefinir a senha.",
+  or: "ou",
+  invalidCredentials: "Essas credenciais não são válidas",
+  emailAlreadyInUse: "Esse e-mail já tem uma conta",
+  accountDisabled: "Esta conta foi desativada",
+  tooManyAttempts: "Muitas tentativas. Tente novamente em alguns minutos.",
+  signInFailed: "Falha ao entrar. Tente novamente.",
+  firebaseNotConfigured: "O login ainda não está configurado nesta versão.",
+  googleNotConfigured: "O login com Google ainda não está configurado nesta versão.",
+
   // redesign UI strings
   searchPlaceholder: "Busque músicas, álbuns, artistas, playlists…",
   searchSongs: "Buscar músicas…",
@@ -1775,6 +1853,19 @@ export const pt = {
 };
 
 export const ar = {
+  // firebase auth strings
+  continueWithGoogle: "المتابعة باستخدام Google",
+  forgotPassword: "هل نسيت كلمة المرور؟",
+  resetEmailSent: "تحقق من بريدك لإعادة تعيين كلمة المرور.",
+  or: "أو",
+  invalidCredentials: "بيانات الاعتماد هذه غير صالحة",
+  emailAlreadyInUse: "هذا البريد لديه حساب بالفعل",
+  accountDisabled: "تم تعطيل هذا الحساب",
+  tooManyAttempts: "محاولات كثيرة. حاول مجددًا بعد دقائق.",
+  signInFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
+  firebaseNotConfigured: "لم يتم إعداد تسجيل الدخول في هذه النسخة بعد.",
+  googleNotConfigured: "لم يتم إعداد تسجيل الدخول عبر Google في هذه النسخة بعد.",
+
   // redesign UI strings
   searchPlaceholder: "ابحث عن أغانٍ وألبومات وفنانين وقوائم…",
   searchSongs: "ابحث عن أغانٍ…",

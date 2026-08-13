@@ -87,10 +87,23 @@
       "expo-localization",
       "expo-sqlite",
       "expo-sharing",
-      "expo-image"
+      "expo-image",
+      "expo-web-browser"
     ],
     "extra": {
-      "adminApiUrl": "http://10.0.2.2:3000"
+      "adminApiUrl": "http://10.0.2.2:3000",
+      "firebase": {
+        "apiKey": "REPLACE_WITH_FIREBASE_API_KEY",
+        "authDomain": "REPLACE_WITH_PROJECT.firebaseapp.com",
+        "projectId": "REPLACE_WITH_PROJECT_ID",
+        "storageBucket": "REPLACE_WITH_PROJECT.appspot.com",
+        "messagingSenderId": "REPLACE_WITH_SENDER_ID",
+        "appId": "REPLACE_WITH_APP_ID"
+      },
+      "google": {
+        "androidClientId": "REPLACE_WITH_ANDROID_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+        "webClientId": "REPLACE_WITH_WEB_OAUTH_CLIENT_ID.apps.googleusercontent.com"
+      }
     }
   }
 }

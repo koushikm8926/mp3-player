@@ -19,7 +19,7 @@ const prisma = new PrismaClient({
 const DEFAULT_SETTINGS = [
   {
     key: 'app.name',
-    value: 'Minax Music',
+    value: 'Melophile',
     type: 'string',
     label: 'Application name',
     description: 'Shown in the mobile app and in emails.',
@@ -121,7 +121,7 @@ const DEFAULT_SETTINGS = [
 async function main() {
   const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@minaxdigital.com';
   const password = process.env.SEED_ADMIN_PASSWORD ?? 'Admin@12345';
-  const name = process.env.SEED_ADMIN_NAME ?? 'Minax Administrator';
+  const name = process.env.SEED_ADMIN_NAME ?? 'Melophile Administrator';
 
   const passwordHash = await bcrypt.hash(password, 12);
   const admin = await prisma.admin.upsert({
@@ -154,7 +154,7 @@ async function main() {
       platform: 'android',
       version: '1.0.0',
       buildNumber: 1,
-      releaseNotes: 'First release of Minax Music.',
+      releaseNotes: 'First release of Melophile.',
       isCurrent: true,
       minSupported: 1,
     },

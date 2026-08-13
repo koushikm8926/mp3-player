@@ -1,6 +1,8 @@
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 
+import { currentIdToken } from './firebase';
+
 /**
  * Client for the Next.js admin backend.
  *
@@ -54,7 +56,10 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (auth) {
-      const token = await getToken();
+      // Signed-in users authenticate with a Firebase ID token, which the SDK refreshes for
+      // us. Guests have no Firebase identity, so they fall back to the opaque device token
+      // this server issued them.
+      const token = (await currentIdToken()) ?? (await getToken());
       if (token) headers.Authorization = `Bearer ${token}`;
     }
 
@@ -89,8 +94,11 @@ function safeJson(text) {
 }
 
 export const api = {
-  register: (payload) => request('/register', { method: 'POST', body: payload, auth: false }),
-  login: (payload) => request('/login', { method: 'POST', body: payload, auth: false }),
+  /**
+   * Exchanges the current Firebase ID token for the server-side user record. Called right
+   * after sign-in and on every cold start, so the admin panel sees the account.
+   */
+  session: (payload) => request('/session', { method: 'POST', body: payload }),
   guest: (payload) => request('/guest', { method: 'POST', body: payload, auth: false }),
   me: () => request('/me'),
   updateProfile: (payload) => request('/me', { method: 'PATCH', body: payload }),
