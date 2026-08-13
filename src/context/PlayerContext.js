@@ -55,6 +55,13 @@ export function PlayerProvider({ children }) {
   const [shuffle, setShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState(REPEAT_MODES.OFF);
   const [sleepTimer, setSleepTimer] = useState(null); // { endsAt, endOfTrack }
+  const [volume, setVolumeState] = useState(1);
+
+  /**
+   * In-app output level, 0–1. Every place that sets a player's volume scales by this, so the
+   * crossfade ramp and the user's setting compose instead of overwriting each other.
+   */
+  const volumeRef = useRef(1);
 
   const listenStartRef = useRef(0);
   const listenedMsRef = useRef(0);
@@ -200,8 +207,8 @@ export function PlayerProvider({ children }) {
         step += 1;
         const ratio = Math.min(1, step / steps);
         try {
-          outgoingPlayer.volume = 1 - ratio;
-          incomingPlayer.volume = ratio;
+          outgoingPlayer.volume = (1 - ratio) * volumeRef.current;
+          incomingPlayer.volume = ratio * volumeRef.current;
         } catch {
           clearInterval(crossfadeTimerRef.current);
           crossfadeTimerRef.current = null;
@@ -259,7 +266,7 @@ export function PlayerProvider({ children }) {
       }
       playerRef.current = player;
 
-      player.volume = crossfadeSeconds > 0 ? 0 : 1;
+      player.volume = crossfadeSeconds > 0 ? 0 : volumeRef.current;
       try {
         player.setPlaybackRate(settings.playbackSpeed, 'high');
       } catch {
@@ -419,7 +426,7 @@ export function PlayerProvider({ children }) {
     }
     try {
       const player = createAudioPlayer({ uri: track.uri }, { updateInterval: 1000 });
-      player.volume = 1;
+      player.volume = volumeRef.current;
       preloadedRef.current = { trackId: track.id, player };
     } catch {
       preloadedRef.current = null;
@@ -543,6 +550,23 @@ export function PlayerProvider({ children }) {
     },
     [order, flushListen]
   );
+
+  /**
+   * Sets the in-app output level. Applied to the live player immediately unless a crossfade
+   * is mid-ramp — that interval owns the volume until it finishes, and picks the new level
+   * up on its next tick.
+   */
+  const setVolume = useCallback((value) => {
+    const clamped = Math.min(1, Math.max(0, value));
+    volumeRef.current = clamped;
+    setVolumeState(clamped);
+    if (crossfadeTimerRef.current) return;
+    try {
+      if (playerRef.current) playerRef.current.volume = clamped;
+    } catch {
+      /* player already released */
+    }
+  }, []);
 
   const toggleShuffle = useCallback(() => {
     setShuffle((previous) => {
@@ -745,6 +769,7 @@ export function PlayerProvider({ children }) {
       shuffle,
       repeatMode,
       sleepTimer,
+      volume,
       hasQueue: queue.length > 0,
       upNext: order.slice(orderPosition + 1).map((i) => queue[i]).filter(Boolean),
 
@@ -759,6 +784,7 @@ export function PlayerProvider({ children }) {
       skipToQueueIndex,
       toggleShuffle,
       cycleRepeat,
+      setVolume,
       addToQueue,
       playNext,
       removeFromQueue,
@@ -784,6 +810,7 @@ export function PlayerProvider({ children }) {
       shuffle,
       repeatMode,
       sleepTimer,
+      volume,
       playQueue,
       shuffleAndPlay,
       play,
@@ -795,6 +822,7 @@ export function PlayerProvider({ children }) {
       skipToQueueIndex,
       toggleShuffle,
       cycleRepeat,
+      setVolume,
       addToQueue,
       playNext,
       removeFromQueue,
