@@ -22,6 +22,7 @@ export function AlbumDetailScreen({ route, navigation }) {
       navigation={navigation}
       title={album?.name ?? name}
       subtitle={album?.artist}
+      subtitleIsArtist
       artworkUri={album?.artworkUri}
       artworkName={album?.name ?? name}
       tracks={album?.tracks ?? []}
@@ -123,7 +124,7 @@ export function FavoritesScreen({ navigation }) {
     <CollectionScreen
       navigation={navigation}
       title={t('favorites')}
-      artworkName={t('favorites')}
+      heroIcon="heart"
       tracks={favoriteTracks}
       defaultSortKey={SORT_KEYS.TITLE}
       emptyTitle={t('emptyFavoritesTitle')}
@@ -140,7 +141,8 @@ export function RecentlyPlayedScreen({ navigation }) {
     <CollectionScreen
       navigation={navigation}
       title={t('recentlyPlayed')}
-      artworkName={t('recentlyPlayed')}
+      heroIcon="time"
+      description={t('recentlyPlayedBody')}
       tracks={recentTracks}
       sortable={false}
       emptyTitle={t('emptyRecentTitle')}
@@ -192,6 +194,8 @@ export function PlaylistDetailScreen({ route, navigation }) {
     <CollectionScreen
       navigation={navigation}
       title={playlist?.name ?? name}
+      subtitle={t('createdByYou')}
+      description={playlist?.description || undefined}
       artworkUri={tracks[0]?.artworkUri}
       artworkName={playlist?.name ?? name}
       tracks={tracks}

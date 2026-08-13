@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Card, Divider, GroupLabel, ScreenHeader } from '../components/common';
 import { Sheet, SheetItem } from '../components/Sheet';
 import { useAuth } from '../context/AuthContext';
 import { useLibrary } from '../context/LibraryContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
-import { ACCENTS } from '../theme';
-import { Header } from './EqualizerScreen';
+import { ACCENT_ORDER, ACCENTS } from '../theme';
 
 const CROSSFADE_OPTIONS = [0, 2, 3, 4, 5, 6, 8, 10, 12];
 const MIN_TRACK_OPTIONS = [5, 10, 15, 30, 45, 60];
@@ -51,15 +51,31 @@ export function SettingsScreen({ navigation }) {
   }[settings.themeMode];
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top }}>
-      <Header title={t('settings')} onBack={() => navigation.goBack()} />
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScreenHeader
+        title={t('settings')}
+        large={false}
+        actions={[{ icon: 'search', onPress: () => navigation.navigate('Search') }]}
+      />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 170 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ------------------------------------------------------------ account */}
-        <Section title={t('account')}>
-          <View
-            style={[styles.accountCard, { backgroundColor: theme.colors.surface, borderRadius: theme.radius.md }]}
-          >
+        <Pressable
+          onPress={() => navigation.navigate('ServerSettings')}
+          style={({ pressed }) => [
+            styles.accountCard,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+              borderRadius: theme.radius.lg,
+              opacity: pressed ? 0.9 : 1,
+            },
+            theme.shadow.card,
+          ]}
+        >
             <View style={[styles.avatar, { backgroundColor: theme.colors.accent }]}>
               <Text style={{ color: theme.colors.onAccent, fontSize: 20, fontWeight: '700' }}>
                 {(user?.name ?? 'G')[0].toUpperCase()}
@@ -79,14 +95,13 @@ export function SettingsScreen({ navigation }) {
                 { backgroundColor: serverReachable ? theme.colors.success : theme.colors.textTertiary },
               ]}
             />
-          </View>
-          <Row
-            icon="server-outline"
-            label={t('serverUrl')}
-            onPress={() => navigation.navigate('ServerSettings')}
-          />
-          <Row icon="log-out-outline" label={t('signOut')} destructive onPress={confirmSignOut} />
-        </Section>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={theme.colors.textTertiary}
+              style={{ marginLeft: 10 }}
+            />
+        </Pressable>
 
         {/* ------------------------------------------------------------ appearance */}
         <Section title={t('appearance')}>
@@ -96,15 +111,16 @@ export function SettingsScreen({ navigation }) {
               {t('accentColor')}
             </Text>
             <View style={{ flexDirection: 'row' }}>
-              {Object.entries(ACCENTS).map(([key, color]) => (
+              {ACCENT_ORDER.map((key) => (
                 <Pressable
                   key={key}
                   onPress={() => update('accentColor', key)}
                   style={[
                     styles.swatch,
                     {
-                      backgroundColor: color,
-                      borderColor: settings.accentColor === key ? theme.colors.text : 'transparent',
+                      backgroundColor: ACCENTS[key],
+                      borderColor:
+                        settings.accentColor === key ? theme.colors.text : 'transparent',
                     },
                   ]}
                 />
@@ -216,7 +232,18 @@ export function SettingsScreen({ navigation }) {
 
         {/* ------------------------------------------------------------ about */}
         <Section title={t('aboutSection')}>
-          <Row icon="information-circle-outline" label={t('about')} value={`v${version}`} onPress={() => navigation.navigate('About')} />
+          <Row
+            icon="server-outline"
+            label={t('serverUrl')}
+            onPress={() => navigation.navigate('ServerSettings')}
+          />
+          <Row
+            icon="information-circle-outline"
+            label={t('about')}
+            value={`v${version}`}
+            onPress={() => navigation.navigate('About')}
+          />
+          <Row icon="log-out-outline" label={t('signOut')} destructive onPress={confirmSignOut} />
         </Section>
       </ScrollView>
 
@@ -270,19 +297,24 @@ export function SettingsScreen({ navigation }) {
   );
 }
 
+/**
+ * A titled group of rows rendered as one rounded card, with hairline dividers between
+ * children so the card reads as a single surface.
+ */
 export function Section({ title, children }) {
-  const theme = useTheme();
+  const rows = React.Children.toArray(children).filter(Boolean);
+
   return (
-    <View style={{ marginTop: 22 }}>
-      <Text
-        style={[
-          theme.font.caption,
-          { color: theme.colors.accent, paddingHorizontal: 20, marginBottom: 8, letterSpacing: 0.4 },
-        ]}
-      >
-        {title.toUpperCase()}
-      </Text>
-      {children}
+    <View>
+      <GroupLabel label={title} />
+      <Card style={{ marginHorizontal: 16 }}>
+        {rows.map((row, index) => (
+          <View key={row.key ?? index}>
+            {index > 0 ? <Divider inset={52} /> : null}
+            {row}
+          </View>
+        ))}
+      </Card>
     </View>
   );
 }
@@ -299,9 +331,16 @@ export function Row({ icon, label, description, value, onPress, destructive }) {
         { backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent' },
       ]}
     >
-      {icon ? <Ionicons name={icon} size={21} color={color} style={{ width: 32 }} /> : null}
+      {icon ? (
+        <Ionicons
+          name={icon}
+          size={21}
+          color={destructive ? theme.colors.danger : theme.colors.accent}
+          style={{ width: 34 }}
+        />
+      ) : null}
       <View style={{ flex: 1, marginRight: 10 }}>
-        <Text style={[theme.font.body, { color }]}>{label}</Text>
+        <Text style={[theme.font.title, { color }]}>{label}</Text>
         {description ? (
           <Text style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}>
             {description}
@@ -309,7 +348,10 @@ export function Row({ icon, label, description, value, onPress, destructive }) {
         ) : null}
       </View>
       {value ? (
-        <Text numberOfLines={1} style={[theme.font.caption, { color: theme.colors.textSecondary, maxWidth: 140 }]}>
+        <Text
+          numberOfLines={1}
+          style={[theme.font.body, { color: theme.colors.accent, maxWidth: 150 }]}
+        >
           {value}
         </Text>
       ) : null}
@@ -324,9 +366,11 @@ export function ToggleRow({ icon, label, description, value, onValueChange }) {
   const theme = useTheme();
   return (
     <View style={styles.row}>
-      {icon ? <Ionicons name={icon} size={21} color={theme.colors.text} style={{ width: 32 }} /> : null}
+      {icon ? (
+        <Ionicons name={icon} size={21} color={theme.colors.accent} style={{ width: 34 }} />
+      ) : null}
       <View style={{ flex: 1, marginRight: 12 }}>
-        <Text style={[theme.font.body, { color: theme.colors.text }]}>{label}</Text>
+        <Text style={[theme.font.title, { color: theme.colors.text }]}>{label}</Text>
         {description ? (
           <Text style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}>
             {description}
@@ -344,10 +388,17 @@ export function ToggleRow({ icon, label, description, value, onValueChange }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14 },
-  accountCard: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, padding: 14 },
-  avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 15 },
+  accountCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 6,
+    padding: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  avatar: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
   statusDot: { width: 9, height: 9, borderRadius: 5 },
-  accentRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14 },
+  accentRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 15 },
   swatch: { width: 22, height: 22, borderRadius: 11, marginLeft: 7, borderWidth: 2 },
 });
