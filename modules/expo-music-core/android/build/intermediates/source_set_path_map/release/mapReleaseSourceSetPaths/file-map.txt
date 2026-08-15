@@ -1,0 +1,7 @@
+expo.modules.musiccore.expo-music-core-pngs-0 /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/build/generated/res/pngs/release
+expo.modules.musiccore.expo-music-core-resValues-1 /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/build/generated/res/resValues/release
+expo.modules.musiccore.expo-music-core-mergeReleaseResources-2 /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+expo.modules.musiccore.expo-music-core-mergeReleaseResources-3 /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+expo.modules.musiccore.expo-music-core-release-4 /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/build/intermediates/merged_res/release/mergeReleaseResources
+expo.modules.musiccore.expo-music-core-main-5 /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/res
+expo.modules.musiccore.expo-music-core-release-6 /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/release/res
