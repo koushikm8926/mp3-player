@@ -104,15 +104,25 @@ function MainTabs() {
 /** Routes that own the whole screen and must not have the mini player floating over them. */
 const MINI_PLAYER_HIDDEN_ON = new Set(['NowPlaying', 'Queue', 'Auth', 'Permission']);
 
+/** The active top-level route, or undefined before the navigator has mounted. */
+function topLevelRouteName(state) {
+  return state?.routes?.length ? state.routes[state.index]?.name : undefined;
+}
+
 /**
  * Renders the mini player once, above the entire stack, so it persists across pushed
  * screens like Songs and Album detail — not just the tab screens.
+ *
+ * `visible` gates on the top-level flow rather than the route name alone. The route name
+ * arrives from a navigation callback, so it cannot be trusted on the very first frame;
+ * the flow condition is known synchronously and keeps the player off the auth and
+ * permission screens regardless of callback timing.
  */
-function GlobalMiniPlayer({ routeName }) {
+function GlobalMiniPlayer({ routeName, visible }) {
   const insets = useSafeAreaInsets();
   const { hasQueue } = usePlayer();
 
-  if (!hasQueue || MINI_PLAYER_HIDDEN_ON.has(routeName)) return null;
+  if (!visible || !hasQueue || MINI_PLAYER_HIDDEN_ON.has(routeName)) return null;
 
   // On the tab screens it clears the tab bar; on a pushed screen it sits near the edge.
   const onTabs = routeName === 'Main';
@@ -135,6 +145,7 @@ export function RootNavigator() {
   const [splashDone, setSplashDone] = useState(false);
   const [routeName, setRouteName] = useState('Main');
   const queueRestored = useRef(false);
+  const navigationRef = useRef(null);
 
   const bootstrapping = !settingsReady || status === 'loading' || !library.initialised;
 
@@ -175,9 +186,17 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer
+      ref={navigationRef}
       theme={navigationTheme}
+      // onStateChange only fires on subsequent changes, so the first route has to be read
+      // once the container is ready — otherwise routeName keeps its initial value.
+      onReady={() => {
+        const initial = topLevelRouteName(navigationRef.current?.getRootState());
+        if (initial) setRouteName(initial);
+      }}
       onStateChange={(state) => {
-        if (state?.routes?.length) setRouteName(state.routes[state.index]?.name);
+        const next = topLevelRouteName(state);
+        if (next) setRouteName(next);
       }}
     >
       <Stack.Navigator
@@ -231,7 +250,10 @@ export function RootNavigator() {
         )}
       </Stack.Navigator>
 
-      <GlobalMiniPlayer routeName={routeName} />
+      <GlobalMiniPlayer
+        routeName={routeName}
+        visible={status === 'authenticated' && library.permission === 'granted'}
+      />
     </NavigationContainer>
   );
 }

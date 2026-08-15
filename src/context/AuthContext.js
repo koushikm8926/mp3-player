@@ -14,7 +14,7 @@ import { AppState, Platform } from 'react-native';
 import { historyRepo, outboxRepo } from '../db/repositories';
 import { api, setToken } from '../services/api';
 import { authErrorKey, firebaseAuth, isFirebaseConfigured } from '../services/firebase';
-import { useGoogleSignIn } from '../services/googleAuth';
+import { signOutGoogle, useGoogleSignIn } from '../services/googleAuth';
 
 const AuthContext = createContext(null);
 
@@ -236,6 +236,9 @@ export function AuthProvider({ children }) {
   const signOut = useCallback(async () => {
     await api.logout().catch(() => {});
     await setToken(null);
+    // Play Services caches the chosen account independently of Firebase; without this the
+    // next Google sign-in silently reuses it instead of offering the account picker.
+    await signOutGoogle();
 
     const auth = firebaseAuth();
     if (auth?.currentUser) {

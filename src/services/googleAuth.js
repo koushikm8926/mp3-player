@@ -1,103 +1,100 @@
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import Constants from 'expo-constants';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 import { firebaseAuth } from './firebase';
 
 /**
- * Google sign-in on the Firebase JS SDK.
+ * Google sign-in through Play Services.
  *
- * The JS SDK's `signInWithPopup` has no React Native implementation, so the OAuth leg runs
- * through expo-auth-session and the resulting Google ID token is exchanged for a Firebase
- * credential. That keeps everything in the managed workflow — no native module, no rebuild.
+ * This runs natively rather than through a browser: the native SDK returns a Google ID token
+ * directly, which is exchanged for a Firebase credential. The earlier expo-auth-session flow
+ * opened a Chrome Custom Tab and came back through a `com.minaxdigital.mp3player:/oauthredirect`
+ * custom URI scheme — Google now blocks that on newly created Android OAuth clients, because a
+ * custom scheme can be claimed by any app on the device. Nothing here registers a scheme, so
+ * that restriction no longer applies.
  */
-
-// Required so the auth session's browser tab closes and returns control to the app.
-WebBrowser.maybeCompleteAuthSession();
 
 const clientIds = Constants.expoConfig?.extra?.google ?? {};
 
 /**
- * expo-auth-session throws during render if the current platform's client id is undefined,
- * which would take down the whole auth screen — including guest sign-in. A placeholder keeps
- * the hook constructible; `isGoogleConfigured` is what actually gates the button.
+ * Only the web client id is needed on Android. The native SDK identifies the app by package
+ * name plus signing certificate rather than by an Android client id, but Firebase requires the
+ * ID token's audience to be the *web* client, so that is the value handed to `configure`.
  */
-const PLACEHOLDER = 'unconfigured.apps.googleusercontent.com';
+const webClientId = clientIds.webClientId ?? '';
+const iosClientId = clientIds.iosClientId ?? '';
 
-const androidClientId = clientIds.androidClientId || PLACEHOLDER;
-const webClientId = clientIds.webClientId || PLACEHOLDER;
-const iosClientId = clientIds.iosClientId || PLACEHOLDER;
+export const isGoogleConfigured = Boolean(webClientId) && !webClientId.startsWith('REPLACE');
 
-export const isGoogleConfigured = [androidClientId, webClientId].some(
-  (id) => id !== PLACEHOLDER && !id.startsWith('REPLACE')
-);
+// Configuration is synchronous and has to happen before the first `signIn` call. Doing it at
+// import time keeps the hook free of setup effects; a half-configured build skips it entirely
+// so the SDK never sees a placeholder client id.
+if (isGoogleConfigured) {
+  GoogleSignin.configure({
+    webClientId,
+    ...(iosClientId && !iosClientId.startsWith('REPLACE') ? { iosClientId } : {}),
+  });
+}
+
+/**
+ * Maps the SDK's thrown error codes onto the app's translated copy. A cancellation is reported
+ * as `{ cancelled: true }` rather than an error because the auth screen treats it as a no-op.
+ */
+function resultForError(error) {
+  switch (error?.code) {
+    case statusCodes.SIGN_IN_CANCELLED:
+      return { ok: false, cancelled: true };
+    case statusCodes.IN_PROGRESS:
+      // A second tap while the account picker is already open — not worth an error banner.
+      return { ok: false, cancelled: true };
+    default:
+      return { ok: false, errorKey: 'signInFailed' };
+  }
+}
 
 /**
  * Returns `{ signInWithGoogle, ready }`.
  *
- * `ready` is false until the auth request has been built; the button stays disabled until
- * then, because calling promptAsync before that silently no-ops.
+ * Unlike the previous browser-based implementation there is no auth request to build, so
+ * `ready` reflects configuration alone and is true from the first render.
  */
 export function useGoogleSignIn() {
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    androidClientId,
-    webClientId,
-    iosClientId,
-  });
-
-  const [pending, setPending] = useState(null);
-
-  // The hook reports the OAuth result asynchronously rather than resolving promptAsync with
-  // it, so the promise handed to the caller is settled here.
-  useEffect(() => {
-    if (!pending || !response) return;
-
-    const finish = async () => {
-      if (response.type !== 'success') {
-        pending.resolve(
-          response.type === 'dismiss' || response.type === 'cancel'
-            ? { ok: false, cancelled: true }
-            : { ok: false, errorKey: 'signInFailed' }
-        );
-        setPending(null);
-        return;
-      }
-
-      const idToken = response.params?.id_token ?? response.authentication?.idToken;
-      if (!idToken) {
-        pending.resolve({ ok: false, errorKey: 'signInFailed' });
-        setPending(null);
-        return;
-      }
-
-      try {
-        const auth = firebaseAuth();
-        const credential = GoogleAuthProvider.credential(idToken);
-        const result = await signInWithCredential(auth, credential);
-        pending.resolve({ ok: true, user: result.user });
-      } catch {
-        pending.resolve({ ok: false, errorKey: 'signInFailed' });
-      }
-      setPending(null);
-    };
-
-    finish();
-  }, [response, pending]);
-
   const signInWithGoogle = useCallback(async () => {
     if (!isGoogleConfigured) return { ok: false, errorKey: 'googleNotConfigured' };
-    if (!request) return { ok: false, errorKey: 'signInFailed' };
 
-    return new Promise((resolve) => {
-      setPending({ resolve });
-      promptAsync().catch(() => {
-        resolve({ ok: false, errorKey: 'signInFailed' });
-        setPending(null);
-      });
-    });
-  }, [request, promptAsync]);
+    try {
+      // Throws on devices without a usable Play Services install, which is the one hard
+      // requirement of this approach.
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-  return { signInWithGoogle, ready: Boolean(request) && isGoogleConfigured };
+      const response = await GoogleSignin.signIn();
+      if (response.type === 'cancelled') return { ok: false, cancelled: true };
+
+      const idToken = response.data?.idToken;
+      if (!idToken) return { ok: false, errorKey: 'signInFailed' };
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const result = await signInWithCredential(firebaseAuth(), credential);
+      return { ok: true, user: result.user };
+    } catch (error) {
+      return resultForError(error);
+    }
+  }, []);
+
+  return { signInWithGoogle, ready: isGoogleConfigured };
+}
+
+/**
+ * Clears the cached Google session so the next sign-in shows the account picker again.
+ * Firebase sign-out is handled separately by AuthContext; this only drops the Google side.
+ */
+export async function signOutGoogle() {
+  if (!isGoogleConfigured) return;
+  try {
+    await GoogleSignin.signOut();
+  } catch {
+    // Never block the app's sign-out on the Google SDK failing to clear its cache.
+  }
 }

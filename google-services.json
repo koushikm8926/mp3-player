@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "124985582120",
+    "project_id": "melophile-ca73f",
+    "storage_bucket": "melophile-ca73f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:124985582120:android:f55fa95dc8af0217c48b1d",
+        "android_client_info": {
+          "package_name": "com.minaxdigital.mp3player"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "124985582120-degikfik4a5feb712vfo9j7ekg3tf963.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.minaxdigital.mp3player",
+            "certificate_hash": "bb9351532dcced86909d3ea7fe3f24930fb8528a"
+          }
+        },
+        {
+          "client_id": "124985582120-5dba1oe1bvunkthqutpjt4r8s73n0hnr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJdNu6FpNpS_ZtihrCzhyyGQZyg29lWTM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "124985582120-5dba1oe1bvunkthqutpjt4r8s73n0hnr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

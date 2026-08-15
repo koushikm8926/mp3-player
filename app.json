@@ -29,6 +29,7 @@
     "android": {
       "package": "com.minaxdigital.mp3player",
       "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#0B0B0F",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -88,21 +89,22 @@
       "expo-sqlite",
       "expo-sharing",
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "adminApiUrl": "http://10.0.2.2:3000",
       "firebase": {
-        "apiKey": "REPLACE_WITH_FIREBASE_API_KEY",
-        "authDomain": "REPLACE_WITH_PROJECT.firebaseapp.com",
-        "projectId": "REPLACE_WITH_PROJECT_ID",
-        "storageBucket": "REPLACE_WITH_PROJECT.appspot.com",
-        "messagingSenderId": "REPLACE_WITH_SENDER_ID",
-        "appId": "REPLACE_WITH_APP_ID"
+        "apiKey": "AIzaSyCJdNu6FpNpS_ZtihrCzhyyGQZyg29lWTM",
+        "authDomain": "melophile-ca73f.firebaseapp.com",
+        "projectId": "melophile-ca73f",
+        "storageBucket": "melophile-ca73f.firebasestorage.app",
+        "messagingSenderId": "124985582120",
+        "appId": "1:124985582120:android:f55fa95dc8af0217c48b1d"
       },
       "google": {
-        "androidClientId": "REPLACE_WITH_ANDROID_OAUTH_CLIENT_ID.apps.googleusercontent.com",
-        "webClientId": "REPLACE_WITH_WEB_OAUTH_CLIENT_ID.apps.googleusercontent.com"
+        "androidClientId": "124985582120-degikfik4a5feb712vfo9j7ekg3tf963.apps.googleusercontent.com",
+        "webClientId": "124985582120-5dba1oe1bvunkthqutpjt4r8s73n0hnr.apps.googleusercontent.com"
       }
     }
   }
