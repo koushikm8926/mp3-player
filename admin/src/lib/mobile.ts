@@ -24,6 +24,23 @@ export function jsonOk(data: Record<string, unknown>, status = 200) {
   return NextResponse.json(data, { status });
 }
 
+/**
+ * The origin the caller actually dialled, for building absolute URLs it can reach.
+ *
+ * `new URL(request.url).origin` is the server's own bind address — `0.0.0.0:3000` under
+ * `next dev` — which is useless to a client: Android resolves 0.0.0.0 to its own loopback and
+ * the connection is refused. The Host header is the address the client used, so URLs built
+ * from it work from an emulator (10.0.2.2), over the LAN and behind a proxy alike.
+ */
+export function requestOrigin(request: Request): string {
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  if (!host) return new URL(request.url).origin;
+  // Only a proxy knows whether the public leg is TLS; otherwise we speak what we serve.
+  const proto =
+    request.headers.get('x-forwarded-proto') ?? new URL(request.url).protocol.replace(':', '');
+  return `${proto}://${host}`;
+}
+
 /** Parses a JSON body, returning null rather than throwing on malformed input. */
 export async function readJson(request: Request): Promise<Record<string, unknown> | null> {
   try {

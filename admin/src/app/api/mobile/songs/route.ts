@@ -1,5 +1,5 @@
 import { authenticateMobileRequest } from '@/lib/auth';
-import { jsonError, jsonOk } from '@/lib/mobile';
+import { jsonError, jsonOk, requestOrigin } from '@/lib/mobile';
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     },
   });
 
-  const origin = new URL(request.url).origin;
+  const origin = requestOrigin(request);
 
   return jsonOk({
     songs: songs.map((song) => ({

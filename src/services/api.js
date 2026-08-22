@@ -111,6 +111,15 @@ export const api = {
     ),
   /** Published tracks for Admin songs mode. Each carries an absolute streaming URL. */
   songs: () => request('/songs'),
+  /**
+   * Reports a measured track length. The panel cannot decode audio server-side, so uploads
+   * have no duration until a device that has played one sends the value back.
+   */
+  reportSongDuration: (id, durationMs) =>
+    request(`/songs/${encodeURIComponent(id)}/duration`, {
+      method: 'POST',
+      body: { durationMs },
+    }),
   remoteSettings: () => request('/settings', { auth: false }),
   logout: () => request('/logout', { method: 'POST' }),
 };

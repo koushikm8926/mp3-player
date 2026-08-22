@@ -16,6 +16,7 @@ import React, {
 
 import * as MusicCore from '../../modules/expo-music-core';
 import { queueRepo } from '../db/repositories';
+import { api } from '../services/api';
 import { useLibrary } from './LibraryContext';
 import { useSettings } from './SettingsContext';
 
@@ -352,6 +353,27 @@ export function PlayerProvider({ children }) {
 
   // Every player instance gets the same trampoline listener; the body below is swapped on each
   // render so it always closes over fresh state without re-subscribing.
+  /**
+   * Tracks whose length we have already sent back to the panel this session, so a status
+   * tick four times a second does not become four requests a second.
+   */
+  const durationReportedRef = useRef(new Set());
+
+  /**
+   * Admin uploads arrive with no duration — the panel has no way to decode audio — so every
+   * such track lists as 0:00 until a device that has actually played it reports the length
+   * the platform decoder measured. Best-effort: a failure just leaves it for the next play.
+   */
+  const reportAdminDuration = (track, measuredMs) => {
+    if (!track?.isAdminSong || !(measuredMs > 0)) return;
+    if (track.duration > 0) return; // already known from the catalogue
+    if (durationReportedRef.current.has(track.id)) return;
+    durationReportedRef.current.add(track.id);
+    api
+      .reportSongDuration(String(track.id).replace(/^admin:/, ''), Math.round(measuredMs))
+      .catch(() => {});
+  };
+
   const onStatusRef = useRef(() => {});
   function onStatus(status, generation) {
     onStatusRef.current(status, generation);
@@ -369,7 +391,9 @@ export function PlayerProvider({ children }) {
       setPositionMs(status.currentTime * 1000);
     }
     if (status.duration > 0) {
-      setDurationMs(status.duration * 1000);
+      const measured = status.duration * 1000;
+      setDurationMs(measured);
+      reportAdminDuration(playing, measured);
     }
 
     if (status.playing && listenStartRef.current > 0) {
