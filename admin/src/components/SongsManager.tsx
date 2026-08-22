@@ -1,14 +1,9 @@
 'use client';
 
-import { useActionState, useMemo, useRef, useState, useTransition } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
+import { useMemo, useRef, useState, useTransition } from 'react';
 
-import {
-  deleteSong,
-  setPublished,
-  uploadSongs,
-  type UploadState,
-} from '@/app/(dashboard)/songs/actions';
+import { deleteSong, setPublished } from '@/app/(dashboard)/songs/actions';
 import { Badge, Card, EmptyRow, StatTile } from '@/components/ui';
 
 export type SongRow = {
@@ -28,14 +23,22 @@ export type SongRow = {
  * Song library management.
  *
  * The file input is the source of truth for what will be uploaded — the staged list below
- * only mirrors it — so the form posts exactly what the admin picked, whether they browsed
- * for files or dropped them.
+ * only mirrors it — so exactly what the admin picked is sent, whether they browsed for files
+ * or dropped them.
+ *
+ * Files go up one request at a time to `POST /api/admin/songs/upload`. Server actions were
+ * the obvious choice but cap request bodies at 1 MB; one-file-per-request also means a slow
+ * upload reports progress per track instead of stalling on a single huge body.
  */
 export function SongsManager({ songs }: { songs: SongRow[] }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [state, formAction] = useActionState<UploadState, FormData>(uploadSongs, {});
+  const router = useRouter();
   const [, startTransition] = useTransition();
   const [staged, setStaged] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [done, setDone] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'published' | 'hidden'>('all');
@@ -56,7 +59,42 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
   /** Mirrors the input's FileList into state so the staged list can render it. */
   const syncStaged = () => setStaged(Array.from(inputRef.current?.files ?? []));
 
-  /** Writes a file list back onto the input, which is what the form actually submits. */
+  /** Posts the staged files one at a time, stopping at the first failure. */
+  const upload = async () => {
+    setUploading(true);
+    setError(null);
+    setSuccess(null);
+    setDone(0);
+
+    let uploaded = 0;
+    for (const file of staged) {
+      const body = new FormData();
+      body.append('file', file);
+      try {
+        const response = await fetch('/api/admin/songs/upload', { method: 'POST', body });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          setError(payload?.error ?? `Upload failed for "${file.name}".`);
+          break;
+        }
+      } catch {
+        setError(`Could not reach the server while uploading "${file.name}".`);
+        break;
+      }
+      uploaded += 1;
+      setDone(uploaded);
+    }
+
+    setUploading(false);
+    if (uploaded > 0) {
+      setSuccess(`Uploaded ${uploaded} ${uploaded === 1 ? 'song' : 'songs'}. Publish to make them live.`);
+      // Drop the files that made it; anything after a failure stays staged for a retry.
+      setInputFiles(staged.slice(uploaded));
+      router.refresh();
+    }
+  };
+
+  /** Writes a file list back onto the input, which is what the client actually sends. */
   const setInputFiles = (files: File[]) => {
     if (!inputRef.current) return;
     const transfer = new DataTransfer();
@@ -102,7 +140,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
         title="Upload songs"
         description="Audio picked here is stored on the server. New uploads start hidden until you publish them."
       >
-        <form action={formAction} className="p-5">
+        <div className="p-5">
           <div
             onDragOver={(event) => {
               event.preventDefault();
@@ -151,14 +189,14 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
             onChange={syncStaged}
           />
 
-          {state.error ? (
+          {error ? (
             <p className="mt-4 rounded-lg border border-danger-500/30 bg-danger-500/10 px-3 py-2.5 text-sm text-danger-500">
-              {state.error}
+              {error}
             </p>
           ) : null}
-          {state.success ? (
+          {success ? (
             <p className="mt-4 rounded-lg border border-brand-500/30 bg-brand-500/10 px-3 py-2.5 text-sm text-brand-500">
-              {state.success}
+              {success}
             </p>
           ) : null}
 
@@ -171,7 +209,8 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                 <button
                   type="button"
                   onClick={() => setInputFiles([])}
-                  className="text-xs font-medium text-mist-500 hover:text-mist-100"
+                  disabled={uploading}
+                  className="text-xs font-medium text-mist-500 hover:text-mist-100 disabled:opacity-50"
                 >
                   Clear all
                 </button>
@@ -203,11 +242,21 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
               </ul>
 
               <div className="mt-4">
-                <UploadButton count={staged.length} />
+                <button
+                  type="button"
+                  onClick={upload}
+                  className="btn-primary"
+                  disabled={uploading}
+                >
+                  <Glyph name="upload" size={16} />
+                  {uploading
+                    ? `Uploading ${done + 1} of ${staged.length}…`
+                    : `Upload ${staged.length} ${staged.length === 1 ? 'file' : 'files'}`}
+                </button>
               </div>
             </div>
           ) : null}
-        </form>
+        </div>
       </Card>
 
       <Card
@@ -327,17 +376,6 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
         </div>
       </Card>
     </div>
-  );
-}
-
-/** Separate component so `useFormStatus` can see the surrounding form's pending state. */
-function UploadButton({ count }: { count: number }) {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" className="btn-primary" disabled={pending}>
-      <Glyph name="upload" size={16} />
-      {pending ? 'Uploading…' : `Upload ${count} ${count === 1 ? 'file' : 'files'}`}
-    </button>
   );
 }
 
