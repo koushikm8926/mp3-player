@@ -1,9 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+import appLogo from '@/assets/app-logo.png';
 import { logout } from '@/app/login/actions';
 
 const NAV = [
@@ -40,6 +42,7 @@ export function Sidebar({ admin }: { admin: { name: string; email: string; role:
             <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
           </svg>
         </button>
+        <Image src={appLogo} alt="" width={28} height={28} className="size-7" priority />
         <span className="text-sm font-semibold text-mist-100">Minax Music Admin</span>
       </div>
 
@@ -50,11 +53,7 @@ export function Sidebar({ admin }: { admin: { name: string; email: string; role:
       >
         <div className="flex h-full flex-col">
           <div className="hidden items-center gap-3 px-5 py-6 lg:flex">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-brand-500">
-              <svg viewBox="0 0 24 24" className="size-5 fill-white" aria-hidden="true">
-                <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
-              </svg>
-            </span>
+            <Image src={appLogo} alt="" width={36} height={36} className="size-9" priority />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-mist-100">Minax Music</p>
               <p className="truncate text-xs text-mist-500">Admin panel</p>

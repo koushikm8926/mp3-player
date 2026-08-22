@@ -57,6 +57,9 @@ const TAB_ICONS = {
 
 const TAB_BAR_HEIGHT = 62;
 
+/** Shortest time the branded splash stays on screen, counted from mount. */
+const MIN_SPLASH_MS = 2800;
+
 function MainTabs() {
   const theme = useTheme();
   const { t } = useSettings();
@@ -146,13 +149,17 @@ export function RootNavigator() {
   const [routeName, setRouteName] = useState('Main');
   const queueRestored = useRef(false);
   const navigationRef = useRef(null);
+  const splashShownAt = useRef(Date.now());
 
   const bootstrapping = !settingsReady || status === 'loading' || !library.initialised;
 
-  // Keep the splash up for a beat even on a fast device: a 90 ms flash reads as a glitch.
+  // Hold the splash for a minimum stretch measured from mount, not from the moment
+  // bootstrapping ends. When the device is fast the work finishes in well under a second,
+  // and a splash that flashes past that quickly reads as a glitch rather than as branding.
   useEffect(() => {
     if (bootstrapping) return undefined;
-    const handle = setTimeout(() => setSplashDone(true), 450);
+    const elapsed = Date.now() - splashShownAt.current;
+    const handle = setTimeout(() => setSplashDone(true), Math.max(0, MIN_SPLASH_MS - elapsed));
     return () => clearTimeout(handle);
   }, [bootstrapping]);
 
