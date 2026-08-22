@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 
 import { usePlayer } from '../context/PlayerContext';
 import { useTheme } from '../context/SettingsContext';
 import { formatDuration } from '../utils/format';
+import { PopOnChange, PressableScale } from './animated';
 import { Artwork } from './Artwork';
 
 /**
@@ -27,23 +29,29 @@ export function MiniPlayer({ bottomOffset = 0 }) {
   const onAccent = '#FFFFFF';
 
   return (
-    <View style={[styles.wrapper, { bottom: bottomOffset }]} pointerEvents="box-none">
-      <Pressable
-        onPress={() => navigation.navigate('NowPlaying')}
-        style={({ pressed }) => [{ opacity: pressed ? 0.94 : 1 }]}
-      >
+    <Animated.View
+      style={[styles.wrapper, { bottom: bottomOffset }]}
+      pointerEvents="box-none"
+      // The bar only exists while something is queued, so it should arrive and leave as a
+      // bar rather than blinking in and out of the layout.
+      entering={SlideInDown.springify().damping(18).mass(0.6)}
+      exiting={SlideOutDown.duration(220)}
+    >
+      <PressableScale onPress={() => navigation.navigate('NowPlaying')} scaleTo={0.975}>
         <LinearGradient
           colors={theme.accentGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.bar, { borderRadius: theme.radius.lg }, theme.shadow.floating]}
         >
-          <Artwork
-            uri={currentTrack.artworkUri}
-            name={currentTrack.album || currentTrack.title}
-            size={50}
-            radius={theme.radius.sm}
-          />
+          <Animated.View key={currentTrack.id} entering={FadeIn.duration(260)}>
+            <Artwork
+              uri={currentTrack.artworkUri}
+              name={currentTrack.album || currentTrack.title}
+              size={50}
+              radius={theme.radius.sm}
+            />
+          </Animated.View>
 
           <View style={styles.meta}>
             <Text numberOfLines={1} style={[theme.font.title, { color: onAccent }]}>
@@ -74,25 +82,32 @@ export function MiniPlayer({ bottomOffset = 0 }) {
             </View>
           </View>
 
-          <Pressable onPress={skipPrevious} hitSlop={8} style={styles.control}>
+          <PressableScale onPress={skipPrevious} hitSlop={8} style={styles.control} scaleTo={0.82}>
             <Ionicons name="play-skip-back" size={21} color={onAccent} />
-          </Pressable>
+          </PressableScale>
 
-          <Pressable onPress={togglePlay} hitSlop={8} style={[styles.playButton, { backgroundColor: onAccent }]}>
-            <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={22}
-              color={theme.colors.accent}
-              style={{ marginLeft: isPlaying ? 0 : 2 }}
-            />
-          </Pressable>
+          <PressableScale
+            onPress={togglePlay}
+            hitSlop={8}
+            scaleTo={0.88}
+            style={[styles.playButton, { backgroundColor: onAccent }]}
+          >
+            <PopOnChange trigger={isPlaying}>
+              <Ionicons
+                name={isPlaying ? 'pause' : 'play'}
+                size={22}
+                color={theme.colors.accent}
+                style={{ marginLeft: isPlaying ? 0 : 2 }}
+              />
+            </PopOnChange>
+          </PressableScale>
 
-          <Pressable onPress={skipNext} hitSlop={8} style={styles.control}>
+          <PressableScale onPress={skipNext} hitSlop={8} style={styles.control} scaleTo={0.82}>
             <Ionicons name="play-skip-forward" size={21} color={onAccent} />
-          </Pressable>
+          </PressableScale>
         </LinearGradient>
-      </Pressable>
-    </View>
+      </PressableScale>
+    </Animated.View>
   );
 }
 

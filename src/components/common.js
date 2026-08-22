@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../context/SettingsContext';
+import { PressableScale } from './animated';
 
 /**
  * Standard screen header: optional back arrow, a large title with an optional trailing
@@ -294,10 +295,11 @@ export function PrimaryButton({
   };
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, borderRadius: theme.radius.pill }, style]}
+      scaleTo={0.96}
+      style={[{ borderRadius: theme.radius.pill }, style]}
     >
       {isGradient ? (
         <LinearGradient
@@ -329,7 +331,7 @@ export function PrimaryButton({
           {inner}
         </View>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }
 

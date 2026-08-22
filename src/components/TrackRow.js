@@ -1,26 +1,67 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useTheme } from '../context/SettingsContext';
 import { formatDuration } from '../utils/format';
 import { Artwork } from './Artwork';
 
+const GLYPH_BARS = [11, 17, 13];
+const GLYPH_REST = 0.42;
+
+/**
+ * One bar of the playing indicator. Scales from its base so it reads as a level meter
+ * rather than a bar sliding around, and each one is offset so the three never move in step.
+ */
+function GlyphBar({ color, height, delay, paused }) {
+  const level = useSharedValue(GLYPH_REST);
+
+  useEffect(() => {
+    if (paused) {
+      level.value = withTiming(GLYPH_REST, { duration: 200 });
+      return;
+    }
+    level.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 380, easing: Easing.inOut(Easing.ease) }),
+          withTiming(GLYPH_REST, { duration: 380, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      )
+    );
+  }, [paused, delay, level]);
+
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scaleY: level.value }] }));
+
+  return (
+    <Animated.View
+      style={[
+        { width: 3, height, borderRadius: 2, backgroundColor: color, marginHorizontal: 1.5 },
+        styles.glyphBar,
+        animatedStyle,
+      ]}
+    />
+  );
+}
+
 /** Three stacked bars marking the row that is currently playing. */
 function NowPlayingGlyph({ color, paused }) {
   return (
     <View style={styles.glyph}>
-      {[11, 17, 13].map((height, i) => (
-        <View
-          key={i}
-          style={{
-            width: 3,
-            height: paused ? 7 : height,
-            borderRadius: 2,
-            backgroundColor: color,
-            marginHorizontal: 1.5,
-          }}
-        />
+      {GLYPH_BARS.map((height, i) => (
+        <GlyphBar key={i} color={color} height={height} delay={i * 130} paused={paused} />
       ))}
     </View>
   );
@@ -146,6 +187,7 @@ const styles = StyleSheet.create({
   rowTall: { height: TRACK_ROW_TALL_HEIGHT },
   indexBox: { width: 30, alignItems: 'center', justifyContent: 'center' },
   glyph: { flexDirection: 'row', alignItems: 'flex-end', height: 18 },
+  glyphBar: { transformOrigin: 'bottom' },
   meta: { flex: 1, marginLeft: 14, marginRight: 8 },
   more: { paddingHorizontal: 4, paddingVertical: 8 },
 });

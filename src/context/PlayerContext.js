@@ -92,6 +92,8 @@ export function PlayerProvider({ children }) {
     currentTrack,
     settings,
     isPlaying,
+    positionMs,
+    durationMs,
   };
 
   // ------------------------------------------------------------------ audio session
@@ -798,6 +800,7 @@ export function PlayerProvider({ children }) {
       skipNext,
       skipPrevious,
       seekTo,
+      seekBy,
       skipToQueueIndex,
       toggleShuffle,
       cycleRepeat,
@@ -836,6 +839,7 @@ export function PlayerProvider({ children }) {
       skipNext,
       skipPrevious,
       seekTo,
+      seekBy,
       skipToQueueIndex,
       toggleShuffle,
       cycleRepeat,

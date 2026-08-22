@@ -7,10 +7,11 @@ import { Badge, Card, EmptyRow, StatTile } from '@/components/ui';
 /**
  * Song library management — presentation only.
  *
- * Nothing here talks to the database or to storage yet: the rows below are placeholders so
- * the layout can be reviewed, and the upload zone stages files in local state without
- * sending them anywhere. Wiring (Prisma model, upload route, mobile sync endpoint) is the
- * next pass.
+ * Nothing here talks to the database or to storage yet, so the table starts empty and stays
+ * that way: the upload zone stages picked files in local state without sending them
+ * anywhere, and the publish switches only move rows around in memory. Every figure shown is
+ * derived from that state rather than hardcoded, so nothing on screen is invented. Wiring
+ * (Prisma model, upload route, mobile sync endpoint) is the next pass.
  */
 
 type Song = {
@@ -19,60 +20,25 @@ type Song = {
   artist: string;
   album: string;
   duration: string;
-  size: string;
+  sizeBytes: number;
   format: string;
   uploadedAt: string;
   published: boolean;
 };
 
-const PLACEHOLDER_SONGS: Song[] = [
-  {
-    id: '1',
-    title: 'Midnight Drive',
-    artist: 'Aurora Vale',
-    album: 'Neon Hours',
-    duration: '3:42',
-    size: '8.4 MB',
-    format: 'MP3',
-    uploadedAt: '20 Aug 2026',
-    published: true,
-  },
-  {
-    id: '2',
-    title: 'Paper Boats',
-    artist: 'Kite & Co.',
-    album: 'Monsoon Tapes',
-    duration: '4:15',
-    size: '9.8 MB',
-    format: 'MP3',
-    uploadedAt: '20 Aug 2026',
-    published: true,
-  },
-  {
-    id: '3',
-    title: 'Slow Static',
-    artist: 'Hollow Field',
-    album: 'Singles',
-    duration: '2:58',
-    size: '6.1 MB',
-    format: 'M4A',
-    uploadedAt: '18 Aug 2026',
-    published: false,
-  },
-];
-
 /** A file the admin has picked but not yet uploaded. */
-type StagedFile = { id: string; name: string; size: string };
+type StagedFile = { id: string; name: string; sizeBytes: number };
 
 export function SongsManager() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [songs, setSongs] = useState<Song[]>(PLACEHOLDER_SONGS);
+  const [songs, setSongs] = useState<Song[]>([]);
   const [staged, setStaged] = useState<StagedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'published' | 'hidden'>('all');
 
   const publishedCount = songs.filter((song) => song.published).length;
+  const storedBytes = songs.reduce((sum, song) => sum + song.sizeBytes, 0);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -91,7 +57,7 @@ export function SongsManager() {
       ...Array.from(files).map((file, index) => ({
         id: `${file.name}-${current.length + index}`,
         name: file.name,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+        sizeBytes: file.size,
       })),
     ]);
   };
@@ -122,7 +88,7 @@ export function SongsManager() {
         />
         <StatTile
           label="Storage used"
-          value="24.3 MB"
+          value={formatBytes(storedBytes)}
           hint="Across all uploaded audio"
           tone="violet"
           icon={<Glyph name="disk" />}
@@ -207,7 +173,9 @@ export function SongsManager() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-mist-100">{file.name}</p>
-                      <p className="text-xs text-mist-500">{file.size} · waiting</p>
+                      <p className="text-xs text-mist-500">
+                        {formatBytes(file.sizeBytes)} · waiting
+                      </p>
                     </div>
                     <button
                       type="button"
@@ -281,7 +249,14 @@ export function SongsManager() {
             </thead>
             <tbody className="divide-y divide-ink-800">
               {visible.length === 0 ? (
-                <EmptyRow colSpan={7} message="No songs match this view." />
+                <EmptyRow
+                  colSpan={7}
+                  message={
+                    songs.length === 0
+                      ? 'No songs uploaded yet. Songs you upload above will be listed here.'
+                      : 'No songs match this view.'
+                  }
+                />
               ) : (
                 visible.map((song) => (
                   <tr key={song.id} className="transition-colors hover:bg-ink-800/60">
@@ -302,7 +277,7 @@ export function SongsManager() {
                     </td>
                     <td className="td">{song.album}</td>
                     <td className="td text-right tabular-nums">{song.duration}</td>
-                    <td className="td text-right tabular-nums">{song.size}</td>
+                    <td className="td text-right tabular-nums">{formatBytes(song.sizeBytes)}</td>
                     <td className="td">{song.uploadedAt}</td>
                     <td className="td">
                       {song.published ? (
@@ -342,6 +317,18 @@ export function SongsManager() {
       </Card>
     </div>
   );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ['KB', 'MB', 'GB'];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`;
 }
 
 /** Pill switch matching the one the app shows for Admin songs mode. */

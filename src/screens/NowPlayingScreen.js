@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
@@ -10,8 +10,10 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PopOnChange, PressableScale, PressableSpin } from '../components/animated';
 import { Artwork } from '../components/Artwork';
 import { PlaylistPickerSheet } from '../components/PlaylistPickerSheet';
 import { Sheet, SheetItem } from '../components/Sheet';
@@ -22,6 +24,9 @@ import { useSettings, useTheme } from '../context/SettingsContext';
 import { formatCountdown, formatDuration } from '../utils/format';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+/** Step for the two seek controls flanking the play button. */
+const SEEK_STEP_MS = 10000;
 
 /** Full-screen player with artwork, seek bar and every transport control. */
 export function NowPlayingScreen({ navigation }) {
@@ -109,7 +114,9 @@ export function NowPlayingScreen({ navigation }) {
           </Pressable>
         </View>
 
-        <View style={styles.artWrap}>
+        {/* Keyed on the track so each new song's artwork mounts fresh and fades up, rather
+            than swapping in on a single frame. */}
+        <Animated.View key={track.id} entering={FadeIn.duration(320)} style={styles.artWrap}>
           <Artwork
             uri={track.artworkUri}
             name={track.album || track.title}
@@ -117,23 +124,26 @@ export function NowPlayingScreen({ navigation }) {
             radius={theme.radius.xl}
             style={theme.shadow.floating}
           />
-        </View>
+        </Animated.View>
 
         <View style={styles.metaRow}>
-          <Pressable
+          <PressableScale
             onPress={() => {
               tap();
               library.toggleFavorite(track);
             }}
             hitSlop={12}
             style={styles.metaSide}
+            scaleTo={0.82}
           >
-            <Ionicons
-              name={favorite ? 'heart' : 'heart-outline'}
-              size={28}
-              color={favorite ? theme.colors.accent : theme.colors.textSecondary}
-            />
-          </Pressable>
+            <PopOnChange trigger={favorite}>
+              <Ionicons
+                name={favorite ? 'heart' : 'heart-outline'}
+                size={28}
+                color={favorite ? theme.colors.accent : theme.colors.textSecondary}
+              />
+            </PopOnChange>
+          </PressableScale>
 
           <View style={styles.metaCenter}>
             <Text numberOfLines={1} style={[theme.font.h2, { color: theme.colors.text }]}>
@@ -192,69 +202,103 @@ export function NowPlayingScreen({ navigation }) {
         </View>
 
         <View style={styles.controls}>
-          <Pressable
+          <PressableScale
             onPress={() => {
               tap();
               player.toggleShuffle();
             }}
             hitSlop={12}
+            scaleTo={0.85}
           >
-            <Ionicons
-              name="shuffle"
-              size={24}
-              color={player.shuffle ? theme.colors.accent : theme.colors.textSecondary}
-            />
-          </Pressable>
+            <PopOnChange trigger={player.shuffle}>
+              <Ionicons
+                name="shuffle"
+                size={22}
+                color={player.shuffle ? theme.colors.accent : theme.colors.textSecondary}
+              />
+            </PopOnChange>
+          </PressableScale>
 
-          <Pressable onPress={player.skipPrevious} hitSlop={12}>
-            <Ionicons name="play-skip-back" size={34} color={theme.colors.text} />
-          </Pressable>
+          <PressableScale onPress={player.skipPrevious} hitSlop={12} scaleTo={0.86}>
+            <Ionicons name="play-skip-back" size={30} color={theme.colors.text} />
+          </PressableScale>
 
-          <Pressable
+          <PressableSpin
+            onPress={() => {
+              tap();
+              player.seekBy(-SEEK_STEP_MS);
+            }}
+            degrees={-40}
+            hitSlop={12}
+          >
+            <MaterialCommunityIcons name="rewind-10" size={30} color={theme.colors.text} />
+          </PressableSpin>
+
+          <PressableScale
             onPress={() => {
               tap();
               player.togglePlay();
             }}
-            style={({ pressed }) => [
+            scaleTo={0.9}
+            style={[
               styles.playButton,
-              { backgroundColor: theme.colors.accent, opacity: pressed ? 0.88 : 1 },
+              { backgroundColor: theme.colors.accent },
               theme.shadow.floating,
             ]}
           >
-            <Ionicons
-              name={player.isPlaying ? 'pause' : 'play'}
-              size={34}
-              color={theme.colors.onAccent}
-              style={{ marginLeft: player.isPlaying ? 0 : 3 }}
-            />
-          </Pressable>
+            <PopOnChange trigger={player.isPlaying}>
+              <Ionicons
+                name={player.isPlaying ? 'pause' : 'play'}
+                size={34}
+                color={theme.colors.onAccent}
+                style={{ marginLeft: player.isPlaying ? 0 : 3 }}
+              />
+            </PopOnChange>
+          </PressableScale>
 
-          <Pressable onPress={player.skipNext} hitSlop={12}>
-            <Ionicons name="play-skip-forward" size={34} color={theme.colors.text} />
-          </Pressable>
+          <PressableSpin
+            onPress={() => {
+              tap();
+              player.seekBy(SEEK_STEP_MS);
+            }}
+            degrees={40}
+            hitSlop={12}
+          >
+            <MaterialCommunityIcons name="fast-forward-10" size={30} color={theme.colors.text} />
+          </PressableSpin>
 
-          <Pressable
+          <PressableScale onPress={player.skipNext} hitSlop={12} scaleTo={0.86}>
+            <Ionicons name="play-skip-forward" size={30} color={theme.colors.text} />
+          </PressableScale>
+
+          <PressableScale
             onPress={() => {
               tap();
               player.cycleRepeat();
             }}
             hitSlop={12}
+            scaleTo={0.85}
           >
-            <View>
-              <Ionicons
-                name="repeat"
-                size={24}
-                color={repeatActive ? theme.colors.accent : theme.colors.textSecondary}
-              />
-              {player.repeatMode === REPEAT_MODES.ONE ? (
-                <View style={[styles.repeatBadge, { backgroundColor: theme.colors.accent }]}>
-                  <Text style={{ color: theme.colors.onAccent, fontSize: 8, fontWeight: '800' }}>
-                    1
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          </Pressable>
+            <PopOnChange trigger={player.repeatMode}>
+              <View>
+                <Ionicons
+                  name="repeat"
+                  size={22}
+                  color={repeatActive ? theme.colors.accent : theme.colors.textSecondary}
+                />
+                {player.repeatMode === REPEAT_MODES.ONE ? (
+                  <Animated.View
+                    entering={FadeIn.duration(160)}
+                    style={[styles.repeatBadge, { backgroundColor: theme.colors.accent }]}
+                  >
+                    <Text style={{ color: theme.colors.onAccent, fontSize: 8, fontWeight: '800' }}>
+                      1
+                    </Text>
+                  </Animated.View>
+                ) : null}
+              </View>
+            </PopOnChange>
+          </PressableScale>
         </View>
 
         <View style={styles.actionRow}>
@@ -392,15 +436,14 @@ export function NowPlayingScreen({ navigation }) {
 function ActionTile({ icon, label, onPress, active }) {
   const theme = useTheme();
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
-      style={({ pressed }) => [
+      style={[
         styles.actionTile,
         {
           backgroundColor: active ? theme.colors.accentMuted : theme.colors.surface,
           borderColor: active ? 'transparent' : theme.colors.border,
           borderRadius: theme.radius.md,
-          opacity: pressed ? 0.8 : 1,
         },
       ]}
     >
@@ -411,7 +454,7 @@ function ActionTile({ icon, label, onPress, active }) {
       >
         {label}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 

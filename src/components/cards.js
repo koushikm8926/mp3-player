@@ -3,6 +3,7 @@ import React, { memo } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { useTheme } from '../context/SettingsContext';
+import { PressableScale } from './animated';
 import { Artwork } from './Artwork';
 
 /**
@@ -24,7 +25,7 @@ export const AlbumCard = memo(function AlbumCard({
   const theme = useTheme();
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [{ width: size, opacity: pressed ? 0.8 : 1 }]}>
+    <PressableScale onPress={onPress} style={{ width: size }}>
       <View>
         <Artwork uri={album.artworkUri} name={album.name} size={size} radius={theme.radius.md} />
         {playBadge ? (
@@ -81,7 +82,7 @@ export const AlbumCard = memo(function AlbumCard({
           />
         </View>
       ) : null}
-    </Pressable>
+    </PressableScale>
   );
 });
 
@@ -89,9 +90,9 @@ export const AlbumCard = memo(function AlbumCard({
 export const ArtistCircle = memo(function ArtistCircle({ artist, size = 84, subtitle, onPress }) {
   const theme = useTheme();
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
-      style={({ pressed }) => [{ width: size + 20, alignItems: 'center', opacity: pressed ? 0.8 : 1 }]}
+      style={{ width: size + 20, alignItems: 'center' }}
     >
       <Artwork uri={artist.artworkUri} name={artist.name} size={size} radius={size / 2} />
       <Text
@@ -108,7 +109,7 @@ export const ArtistCircle = memo(function ArtistCircle({ artist, size = 84, subt
           {subtitle}
         </Text>
       ) : null}
-    </Pressable>
+    </PressableScale>
   );
 });
 
@@ -315,9 +316,9 @@ export function CategoryTile({ label, icon, count, onPress, tint, width, compact
   const color = tint ?? theme.colors.accent;
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
-      style={({ pressed }) => [
+      style={[
         styles.category,
         {
           width,
@@ -325,7 +326,6 @@ export function CategoryTile({ label, icon, count, onPress, tint, width, compact
           borderRadius: theme.radius.lg,
           borderColor: theme.colors.border,
           paddingVertical: compact ? 16 : 22,
-          opacity: pressed ? 0.8 : 1,
         },
         theme.shadow.card,
         style,
@@ -349,7 +349,7 @@ export function CategoryTile({ label, icon, count, onPress, tint, width, compact
           {count}
         </Text>
       ) : null}
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -357,15 +357,14 @@ export function CategoryTile({ label, icon, count, onPress, tint, width, compact
 export function ShortcutTile({ label, icon, count, onPress, tint, style }) {
   const theme = useTheme();
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
-      style={({ pressed }) => [
+      style={[
         styles.shortcut,
         {
           backgroundColor: theme.colors.surface,
           borderRadius: theme.radius.md,
           borderColor: theme.colors.border,
-          opacity: pressed ? 0.8 : 1,
         },
         theme.shadow.card,
         style,
@@ -389,7 +388,7 @@ export function ShortcutTile({ label, icon, count, onPress, tint, style }) {
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

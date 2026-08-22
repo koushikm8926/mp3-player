@@ -4,6 +4,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MiniPlayer, MINI_PLAYER_HEIGHT } from '../components/MiniPlayer';
@@ -60,6 +61,25 @@ const TAB_BAR_HEIGHT = 62;
 /** Shortest time the branded splash stays on screen, counted from mount. */
 const MIN_SPLASH_MS = 2800;
 
+/** Tab glyph that lifts and settles when its tab becomes the active one. */
+function TabIcon({ name, color, focused }) {
+  const lift = useSharedValue(focused ? 1 : 0);
+
+  useEffect(() => {
+    lift.value = withSpring(focused ? 1 : 0, { damping: 14, stiffness: 260, mass: 0.5 });
+  }, [focused, lift]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + lift.value * 0.14 }, { translateY: -lift.value * 2 }],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Ionicons name={name} size={23} color={color} />
+    </Animated.View>
+  );
+}
+
 function MainTabs() {
   const theme = useTheme();
   const { t } = useSettings();
@@ -86,7 +106,9 @@ function MainTabs() {
           tabBarLabelStyle: { ...theme.font.tiny, marginTop: 3 },
           tabBarIcon: ({ focused, color }) => {
             const [active, inactive] = TAB_ICONS[route.name];
-            return <Ionicons name={focused ? active : inactive} size={23} color={color} />;
+            return (
+              <TabIcon name={focused ? active : inactive} color={color} focused={focused} />
+            );
           },
         })}
       >
