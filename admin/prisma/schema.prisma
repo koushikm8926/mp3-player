@@ -67,16 +67,16 @@ model User {
 
 /// One physical install. A user may have several.
 model Device {
-  id             String    @id @default(cuid())
+  id             String   @id @default(cuid())
   userId         String
   installationId String?
-  platform       String    @default("android")
+  platform       String   @default("android")
   osVersion      String?
   appVersion     String?
-  buildNumber    Int       @default(0)
+  buildNumber    Int      @default(0)
   deviceName     String?
-  lastSeenAt     DateTime  @default(now())
-  createdAt      DateTime  @default(now())
+  lastSeenAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -116,19 +116,19 @@ model UsageEvent {
 
 /// Releases the app checks against on "Check for updates".
 model AppVersion {
-  id            String   @id @default(cuid())
-  platform      String   @default("android")
-  version       String
-  buildNumber   Int
-  releaseNotes  String   @default("")
-  downloadUrl   String?
+  id           String   @id @default(cuid())
+  platform     String   @default("android")
+  version      String
+  buildNumber  Int
+  releaseNotes String   @default("")
+  downloadUrl  String?
   /// Blocks the app until the user updates.
-  isMandatory   Boolean  @default(false)
+  isMandatory  Boolean  @default(false)
   /// Only one version per platform may be current; the API returns it as `latestVersion`.
-  isCurrent     Boolean  @default(false)
-  minSupported  Int      @default(1)
-  releasedAt    DateTime @default(now())
-  createdAt     DateTime @default(now())
+  isCurrent    Boolean  @default(false)
+  minSupported Int      @default(1)
+  releasedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   @@unique([platform, buildNumber])
   @@index([platform, isCurrent])
@@ -144,7 +144,7 @@ model Setting {
   group       String   @default("general")
   /// Exposed to the mobile app through the unauthenticated /api/mobile/settings endpoint.
   isPublic    Boolean  @default(false)
-  updatedAt   DateTime @updatedAt @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 
   @@index([group])
 }
@@ -161,5 +161,33 @@ model AuditLog {
 
   admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
 
+  @@index([createdAt])
+}
+
+/// A track uploaded from the admin panel, played by the app in Admin songs mode.
+///
+/// Only metadata lives here. The audio itself is written to the uploads directory by
+/// `lib/songStorage.ts` and served by the streaming route, so moving to object storage later
+/// means changing that one module rather than this model.
+model Song {
+  id           String   @id @default(cuid())
+  title        String
+  artist       String   @default("Unknown artist")
+  album        String   @default("Unknown album")
+  /// Name on disk, relative to the uploads directory. Never the admin's original filename.
+  storageKey   String   @unique
+  /// The admin's filename, kept only so the panel can show what was uploaded.
+  originalName String
+  mimeType     String   @default("audio/mpeg")
+  sizeBytes    Int
+  /// Null until the app reports a duration; the panel cannot decode audio server-side.
+  durationMs   Int?
+  /// Whether the app may see this track. Uploads start hidden.
+  isPublished  Boolean  @default(false)
+  uploadedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isPublished])
   @@index([createdAt])
 }

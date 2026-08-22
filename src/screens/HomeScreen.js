@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
@@ -34,9 +35,9 @@ export function HomeScreen({ navigation }) {
   const library = useLibrary();
   const [sheetTrack, setSheetTrack] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  // Admin songs mode is presentation-only for now: the switch and the banner are in place,
-  // but nothing fetches the panel's catalogue yet, so the lists below are unchanged.
-  const [adminMode, setAdminMode] = useState(false);
+  // Admin songs mode lives in LibraryContext, so flipping it re-points every screen at the
+  // panel's catalogue rather than just this one.
+  const { adminMode, setAdminMode, adminLoading, adminError } = library;
 
   const {
     tracks,
@@ -123,7 +124,11 @@ export function HomeScreen({ navigation }) {
             </View>
           </View>
 
-          <AdminModeSwitch value={adminMode} onToggle={() => setAdminMode((on) => !on)} />
+          <AdminModeSwitch
+            value={adminMode}
+            busy={adminLoading}
+            onToggle={() => setAdminMode(!adminMode)}
+          />
         </View>
 
         <SearchBar
@@ -132,7 +137,7 @@ export function HomeScreen({ navigation }) {
           onPressTrailing={() => navigation.navigate('Search')}
         />
 
-        {adminMode ? <AdminModeBanner /> : null}
+        {adminMode ? <AdminModeBanner error={adminError} /> : null}
 
         <HeroBanner
           onPlay={() => player.shuffleAndPlay(tracks)}
@@ -281,7 +286,7 @@ export function HomeScreen({ navigation }) {
  * so nothing was lost by giving the corner to the mode instead. Drawn by hand rather than
  * with the platform `Switch` so it can carry the mode's icon inside the same pill.
  */
-function AdminModeSwitch({ value, onToggle }) {
+function AdminModeSwitch({ value, busy, onToggle }) {
   const theme = useTheme();
   const { t } = useSettings();
 
@@ -303,11 +308,19 @@ function AdminModeSwitch({ value, onToggle }) {
         },
       ]}
     >
-      <Ionicons
-        name={value ? 'cloud-done' : 'cloud-outline'}
-        size={17}
-        color={value ? theme.colors.onAccent : theme.colors.textSecondary}
-      />
+      {busy ? (
+        <ActivityIndicator
+          size="small"
+          color={value ? theme.colors.onAccent : theme.colors.accent}
+          style={{ width: 17, height: 17 }}
+        />
+      ) : (
+        <Ionicons
+          name={value ? 'cloud-done' : 'cloud-outline'}
+          size={17}
+          color={value ? theme.colors.onAccent : theme.colors.textSecondary}
+        />
+      )}
       <View
         style={[
           styles.adminTrack,
@@ -329,30 +342,29 @@ function AdminModeSwitch({ value, onToggle }) {
 }
 
 /** Confirms what the switch changed, so the mode is never on without the listener knowing. */
-function AdminModeBanner() {
+function AdminModeBanner({ error }) {
   const theme = useTheme();
   const { t } = useSettings();
+  const tone = error ? theme.colors.danger : theme.colors.accent;
 
   return (
     <View
       style={[
         styles.adminBanner,
         {
-          backgroundColor: theme.colors.accentSoft,
-          borderColor: theme.colors.accentMuted,
+          backgroundColor: error ? `${theme.colors.danger}14` : theme.colors.accentSoft,
+          borderColor: error ? `${theme.colors.danger}33` : theme.colors.accentMuted,
           borderRadius: theme.radius.lg,
         },
       ]}
     >
-      <Ionicons name="cloud-done" size={19} color={theme.colors.accent} />
+      <Ionicons name={error ? 'cloud-offline' : 'cloud-done'} size={19} color={tone} />
       <View style={{ flex: 1, marginLeft: 11 }}>
-        <Text style={[theme.font.title, { color: theme.colors.accent }]}>
-          {t('adminSongsMode')}
-        </Text>
+        <Text style={[theme.font.title, { color: tone }]}>{t('adminSongsMode')}</Text>
         <Text
           style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 2 }]}
         >
-          {t('adminSongsModeOnBody')}
+          {error ?? t('adminSongsModeOnBody')}
         </Text>
       </View>
     </View>

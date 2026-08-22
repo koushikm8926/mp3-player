@@ -83,6 +83,45 @@ function decorate(item) {
   };
 }
 
+/**
+ * Converts the admin panel's song list into the track shape the rest of the app expects.
+ *
+ * `uri` is an https URL rather than a file path; `expo-audio` treats the two the same, so
+ * nothing downstream — player, queue, search, browse indexes — needs to know the difference.
+ * Fields MediaStore would supply (album art, genre, disc number) have no equivalent here and
+ * fall back to the same defaults a tagless local file gets.
+ */
+export function adminSongsToLibrary(songs) {
+  const tracks = songs.map((song) => {
+    const title = song.title || 'Untitled';
+    const artist = song.artist || 'Unknown artist';
+    const album = song.album || 'Unknown album';
+    return {
+      id: `admin:${song.id}`,
+      uri: song.url,
+      title,
+      artist,
+      album,
+      albumId: null,
+      genre: 'Admin panel',
+      fileName: song.originalName ?? title,
+      folderPath: 'Admin panel',
+      folderName: 'Admin panel',
+      artworkUri: null,
+      duration: Number(song.durationMs) || 0,
+      size: Number(song.sizeBytes) || 0,
+      year: 0,
+      trackNumber: 0,
+      discNumber: 1,
+      dateAdded: song.createdAt ? Math.floor(new Date(song.createdAt).getTime() / 1000) : 0,
+      isAdminSong: true,
+      searchKey: normalizeForSearch(`${title} ${artist} ${album} Admin panel`),
+    };
+  });
+
+  return { tracks, hiddenTracks: [], ...buildIndexes(tracks) };
+}
+
 export function buildIndexes(tracks) {
   const albumMap = new Map();
   const artistMap = new Map();

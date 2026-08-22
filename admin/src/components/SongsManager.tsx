@@ -1,65 +1,68 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useActionState, useMemo, useRef, useState, useTransition } from 'react';
+import { useFormStatus } from 'react-dom';
 
+import {
+  deleteSong,
+  setPublished,
+  uploadSongs,
+  type UploadState,
+} from '@/app/(dashboard)/songs/actions';
 import { Badge, Card, EmptyRow, StatTile } from '@/components/ui';
 
-/**
- * Song library management — presentation only.
- *
- * Nothing here talks to the database or to storage yet, so the table starts empty and stays
- * that way: the upload zone stages picked files in local state without sending them
- * anywhere, and the publish switches only move rows around in memory. Every figure shown is
- * derived from that state rather than hardcoded, so nothing on screen is invented. Wiring
- * (Prisma model, upload route, mobile sync endpoint) is the next pass.
- */
-
-type Song = {
+export type SongRow = {
   id: string;
   title: string;
   artist: string;
   album: string;
-  duration: string;
+  originalName: string;
+  mimeType: string;
   sizeBytes: number;
-  format: string;
-  uploadedAt: string;
-  published: boolean;
+  durationMs: number | null;
+  isPublished: boolean;
+  createdAt: string;
 };
 
-/** A file the admin has picked but not yet uploaded. */
-type StagedFile = { id: string; name: string; sizeBytes: number };
-
-export function SongsManager() {
+/**
+ * Song library management.
+ *
+ * The file input is the source of truth for what will be uploaded — the staged list below
+ * only mirrors it — so the form posts exactly what the admin picked, whether they browsed
+ * for files or dropped them.
+ */
+export function SongsManager({ songs }: { songs: SongRow[] }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [staged, setStaged] = useState<StagedFile[]>([]);
+  const [state, formAction] = useActionState<UploadState, FormData>(uploadSongs, {});
+  const [, startTransition] = useTransition();
+  const [staged, setStaged] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'published' | 'hidden'>('all');
 
-  const publishedCount = songs.filter((song) => song.published).length;
+  const publishedCount = songs.filter((song) => song.isPublished).length;
   const storedBytes = songs.reduce((sum, song) => sum + song.sizeBytes, 0);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return songs.filter((song) => {
-      if (filter === 'published' && !song.published) return false;
-      if (filter === 'hidden' && song.published) return false;
+      if (filter === 'published' && !song.isPublished) return false;
+      if (filter === 'hidden' && song.isPublished) return false;
       if (!needle) return true;
       return `${song.title} ${song.artist} ${song.album}`.toLowerCase().includes(needle);
     });
   }, [songs, query, filter]);
 
-  const stage = (files: FileList | null) => {
-    if (!files?.length) return;
-    setStaged((current) => [
-      ...current,
-      ...Array.from(files).map((file, index) => ({
-        id: `${file.name}-${current.length + index}`,
-        name: file.name,
-        sizeBytes: file.size,
-      })),
-    ]);
+  /** Mirrors the input's FileList into state so the staged list can render it. */
+  const syncStaged = () => setStaged(Array.from(inputRef.current?.files ?? []));
+
+  /** Writes a file list back onto the input, which is what the form actually submits. */
+  const setInputFiles = (files: File[]) => {
+    if (!inputRef.current) return;
+    const transfer = new DataTransfer();
+    files.forEach((file) => transfer.items.add(file));
+    inputRef.current.files = transfer.files;
+    syncStaged();
   };
 
   return (
@@ -97,9 +100,9 @@ export function SongsManager() {
 
       <Card
         title="Upload songs"
-        description="Audio picked here is added to the panel library and pushed to the app."
+        description="Audio picked here is stored on the server. New uploads start hidden until you publish them."
       >
-        <div className="p-5">
+        <form action={formAction} className="p-5">
           <div
             onDragOver={(event) => {
               event.preventDefault();
@@ -109,7 +112,7 @@ export function SongsManager() {
             onDrop={(event) => {
               event.preventDefault();
               setDragging(false);
-              stage(event.dataTransfer.files);
+              setInputFiles([...staged, ...Array.from(event.dataTransfer.files)]);
             }}
             onClick={() => inputRef.current?.click()}
             role="button"
@@ -130,7 +133,7 @@ export function SongsManager() {
               Drag audio files here, or click to browse
             </p>
             <p className="mt-1.5 text-xs text-mist-500">
-              MP3, M4A, AAC, WAV or FLAC · up to 50 MB per file
+              MP3, M4A, AAC, WAV, FLAC or OGG · up to 50 MB per file
             </p>
             <span className="btn-primary mt-5">
               <Glyph name="plus" size={16} />
@@ -141,14 +144,23 @@ export function SongsManager() {
           <input
             ref={inputRef}
             type="file"
-            accept="audio/*"
+            name="files"
+            accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg"
             multiple
             hidden
-            onChange={(event) => {
-              stage(event.target.files);
-              event.target.value = '';
-            }}
+            onChange={syncStaged}
           />
+
+          {state.error ? (
+            <p className="mt-4 rounded-lg border border-danger-500/30 bg-danger-500/10 px-3 py-2.5 text-sm text-danger-500">
+              {state.error}
+            </p>
+          ) : null}
+          {state.success ? (
+            <p className="mt-4 rounded-lg border border-brand-500/30 bg-brand-500/10 px-3 py-2.5 text-sm text-brand-500">
+              {state.success}
+            </p>
+          ) : null}
 
           {staged.length > 0 ? (
             <div className="mt-5">
@@ -158,7 +170,7 @@ export function SongsManager() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setStaged([])}
+                  onClick={() => setInputFiles([])}
                   className="text-xs font-medium text-mist-500 hover:text-mist-100"
                 >
                   Clear all
@@ -166,20 +178,21 @@ export function SongsManager() {
               </div>
 
               <ul className="divide-y divide-ink-800 overflow-hidden rounded-lg border border-ink-700">
-                {staged.map((file) => (
-                  <li key={file.id} className="flex items-center gap-3 bg-ink-850 px-4 py-3">
+                {staged.map((file, index) => (
+                  <li
+                    key={`${file.name}-${index}`}
+                    className="flex items-center gap-3 bg-ink-850 px-4 py-3"
+                  >
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
                       <Glyph name="music" size={17} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-mist-100">{file.name}</p>
-                      <p className="text-xs text-mist-500">
-                        {formatBytes(file.sizeBytes)} · waiting
-                      </p>
+                      <p className="text-xs text-mist-500">{formatBytes(file.size)}</p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setStaged((c) => c.filter((f) => f.id !== file.id))}
+                      onClick={() => setInputFiles(staged.filter((_, i) => i !== index))}
                       aria-label={`Remove ${file.name}`}
                       className="text-mist-500 transition-colors hover:text-danger-500"
                     >
@@ -189,18 +202,12 @@ export function SongsManager() {
                 ))}
               </ul>
 
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button type="button" className="btn-primary" disabled>
-                  <Glyph name="upload" size={16} />
-                  Upload {staged.length} {staged.length === 1 ? 'file' : 'files'}
-                </button>
-                <p className="text-xs text-mist-500">
-                  Uploading is not wired up yet — this pass is the interface only.
-                </p>
+              <div className="mt-4">
+                <UploadButton count={staged.length} />
               </div>
             </div>
           ) : null}
-        </div>
+        </form>
       </Card>
 
       <Card
@@ -222,9 +229,7 @@ export function SongsManager() {
                   type="button"
                   onClick={() => setFilter(key)}
                   className={`rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
-                    filter === key
-                      ? 'bg-brand-500 text-white'
-                      : 'text-mist-500 hover:text-mist-100'
+                    filter === key ? 'bg-brand-500 text-white' : 'text-mist-500 hover:text-mist-100'
                   }`}
                 >
                   {key}
@@ -270,17 +275,19 @@ export function SongsManager() {
                             {song.title}
                           </span>
                           <span className="block truncate text-xs text-mist-500">
-                            {song.artist} · {song.format}
+                            {song.artist} · {formatType(song.mimeType)}
                           </span>
                         </div>
                       </div>
                     </td>
                     <td className="td">{song.album}</td>
-                    <td className="td text-right tabular-nums">{song.duration}</td>
+                    <td className="td text-right tabular-nums">
+                      {formatDuration(song.durationMs)}
+                    </td>
                     <td className="td text-right tabular-nums">{formatBytes(song.sizeBytes)}</td>
-                    <td className="td">{song.uploadedAt}</td>
+                    <td className="td">{formatDate(song.createdAt)}</td>
                     <td className="td">
-                      {song.published ? (
+                      {song.isPublished ? (
                         <Badge tone="brand">Live in app</Badge>
                       ) : (
                         <Badge tone="neutral">Hidden</Badge>
@@ -289,19 +296,23 @@ export function SongsManager() {
                     <td className="td">
                       <div className="flex items-center justify-end gap-2">
                         <Switch
-                          checked={song.published}
+                          checked={song.isPublished}
                           label={`Publish ${song.title}`}
                           onChange={() =>
-                            setSongs((current) =>
-                              current.map((row) =>
-                                row.id === song.id ? { ...row, published: !row.published } : row
-                              )
-                            )
+                            startTransition(() => {
+                              void setPublished(song.id, !song.isPublished);
+                            })
                           }
                         />
                         <button
                           type="button"
                           aria-label={`Remove ${song.title}`}
+                          onClick={() => {
+                            if (!confirm(`Delete "${song.title}"? This cannot be undone.`)) return;
+                            startTransition(() => {
+                              void deleteSong(song.id);
+                            });
+                          }}
                           className="rounded-lg border border-ink-600 bg-ink-850 p-1.5 text-mist-500 transition-colors hover:border-danger-500/40 hover:text-danger-500"
                         >
                           <Glyph name="trash" size={16} />
@@ -319,6 +330,17 @@ export function SongsManager() {
   );
 }
 
+/** Separate component so `useFormStatus` can see the surrounding form's pending state. */
+function UploadButton({ count }: { count: number }) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn-primary" disabled={pending}>
+      <Glyph name="upload" size={16} />
+      {pending ? 'Uploading…' : `Upload ${count} ${count === 1 ? 'file' : 'files'}`}
+    </button>
+  );
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const units = ['KB', 'MB', 'GB'];
@@ -329,6 +351,25 @@ function formatBytes(bytes: number): string {
     unit += 1;
   }
   return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`;
+}
+
+/** Duration is unknown until the app reports it — the panel cannot decode audio itself. */
+function formatDuration(ms: number | null): string {
+  if (!ms) return '—';
+  const total = Math.round(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function formatType(mimeType: string): string {
+  return mimeType.replace(/^audio\//, '').toUpperCase();
 }
 
 /** Pill switch matching the one the app shows for Admin songs mode. */
@@ -367,8 +408,10 @@ const GLYPHS = {
   plus: 'M12 5v14M5 12h14',
   close: 'M18 6 6 18M6 6l12 12',
   trash: 'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6',
-  broadcast: 'M4.9 19.1a10 10 0 0 1 0-14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
-  eyeOff: 'M17.9 17.9A10.1 10.1 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.1-6M9.9 4.2A9.1 9.1 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.2 3.2M9.9 9.9a3 3 0 0 0 4.2 4.2M1 1l22 22',
+  broadcast:
+    'M4.9 19.1a10 10 0 0 1 0-14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  eyeOff:
+    'M17.9 17.9A10.1 10.1 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.1-6M9.9 4.2A9.1 9.1 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.2 3.2M9.9 9.9a3 3 0 0 0 4.2 4.2M1 1l22 22',
   disk: 'M21 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8M3 8l2-4h14l2 4M3 8h18M7 15h4',
 } as const;
 

@@ -460,8 +460,15 @@ export function ChipRow({ options, value, onChange, style, contentStyle }) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={style}
-      contentContainerStyle={[{ paddingHorizontal: 16, paddingVertical: 2 }, contentStyle]}
+      // A horizontal ScrollView has no intrinsic height, so in a flex column it grows to fill
+      // whatever vertical space is left and its row of children stretches to match — which
+      // turned these chips into full-height ovals. `flexGrow: 0` keeps the strip the height of
+      // its content; `alignItems: 'center'` stops the chips themselves from stretching.
+      style={[styles.chipRow, style]}
+      contentContainerStyle={[
+        { paddingHorizontal: 16, paddingVertical: 2, alignItems: 'center' },
+        contentStyle,
+      ]}
     >
       {options.map((option) => (
         <Chip
@@ -661,6 +668,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   input: { flex: 1, paddingVertical: 13 },
+  chipRow: { flexGrow: 0, flexShrink: 0 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

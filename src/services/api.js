@@ -109,6 +109,8 @@ export const api = {
       `/version?platform=android&version=${encodeURIComponent(payload.version)}&build=${payload.build}`,
       { auth: false }
     ),
+  /** Published tracks for Admin songs mode. Each carries an absolute streaming URL. */
+  songs: () => request('/songs'),
   remoteSettings: () => request('/settings', { auth: false }),
   logout: () => request('/logout', { method: 'POST' }),
 };

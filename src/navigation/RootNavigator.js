@@ -59,7 +59,7 @@ const TAB_ICONS = {
 const TAB_BAR_HEIGHT = 62;
 
 /** Shortest time the branded splash stays on screen, counted from mount. */
-const MIN_SPLASH_MS = 2800;
+const MIN_SPLASH_MS = 1500;
 
 /** Tab glyph that lifts and settles when its tab becomes the active one. */
 function TabIcon({ name, color, focused }) {

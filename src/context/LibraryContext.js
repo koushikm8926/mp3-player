@@ -8,6 +8,8 @@ import React, {
   useState,
 } from 'react';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import * as MusicCore from '../../modules/expo-music-core';
 import {
   favoritesRepo,
@@ -16,7 +18,14 @@ import {
   historyRepo,
   playlistsRepo,
 } from '../db/repositories';
-import { buildIndexes, getLibraryPermission, requestLibraryPermission, scanLibrary } from '../services/musicLibrary';
+import { api } from '../services/api';
+import {
+  adminSongsToLibrary,
+  buildIndexes,
+  getLibraryPermission,
+  requestLibraryPermission,
+  scanLibrary,
+} from '../services/musicLibrary';
 import { useSettings } from './SettingsContext';
 
 const LibraryContext = createContext(null);
@@ -50,14 +59,28 @@ export function LibraryProvider({ children }) {
   const [recentIds, setRecentIds] = useState([]);
   const [statsMap, setStatsMap] = useState(() => new Map());
 
+  // Admin songs mode: the panel's catalogue replaces the device's own while it is on.
+  const [adminMode, setAdminModeState] = useState(false);
+  const [adminLibrary, setAdminLibrary] = useState(EMPTY_LIBRARY);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState(null);
+
   const scanInFlight = useRef(false);
   const refreshDebounce = useRef(null);
 
+  /**
+   * What the rest of the app treats as "the library".
+   *
+   * Swapping it here rather than in each screen means Home, Library, Search and every browse
+   * list follow the switch without knowing the mode exists.
+   */
+  const activeLibrary = adminMode ? adminLibrary : library;
+
   const trackById = useMemo(() => {
     const map = new Map();
-    for (const track of library.tracks) map.set(track.id, track);
+    for (const track of activeLibrary.tracks) map.set(track.id, track);
     return map;
-  }, [library.tracks]);
+  }, [activeLibrary.tracks]);
 
   const hiddenTrackById = useMemo(() => {
     const map = new Map();
@@ -170,6 +193,53 @@ export function LibraryProvider({ children }) {
     },
     [loadOverlays, runScan, library.tracks.length]
   );
+
+  // ------------------------------------------------------------------ admin songs
+
+  const ADMIN_MODE_KEY = 'minax.library.adminMode';
+
+  /** Pulls the panel's published catalogue. Safe to call when the mode is off. */
+  const refreshAdminSongs = useCallback(async () => {
+    setAdminLoading(true);
+    setAdminError(null);
+    try {
+      const response = await api.songs();
+      const songs = Array.isArray(response?.songs) ? response.songs : [];
+      setAdminLibrary(adminSongsToLibrary(songs));
+      return songs.length;
+    } catch (error) {
+      // The catalogue lives on the admin panel, so this fails whenever the phone cannot
+      // reach it. Keep whatever was fetched last rather than blanking the screen.
+      setAdminError(error?.message ?? 'Could not reach the admin panel.');
+      return -1;
+    } finally {
+      setAdminLoading(false);
+    }
+  }, []);
+
+  const setAdminMode = useCallback(
+    async (enabled) => {
+      setAdminModeState(enabled);
+      await AsyncStorage.setItem(ADMIN_MODE_KEY, enabled ? '1' : '0').catch(() => {});
+      if (enabled) await refreshAdminSongs();
+    },
+    [refreshAdminSongs]
+  );
+
+  // Restore the mode across restarts, and fetch once if it was left on.
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(ADMIN_MODE_KEY)
+      .then((stored) => {
+        if (cancelled || stored !== '1') return;
+        setAdminModeState(true);
+        return refreshAdminSongs();
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshAdminSongs]);
 
   // ------------------------------------------------------------------ favourites
 
@@ -323,8 +393,8 @@ export function LibraryProvider({ children }) {
   }, [statsMap, resolveTracks]);
 
   const recentlyAddedTracks = useMemo(
-    () => [...library.tracks].sort((a, b) => b.dateAdded - a.dateAdded).slice(0, 50),
-    [library.tracks]
+    () => [...activeLibrary.tracks].sort((a, b) => b.dateAdded - a.dateAdded).slice(0, 50),
+    [activeLibrary.tracks]
   );
 
   const value = useMemo(
@@ -333,7 +403,7 @@ export function LibraryProvider({ children }) {
       permission,
       scanning,
       initialised,
-      ...library,
+      ...activeLibrary,
       trackById,
       hiddenTrackById,
       statsMap,
@@ -345,6 +415,13 @@ export function LibraryProvider({ children }) {
       recentTracks,
       mostPlayedTracks,
       recentlyAddedTracks,
+
+      // admin songs mode
+      adminMode,
+      setAdminMode,
+      adminLoading,
+      adminError,
+      refreshAdminSongs,
 
       // actions
       requestPermission,
@@ -371,7 +448,12 @@ export function LibraryProvider({ children }) {
       permission,
       scanning,
       initialised,
-      library,
+      activeLibrary,
+      adminMode,
+      setAdminMode,
+      adminLoading,
+      adminError,
+      refreshAdminSongs,
       trackById,
       hiddenTrackById,
       statsMap,
