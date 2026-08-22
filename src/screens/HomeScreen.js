@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
@@ -35,6 +34,9 @@ export function HomeScreen({ navigation }) {
   const library = useLibrary();
   const [sheetTrack, setSheetTrack] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  // Admin songs mode is presentation-only for now: the switch and the banner are in place,
+  // but nothing fetches the panel's catalogue yet, so the lists below are unchanged.
+  const [adminMode, setAdminMode] = useState(false);
 
   const {
     tracks,
@@ -121,13 +123,7 @@ export function HomeScreen({ navigation }) {
             </View>
           </View>
 
-          <Pressable onPress={onRefresh} hitSlop={12} disabled={library.scanning}>
-            {library.scanning ? (
-              <ActivityIndicator size="small" color={theme.colors.accent} />
-            ) : (
-              <Ionicons name="sync-outline" size={25} color={theme.colors.text} />
-            )}
-          </Pressable>
+          <AdminModeSwitch value={adminMode} onToggle={() => setAdminMode((on) => !on)} />
         </View>
 
         <SearchBar
@@ -135,6 +131,8 @@ export function HomeScreen({ navigation }) {
           onPress={() => navigation.navigate('Search')}
           onPressTrailing={() => navigation.navigate('Search')}
         />
+
+        {adminMode ? <AdminModeBanner /> : null}
 
         <HeroBanner
           onPlay={() => player.shuffleAndPlay(tracks)}
@@ -277,6 +275,91 @@ export function HomeScreen({ navigation }) {
 }
 
 /**
+ * Header switch for Admin songs mode.
+ *
+ * It sits where the library-refresh button used to; pull-to-refresh already rescans storage,
+ * so nothing was lost by giving the corner to the mode instead. Drawn by hand rather than
+ * with the platform `Switch` so it can carry the mode's icon inside the same pill.
+ */
+function AdminModeSwitch({ value, onToggle }) {
+  const theme = useTheme();
+  const { t } = useSettings();
+
+  return (
+    <Pressable
+      onPress={onToggle}
+      hitSlop={10}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={t('adminSongsMode')}
+      style={({ pressed }) => [
+        styles.adminSwitch,
+        theme.shadow.card,
+        {
+          borderRadius: theme.radius.pill,
+          backgroundColor: value ? theme.colors.accent : theme.colors.surface,
+          borderColor: value ? theme.colors.accent : theme.colors.border,
+          opacity: pressed ? 0.85 : 1,
+        },
+      ]}
+    >
+      <Ionicons
+        name={value ? 'cloud-done' : 'cloud-outline'}
+        size={17}
+        color={value ? theme.colors.onAccent : theme.colors.textSecondary}
+      />
+      <View
+        style={[
+          styles.adminTrack,
+          { backgroundColor: value ? 'rgba(255,255,255,0.38)' : theme.colors.surfaceAlt },
+        ]}
+      >
+        <View
+          style={[
+            styles.adminKnob,
+            {
+              alignSelf: value ? 'flex-end' : 'flex-start',
+              backgroundColor: value ? theme.colors.onAccent : theme.colors.textTertiary,
+            },
+          ]}
+        />
+      </View>
+    </Pressable>
+  );
+}
+
+/** Confirms what the switch changed, so the mode is never on without the listener knowing. */
+function AdminModeBanner() {
+  const theme = useTheme();
+  const { t } = useSettings();
+
+  return (
+    <View
+      style={[
+        styles.adminBanner,
+        {
+          backgroundColor: theme.colors.accentSoft,
+          borderColor: theme.colors.accentMuted,
+          borderRadius: theme.radius.lg,
+        },
+      ]}
+    >
+      <Ionicons name="cloud-done" size={19} color={theme.colors.accent} />
+      <View style={{ flex: 1, marginLeft: 11 }}>
+        <Text style={[theme.font.title, { color: theme.colors.accent }]}>
+          {t('adminSongsMode')}
+        </Text>
+        <Text
+          style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 2 }]}
+        >
+          {t('adminSongsModeOnBody')}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/**
  * Accent-gradient hero with the app promise and a shuffle-everything CTA.
  *
  * The mockup fills this with a studio photograph; a local player has no such asset, so the
@@ -350,6 +433,32 @@ const styles = StyleSheet.create({
   },
   headerTitles: { flex: 1, marginLeft: 14 },
   brandRow: { flexDirection: 'row', alignItems: 'center', marginTop: 1 },
+  adminSwitch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    paddingLeft: 9,
+    paddingRight: 7,
+    paddingVertical: 6,
+  },
+  adminTrack: {
+    width: 26,
+    height: 15,
+    borderRadius: 8,
+    marginLeft: 7,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  adminKnob: { width: 11, height: 11, borderRadius: 6 },
+  adminBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+  },
   hero: {
     marginHorizontal: 16,
     marginTop: 18,

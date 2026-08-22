@@ -338,6 +338,12 @@ export const en = {
   autoRefreshLibrary: 'Auto-refresh library',
   autoRefreshLibraryDescription: 'Re-scan automatically when files are added or removed',
   minimumLength: 'Minimum length',
+
+  // admin panel songs
+  adminSongs: 'Admin songs',
+  adminSongsMode: 'Admin songs mode',
+  adminSongsModeOnBody: 'Showing songs published from the admin panel.',
+  adminSongsModeOffBody: 'Showing songs stored on this device.',
 };
 
 export const hi = {
@@ -640,6 +646,12 @@ export const hi = {
   autoRefreshLibrary: 'लाइब्रेरी स्वतः रिफ़्रेश',
   autoRefreshLibraryDescription: 'फ़ाइलें जुड़ने या हटने पर स्वतः दोबारा स्कैन करें',
   minimumLength: 'न्यूनतम अवधि',
+
+  // admin panel songs
+  adminSongs: 'एडमिन गाने',
+  adminSongsMode: 'एडमिन गाने मोड',
+  adminSongsModeOnBody: 'एडमिन पैनल से प्रकाशित गाने दिख रहे हैं।',
+  adminSongsModeOffBody: 'इस डिवाइस में सहेजे गए गाने दिख रहे हैं।',
 };
 
 export const es = {
@@ -942,6 +954,12 @@ export const es = {
   autoRefreshLibrary: 'Actualización automática',
   autoRefreshLibraryDescription: 'Reescanea automáticamente al añadir o quitar archivos',
   minimumLength: 'Duración mínima',
+
+  // admin panel songs
+  adminSongs: 'Canciones del admin',
+  adminSongsMode: 'Modo canciones del admin',
+  adminSongsModeOnBody: 'Mostrando canciones publicadas desde el panel de administración.',
+  adminSongsModeOffBody: 'Mostrando canciones guardadas en este dispositivo.',
 };
 
 export const fr = {
@@ -1245,6 +1263,12 @@ export const fr = {
   autoRefreshLibrary: 'Actualisation automatique',
   autoRefreshLibraryDescription: 'Réanalyse automatiquement à l’ajout ou la suppression de fichiers',
   minimumLength: 'Durée minimale',
+
+  // admin panel songs
+  adminSongs: 'Titres de l’admin',
+  adminSongsMode: 'Mode titres de l’admin',
+  adminSongsModeOnBody: 'Affichage des titres publiés depuis le panneau d’administration.',
+  adminSongsModeOffBody: 'Affichage des titres stockés sur cet appareil.',
 };
 
 export const de = {
@@ -1548,6 +1572,12 @@ export const de = {
   autoRefreshLibrary: 'Automatisch aktualisieren',
   autoRefreshLibraryDescription: 'Beim Hinzufügen oder Löschen von Dateien neu einlesen',
   minimumLength: 'Mindestlänge',
+
+  // admin panel songs
+  adminSongs: 'Admin-Songs',
+  adminSongsMode: 'Admin-Songs-Modus',
+  adminSongsModeOnBody: 'Es werden Songs aus dem Admin-Panel angezeigt.',
+  adminSongsModeOffBody: 'Es werden Songs von diesem Gerät angezeigt.',
 };
 
 export const pt = {
@@ -1850,6 +1880,12 @@ export const pt = {
   autoRefreshLibrary: 'Atualização automática',
   autoRefreshLibraryDescription: 'Reescaneia automaticamente ao adicionar ou remover arquivos',
   minimumLength: 'Duração mínima',
+
+  // admin panel songs
+  adminSongs: 'Músicas do admin',
+  adminSongsMode: 'Modo músicas do admin',
+  adminSongsModeOnBody: 'Mostrando músicas publicadas no painel de administração.',
+  adminSongsModeOffBody: 'Mostrando músicas guardadas neste dispositivo.',
 };
 
 export const ar = {
@@ -2152,6 +2188,12 @@ export const ar = {
   autoRefreshLibrary: 'تحديث تلقائي للمكتبة',
   autoRefreshLibraryDescription: 'إعادة فحص تلقائية عند إضافة الملفات أو حذفها',
   minimumLength: 'أقل مدة',
+
+  // admin panel songs
+  adminSongs: 'أغاني المشرف',
+  adminSongsMode: 'وضع أغاني المشرف',
+  adminSongsModeOnBody: 'يتم عرض الأغاني المنشورة من لوحة التحكم.',
+  adminSongsModeOffBody: 'يتم عرض الأغاني المحفوظة على هذا الجهاز.',
 };
 
 export const LANGUAGES = [

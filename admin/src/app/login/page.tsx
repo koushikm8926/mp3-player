@@ -16,7 +16,7 @@ export default async function LoginPage({
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-brand-500">
-            <svg viewBox="0 0 24 24" className="size-7 fill-ink-950" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="size-7 fill-white" aria-hidden="true">
               <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
             </svg>
           </div>

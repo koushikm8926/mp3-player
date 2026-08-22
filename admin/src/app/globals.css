@@ -3,31 +3,40 @@
 /**
  * Minax Music admin — design tokens.
  *
- * A single dark palette: the panel is an operations tool that is usually left open on a
- * dashboard, so it commits to one look rather than following the OS theme.
+ * A single light palette: white surfaces on a cool blue-tinted page, with the same
+ * saturated blue the Android app uses as its accent. The panel commits to one look
+ * rather than following the OS theme, so there is no dark variant to keep in sync.
+ *
+ * `ink-*` runs light-to-lighter-still for surfaces and borders, `mist-*` runs dark-to-light
+ * for text. The names are inherited from the earlier dark palette so every screen keeps
+ * working; only the values changed.
  */
 @theme {
-  --color-ink-950: #08080c;
-  --color-ink-900: #0d0d13;
-  --color-ink-850: #12121a;
-  --color-ink-800: #171720;
-  --color-ink-700: #1f1f2b;
-  --color-ink-600: #2a2a38;
-  --color-ink-500: #3a3a4c;
+  /* Surfaces, lightest content outward. */
+  --color-ink-950: #f2f6fc; /* page background */
+  --color-ink-900: #e9f0fa; /* table headers, native select menus */
+  --color-ink-850: #ffffff; /* cards */
+  --color-ink-800: #e8eff9; /* row dividers and hover washes */
+  --color-ink-700: #dfe7f2; /* hairline borders */
+  --color-ink-600: #cbd8ea; /* input borders */
+  --color-ink-500: #a9bdd8; /* hovered borders */
 
-  --color-mist-500: #6b6b80;
-  --color-mist-400: #8a8a9e;
-  --color-mist-300: #a8a8bb;
-  --color-mist-100: #e7e7ee;
+  /* Text, darkest first. */
+  --color-mist-100: #0f1729;
+  --color-mist-200: #1e293b;
+  --color-mist-300: #42506b;
+  --color-mist-400: #5b6980;
+  --color-mist-500: #78859c;
+  --color-mist-600: #9aa6ba;
 
-  --color-brand-500: #1db954;
-  --color-brand-400: #35d06b;
-  --color-brand-600: #16a349;
+  --color-brand-500: #1b6ff5;
+  --color-brand-400: #4a8cff;
+  --color-brand-600: #1558cc;
 
-  --color-info-500: #3b82f6;
-  --color-warn-500: #f59e0b;
-  --color-danger-500: #ef4444;
-  --color-violet-500: #8b5cf6;
+  --color-info-500: #0ea5e9;
+  --color-warn-500: #d97706;
+  --color-danger-500: #dc2626;
+  --color-violet-500: #7c3aed;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -42,7 +51,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-ink-600) transparent;
+  scrollbar-color: var(--color-ink-500) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -50,15 +59,16 @@ body {
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--color-ink-600);
+  background: var(--color-ink-500);
   border-radius: 6px;
   border: 3px solid transparent;
   background-clip: content-box;
 }
 
 @layer components {
+  /* On a light page a border alone reads flat, so cards also carry a soft shadow. */
   .card {
-    @apply rounded-xl border border-ink-700 bg-ink-850;
+    @apply rounded-xl border border-ink-700 bg-ink-850 shadow-[0_1px_2px_rgba(15,23,41,0.04),0_8px_24px_-12px_rgba(15,23,41,0.10)];
   }
 
   /* Tailwind v4 cannot @apply a class defined in the same layer, so each variant repeats
@@ -70,17 +80,17 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply bg-brand-500 text-ink-950 hover:bg-brand-400;
+    @apply bg-brand-500 text-white hover:bg-brand-600;
   }
   .btn-ghost {
-    @apply border border-ink-600 text-mist-300 hover:border-ink-500 hover:text-mist-100;
+    @apply border border-ink-600 bg-ink-850 text-mist-400 hover:border-ink-500 hover:text-mist-100;
   }
   .btn-danger {
-    @apply border border-danger-500/40 text-danger-500 hover:bg-danger-500/10;
+    @apply border border-danger-500/40 bg-ink-850 text-danger-500 hover:bg-danger-500/10;
   }
 
   .input {
-    @apply w-full rounded-lg border border-ink-600 bg-ink-900 px-3.5 py-2.5 text-sm text-mist-100 outline-none transition-colors placeholder:text-mist-500 focus:border-brand-500;
+    @apply w-full rounded-lg border border-ink-600 bg-ink-850 px-3.5 py-2.5 text-sm text-mist-100 outline-none transition-colors placeholder:text-mist-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15;
   }
 
   .label {

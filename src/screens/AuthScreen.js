@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
@@ -14,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import APP_LOGO from '../../assets/app-logo.png';
 import { Field, PrimaryButton } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
@@ -130,8 +132,8 @@ export function AuthScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={[styles.logo, { backgroundColor: theme.colors.accent }]}>
-            <Ionicons name="musical-notes" size={32} color={theme.colors.onAccent} />
+          <View style={styles.logo}>
+            <Image source={APP_LOGO} style={styles.logoImage} contentFit="cover" />
           </View>
 
           <Text style={[theme.font.h1, { color: theme.colors.text, marginTop: 24 }]}>
@@ -313,7 +315,15 @@ function GoogleGlyph({ size = 19 }) {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 24, flexGrow: 1 },
-  logo: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  logo: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoImage: { width: '100%', height: '100%' },
   banner: { flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 16 },
   forgotRow: { alignSelf: 'flex-end', marginTop: -6, marginBottom: 16 },
   switchRow: { alignItems: 'center', marginTop: 20 },

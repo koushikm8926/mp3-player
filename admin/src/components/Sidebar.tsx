@@ -8,6 +8,7 @@ import { logout } from '@/app/login/actions';
 
 const NAV = [
   { href: '/', label: 'Dashboard', icon: 'grid' },
+  { href: '/songs', label: 'Songs', icon: 'music' },
   { href: '/users', label: 'Registered users', icon: 'users' },
   { href: '/active', label: 'Active users', icon: 'pulse' },
   { href: '/statistics', label: 'User statistics', icon: 'chart' },
@@ -28,7 +29,7 @@ export function Sidebar({ admin }: { admin: { name: string; email: string; role:
   return (
     <>
       {/* Mobile top bar — the sidebar is a drawer below `lg`. */}
-      <div className="flex items-center gap-3 border-b border-ink-700 bg-ink-900 px-4 py-3 lg:hidden">
+      <div className="flex items-center gap-3 border-b border-ink-700 bg-ink-850 px-4 py-3 lg:hidden">
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
@@ -45,12 +46,12 @@ export function Sidebar({ admin }: { admin: { name: string; email: string; role:
       <aside
         className={`${
           open ? 'block' : 'hidden'
-        } w-full shrink-0 border-b border-ink-700 bg-ink-900 lg:sticky lg:top-0 lg:block lg:h-screen lg:w-64 lg:border-r lg:border-b-0`}
+        } w-full shrink-0 border-b border-ink-700 bg-ink-850 lg:sticky lg:top-0 lg:block lg:h-screen lg:w-64 lg:border-r lg:border-b-0`}
       >
         <div className="flex h-full flex-col">
           <div className="hidden items-center gap-3 px-5 py-6 lg:flex">
             <span className="flex size-9 items-center justify-center rounded-xl bg-brand-500">
-              <svg viewBox="0 0 24 24" className="size-5 fill-ink-950" aria-hidden="true">
+              <svg viewBox="0 0 24 24" className="size-5 fill-white" aria-hidden="true">
                 <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
               </svg>
             </span>
@@ -98,6 +99,7 @@ export function Sidebar({ admin }: { admin: { name: string; email: string; role:
 
 const PATHS: Record<IconName | 'logout', string> = {
   grid: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
+  music: 'M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
   users: 'M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 9a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM22 19v-2a4 4 0 0 0-3-3.87M16 2.13a4 4 0 0 1 0 7.75',
   pulse: 'M3 12h4l3 8 4-16 3 8h4',
   chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
