@@ -34,7 +34,9 @@ export default async function DashboardPage() {
     currentVersion,
     eventTotals,
   ] = await Promise.all([
-    prisma.user.count({ where: { status: { not: 'deleted' } } }),
+    // Guests have their own tile below, so this one counts signed-up accounts only —
+    // it links to /users, which is filtered the same way.
+    prisma.user.count({ where: { status: { not: 'deleted' }, isGuest: false } }),
     prisma.user.count({ where: { lastSeenAt: { gte: since }, status: 'active' } }),
     prisma.user.count({ where: { lastSeenAt: { gte: new Date(now - DAY) } } }),
     prisma.user.count({ where: { lastSeenAt: { gte: new Date(now - 7 * DAY) } } }),

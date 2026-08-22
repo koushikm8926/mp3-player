@@ -9,6 +9,9 @@ import { useEffect, useRef, useState, useTransition } from 'react';
  * State lives in the URL so a filtered view can be bookmarked or shared, and the server
  * component re-renders with the new query. Typing is debounced to avoid a request per keystroke.
  */
+/** Value each filter falls back to when its query parameter is absent. */
+const DEFAULTS: Record<string, string> = { q: '', status: 'all', type: 'registered', sort: 'newest' };
+
 export function UserFilters({
   query,
   status,
@@ -29,7 +32,7 @@ export function UserFilters({
   const push = (updates: Record<string, string>) => {
     const next = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(updates)) {
-      if (!value || value === 'all') next.delete(key);
+      if (!value || value === DEFAULTS[key]) next.delete(key);
       else next.set(key, value);
     }
     next.delete('page');

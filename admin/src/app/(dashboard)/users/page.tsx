@@ -39,7 +39,8 @@ export default async function UsersPage({
 
   const query = (params.q ?? '').trim();
   const status = params.status ?? 'all';
-  const type = params.type ?? 'all';
+  // The page is "Registered users", so guest installs are hidden unless explicitly asked for.
+  const type = params.type ?? 'registered';
   const sort = params.sort && SORTS[params.sort] ? params.sort : 'newest';
   const page = Math.max(1, Number(params.page) || 1);
 
