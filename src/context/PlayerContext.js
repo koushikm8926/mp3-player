@@ -541,6 +541,23 @@ export function PlayerProvider({ children }) {
       });
   }, []);
 
+  /**
+   * Jumps a fixed step relative to the live position — the ±10 s controls.
+   *
+   * Reads `positionMs` off the ref rather than closing over it so repeated taps compound
+   * instead of all resolving against the position captured at the first render.
+   */
+  const seekBy = useCallback(
+    (deltaMs) => {
+      const player = playerRef.current;
+      if (!player) return;
+      const total = stateRef.current.durationMs || 0;
+      const next = Math.max(0, stateRef.current.positionMs + deltaMs);
+      seekTo(total > 0 ? Math.min(next, total) : next);
+    },
+    [seekTo]
+  );
+
   const skipToQueueIndex = useCallback(
     (queueIndex) => {
       const position = order.indexOf(queueIndex);

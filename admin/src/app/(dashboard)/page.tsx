@@ -31,7 +31,6 @@ export default async function DashboardPage() {
     totals,
     recentUsers,
     versionRows,
-    currentVersion,
     eventTotals,
   ] = await Promise.all([
     // Guests have their own tile below, so this one counts signed-up accounts only —
@@ -59,7 +58,6 @@ export default async function DashboardPage() {
       },
     }),
     prisma.device.groupBy({ by: ['appVersion'], _count: { _all: true } }),
-    prisma.appVersion.findFirst({ where: { platform: 'android', isCurrent: true } }),
     prisma.usageEvent.groupBy({ by: ['type'], _count: { _all: true } }),
   ]);
 
@@ -81,7 +79,7 @@ export default async function DashboardPage() {
         description={`Overview of the Minax Music install base. Active means seen in the last ${windowMinutes} minutes.`}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatTile
           label="Registered users"
           value={formatNumber(totalUsers)}
@@ -105,14 +103,6 @@ export default async function DashboardPage() {
           tone="violet"
           href="/statistics"
           icon={<GlyphNote />}
-        />
-        <StatTile
-          label="Current release"
-          value={currentVersion ? `v${currentVersion.version}` : '—'}
-          hint={currentVersion ? `Build ${currentVersion.buildNumber}` : 'No version published'}
-          tone="warn"
-          href="/versions"
-          icon={<GlyphTag />}
         />
       </div>
 
@@ -151,14 +141,14 @@ export default async function DashboardPage() {
               <p className="px-5 py-8 text-center text-sm text-mist-500">No devices reported yet.</p>
             ) : (
               versionRows
-                .sort((a, b) => b._count._all - a._count._all)
-                .map((row) => (
+                .toSorted((a, b) => b._count._all - a._count._all)
+                .map((row, index) => (
                   <BarRow
                     key={row.appVersion ?? 'unknown'}
                     label={row.appVersion ? `v${row.appVersion}` : 'Unknown'}
                     value={row._count._all}
                     total={totalDevices}
-                    tone={row.appVersion === currentVersion?.version ? 'brand' : 'neutral'}
+                    tone={index === 0 ? 'brand' : 'neutral'}
                   />
                 ))
             )}
@@ -264,13 +254,6 @@ function GlyphNote() {
   return (
     <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden="true">
       <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
-    </svg>
-  );
-}
-function GlyphTag() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-4 stroke-current" fill="none" strokeWidth="2">
-      <path d="M20.6 13.4 12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" strokeLinejoin="round" />
     </svg>
   );
 }

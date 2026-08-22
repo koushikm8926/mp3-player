@@ -15,7 +15,6 @@ const NAV = [
   { href: '/active', label: 'Active users', icon: 'pulse' },
   { href: '/statistics', label: 'User statistics', icon: 'chart' },
   { href: '/reports', label: 'Reports', icon: 'report' },
-  { href: '/versions', label: 'App versions', icon: 'tag' },
   { href: '/settings', label: 'Settings', icon: 'cog' },
 ] as const;
 
@@ -103,7 +102,6 @@ const PATHS: Record<IconName | 'logout', string> = {
   pulse: 'M3 12h4l3 8 4-16 3 8h4',
   chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
   report: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6',
-  tag: 'M20.6 13.4 12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01',
   cog: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
 };
