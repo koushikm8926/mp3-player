@@ -204,7 +204,21 @@ export function LibraryProvider({ children }) {
     setAdminError(null);
     try {
       const response = await api.songs();
-      const songs = Array.isArray(response?.songs) ? response.songs : [];
+
+      // `api` never throws — a dead server, a timeout or a 401 all come back as
+      // `{ ok: false }`. Without this check every one of those reads as "the panel has
+      // published nothing", which is the wrong thing to tell the user and hides the cause.
+      if (!response.ok) {
+        setAdminError(
+          response.offline
+            ? 'Could not reach the admin panel. Check the server URL in Settings → Server.'
+            : (response.error ?? 'The admin panel refused the request.')
+        );
+        return -1;
+      }
+
+      // The payload is the envelope's `data`, not the envelope itself.
+      const songs = Array.isArray(response.data?.songs) ? response.data.songs : [];
       setAdminLibrary(adminSongsToLibrary(songs));
       return songs.length;
     } catch (error) {
