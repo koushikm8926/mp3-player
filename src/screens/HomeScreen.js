@@ -68,21 +68,26 @@ export function HomeScreen({ navigation }) {
   const activeProgress =
     player.durationMs > 0 ? Math.min(1, player.positionMs / player.durationMs) : 0;
 
+  // Pull-to-refresh means "reload whatever is on screen", which is the panel's catalogue
+  // while the mode is on — rescanning storage there would refresh the wrong library.
   const onRefresh = async () => {
     setRefreshing(true);
-    await library.refresh({ rescanMediaStore: true });
+    if (adminMode) await library.refreshAdminSongs();
+    else await library.refresh({ rescanMediaStore: true });
     setRefreshing(false);
   };
 
-  if (tracks.length === 0 && !library.scanning) {
+  if (tracks.length === 0 && !library.scanning && !adminLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top }}>
+        {/* In admin mode the offer must be a way out of the mode: rescanning storage would
+            not help, and the header switch is not rendered on this branch. */}
         <EmptyState
-          icon="musical-notes-outline"
-          title={t('emptyLibraryTitle')}
-          body={t('emptyLibraryBody')}
-          action={t('refreshLibrary')}
-          onAction={onRefresh}
+          icon={adminMode ? 'cloud-offline-outline' : 'musical-notes-outline'}
+          title={adminMode ? t('adminSongsEmptyTitle') : t('emptyLibraryTitle')}
+          body={adminMode ? adminError ?? t('adminSongsEmptyBody') : t('emptyLibraryBody')}
+          action={adminMode ? t('adminSongsTurnOff') : t('refreshLibrary')}
+          onAction={adminMode ? () => setAdminMode(false) : onRefresh}
         />
       </View>
     );

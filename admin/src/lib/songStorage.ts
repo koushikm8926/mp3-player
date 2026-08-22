@@ -12,6 +12,10 @@ import { Readable } from 'node:stream';
  *
  * `SONG_UPLOADS_DIR` overrides the location — set it to a mounted volume in production so
  * uploads survive a redeploy.
+ *
+ * The `turbopackIgnore` comments below tell the build tracer not to follow these paths. They
+ * are computed at runtime and always constrained to the uploads directory by
+ * `resolveStoredPath`; without the hints the tracer bundles the entire project as a guess.
  */
 
 const UPLOADS_DIR = process.env.SONG_UPLOADS_DIR
@@ -59,7 +63,7 @@ export async function saveAudio(
   if (!target) throw new Error('Could not resolve a storage path for this file.');
 
   const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(target, bytes);
+  await writeFile(/*turbopackIgnore: true*/ target, bytes);
 
   return { storageKey, sizeBytes: bytes.byteLength, mimeType };
 }
@@ -68,7 +72,7 @@ export async function saveAudio(
 export async function deleteAudio(storageKey: string): Promise<void> {
   const target = resolveStoredPath(storageKey);
   if (!target) return;
-  await unlink(target).catch(() => undefined);
+  await unlink(/*turbopackIgnore: true*/ target).catch(() => undefined);
 }
 
 /**
@@ -87,7 +91,7 @@ export async function openAudio(
   const target = resolveStoredPath(storageKey);
   if (!target) return { ok: false, reason: 'missing' };
 
-  const info = await stat(target).catch(() => null);
+  const info = await stat(/*turbopackIgnore: true*/ target).catch(() => null);
   if (!info?.isFile()) return { ok: false, reason: 'missing' };
 
   const size = info.size;
@@ -115,7 +119,7 @@ export async function openAudio(
     partial = true;
   }
 
-  const nodeStream = createReadStream(target, { start, end });
+  const nodeStream = createReadStream(/*turbopackIgnore: true*/ target, { start, end });
   return {
     ok: true,
     stream: Readable.toWeb(nodeStream) as ReadableStream,

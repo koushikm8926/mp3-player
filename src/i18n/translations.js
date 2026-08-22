@@ -344,6 +344,9 @@ export const en = {
   adminSongsMode: 'Admin songs mode',
   adminSongsModeOnBody: 'Showing songs published from the admin panel.',
   adminSongsModeOffBody: 'Showing songs stored on this device.',
+  adminSongsEmptyTitle: 'No songs published yet',
+  adminSongsEmptyBody: "Nothing has been published from the admin panel yet. Turn the mode off to play the songs on this device.",
+  adminSongsTurnOff: 'Turn off Admin songs mode',
 };
 
 export const hi = {
@@ -652,6 +655,9 @@ export const hi = {
   adminSongsMode: 'एडमिन गाने मोड',
   adminSongsModeOnBody: 'एडमिन पैनल से प्रकाशित गाने दिख रहे हैं।',
   adminSongsModeOffBody: 'इस डिवाइस में सहेजे गए गाने दिख रहे हैं।',
+  adminSongsEmptyTitle: 'अभी कोई गाना प्रकाशित नहीं',
+  adminSongsEmptyBody: "एडमिन पैनल से अभी तक कुछ भी प्रकाशित नहीं हुआ है। इस डिवाइस के गाने चलाने के लिए मोड बंद करें।",
+  adminSongsTurnOff: 'एडमिन गाने मोड बंद करें',
 };
 
 export const es = {
@@ -960,6 +966,9 @@ export const es = {
   adminSongsMode: 'Modo canciones del admin',
   adminSongsModeOnBody: 'Mostrando canciones publicadas desde el panel de administración.',
   adminSongsModeOffBody: 'Mostrando canciones guardadas en este dispositivo.',
+  adminSongsEmptyTitle: 'Aún no hay canciones publicadas',
+  adminSongsEmptyBody: "Todavía no se ha publicado nada desde el panel de administración. Desactiva el modo para reproducir las canciones de este dispositivo.",
+  adminSongsTurnOff: 'Desactivar el modo canciones del admin',
 };
 
 export const fr = {
@@ -1269,6 +1278,9 @@ export const fr = {
   adminSongsMode: 'Mode titres de l’admin',
   adminSongsModeOnBody: 'Affichage des titres publiés depuis le panneau d’administration.',
   adminSongsModeOffBody: 'Affichage des titres stockés sur cet appareil.',
+  adminSongsEmptyTitle: 'Aucun titre publié pour l’instant',
+  adminSongsEmptyBody: "Rien n’a encore été publié depuis le panneau d’administration. Désactivez le mode pour écouter les titres de cet appareil.",
+  adminSongsTurnOff: 'Désactiver le mode titres de l’admin',
 };
 
 export const de = {
@@ -1578,6 +1590,9 @@ export const de = {
   adminSongsMode: 'Admin-Songs-Modus',
   adminSongsModeOnBody: 'Es werden Songs aus dem Admin-Panel angezeigt.',
   adminSongsModeOffBody: 'Es werden Songs von diesem Gerät angezeigt.',
+  adminSongsEmptyTitle: 'Noch keine Songs veröffentlicht',
+  adminSongsEmptyBody: "Aus dem Admin-Panel wurde noch nichts veröffentlicht. Schalte den Modus aus, um die Songs auf diesem Gerät zu hören.",
+  adminSongsTurnOff: 'Admin-Songs-Modus ausschalten',
 };
 
 export const pt = {
@@ -1886,6 +1901,9 @@ export const pt = {
   adminSongsMode: 'Modo músicas do admin',
   adminSongsModeOnBody: 'Mostrando músicas publicadas no painel de administração.',
   adminSongsModeOffBody: 'Mostrando músicas guardadas neste dispositivo.',
+  adminSongsEmptyTitle: 'Ainda não há músicas publicadas',
+  adminSongsEmptyBody: "Ainda não foi publicado nada no painel de administração. Desative o modo para ouvir as músicas deste dispositivo.",
+  adminSongsTurnOff: 'Desativar o modo músicas do admin',
 };
 
 export const ar = {
@@ -2194,6 +2212,9 @@ export const ar = {
   adminSongsMode: 'وضع أغاني المشرف',
   adminSongsModeOnBody: 'يتم عرض الأغاني المنشورة من لوحة التحكم.',
   adminSongsModeOffBody: 'يتم عرض الأغاني المحفوظة على هذا الجهاز.',
+  adminSongsEmptyTitle: 'لم يتم نشر أي أغانٍ بعد',
+  adminSongsEmptyBody: "لم يتم نشر أي شيء من لوحة التحكم بعد. أوقف الوضع لتشغيل الأغاني الموجودة على هذا الجهاز.",
+  adminSongsTurnOff: 'إيقاف وضع أغاني المشرف',
 };
 
 export const LANGUAGES = [
