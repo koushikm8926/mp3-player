@@ -26,6 +26,8 @@ export default async function SongsPage() {
           title: song.title,
           artist: song.artist,
           album: song.album,
+          category: song.category || 'Pop',
+          artworkUrl: song.artworkUrl,
           originalName: song.originalName,
           mimeType: song.mimeType,
           sizeBytes: song.sizeBytes,

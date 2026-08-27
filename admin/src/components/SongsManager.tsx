@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState, useTransition } from 'react';
 
-import { deleteSong, setPublished } from '@/app/(dashboard)/songs/actions';
+import { deleteSong, setPublished, updateSong } from '@/app/(dashboard)/songs/actions';
 import { Badge, Card, EmptyRow, StatTile } from '@/components/ui';
 
 export type SongRow = {
@@ -11,6 +11,8 @@ export type SongRow = {
   title: string;
   artist: string;
   album: string;
+  category: string;
+  artworkUrl?: string | null;
   originalName: string;
   mimeType: string;
   sizeBytes: number;
@@ -18,6 +20,25 @@ export type SongRow = {
   isPublished: boolean;
   createdAt: string;
 };
+
+export const CATEGORIES = [
+  'Devotional',
+  'Podcasts',
+  'Meditation',
+  'Audiobooks',
+  'Kids',
+  'Instrumental',
+  'Motivation',
+  'Classical',
+  'Romance',
+  'Party',
+  'Hip Hop',
+  'Pop',
+  'Rock',
+  'Lo-Fi',
+  'Workout',
+  'Study',
+] as const;
 
 /**
  * Song library management.
@@ -35,6 +56,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [staged, setStaged] = useState<File[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Devotional');
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +64,13 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
   const [dragging, setDragging] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'published' | 'hidden'>('all');
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editArtist, setEditArtist] = useState('');
+  const [editAlbum, setEditAlbum] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editArtworkUrl, setEditArtworkUrl] = useState('');
 
   const publishedCount = songs.filter((song) => song.isPublished).length;
   const storedBytes = songs.reduce((sum, song) => sum + song.sizeBytes, 0);
@@ -52,7 +81,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
       if (filter === 'published' && !song.isPublished) return false;
       if (filter === 'hidden' && song.isPublished) return false;
       if (!needle) return true;
-      return `${song.title} ${song.artist} ${song.album}`.toLowerCase().includes(needle);
+      return `${song.title} ${song.artist} ${song.album} ${song.category}`.toLowerCase().includes(needle);
     });
   }, [songs, query, filter]);
 
@@ -70,6 +99,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
     for (const file of staged) {
       const body = new FormData();
       body.append('file', file);
+      body.append('category', selectedCategory);
       try {
         const response = await fetch('/api/admin/songs/upload', { method: 'POST', body });
         if (!response.ok) {
@@ -141,6 +171,24 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
         description="Audio picked here is stored on the server. New uploads start hidden until you publish them."
       >
         <div className="p-5">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <label htmlFor="upload-category" className="text-xs font-semibold uppercase tracking-wide text-mist-400">
+              Song Category:
+            </label>
+            <select
+              id="upload-category"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="rounded-lg border border-ink-600 bg-ink-850 px-3 py-1.5 text-xs text-mist-100 focus:border-brand-500 focus:outline-none"
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div
             onDragOver={(event) => {
               event.preventDefault();
@@ -204,7 +252,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
             <div className="mt-5">
               <div className="mb-2.5 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-mist-500">
-                  Ready to upload · {staged.length}
+                  Ready to upload under <span className="text-brand-400 font-bold">{selectedCategory}</span> · {staged.length}
                 </p>
                 <button
                   type="button"
@@ -268,7 +316,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search songs…"
+              placeholder="Search songs or categories…"
               className="input w-48 py-1.5 text-xs"
             />
             <div className="flex rounded-lg border border-ink-600 bg-ink-850 p-0.5">
@@ -293,6 +341,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
             <thead className="border-b border-ink-700 bg-ink-900/60">
               <tr>
                 <th className="th">Song</th>
+                <th className="th">Category</th>
                 <th className="th">Album</th>
                 <th className="th text-right">Duration</th>
                 <th className="th text-right">Size</th>
@@ -304,7 +353,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
             <tbody className="divide-y divide-ink-800">
               {visible.length === 0 ? (
                 <EmptyRow
-                  colSpan={7}
+                  colSpan={8}
                   message={
                     songs.length === 0
                       ? 'No songs uploaded yet. Songs you upload above will be listed here.'
@@ -312,64 +361,192 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                   }
                 />
               ) : (
-                visible.map((song) => (
-                  <tr key={song.id} className="transition-colors hover:bg-ink-800/60">
-                    <td className="td">
-                      <div className="flex items-center gap-3">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
-                          <Glyph name="music" size={18} />
-                        </span>
-                        <div className="min-w-0">
-                          <span className="block truncate font-medium text-mist-100">
-                            {song.title}
+                visible.map((song) => {
+                  const isEditing = editingId === song.id;
+                  if (isEditing) {
+                    return (
+                      <tr key={song.id} className="bg-ink-800/80">
+                        <td className="td" colSpan={2}>
+                          <div className="space-y-1.5">
+                            <input
+                              type="text"
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              placeholder="Title"
+                              className="input w-full py-1 text-xs"
+                            />
+                            <input
+                              type="text"
+                              value={editArtist}
+                              onChange={(e) => setEditArtist(e.target.value)}
+                              placeholder="Artist"
+                              className="input w-full py-1 text-xs"
+                            />
+                          </div>
+                        </td>
+                        <td className="td">
+                          <input
+                            type="text"
+                            value={editAlbum}
+                            onChange={(e) => setEditAlbum(e.target.value)}
+                            placeholder="Album"
+                            className="input w-full py-1 text-xs mb-1"
+                          />
+                          <select
+                            value={editCategory}
+                            onChange={(e) => setEditCategory(e.target.value)}
+                            className="input w-full py-1 text-xs"
+                          >
+                            {CATEGORIES.map((cat) => (
+                              <option key={cat} value={cat}>
+                                {cat}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="td text-right tabular-nums">
+                          {formatDuration(song.durationMs)}
+                        </td>
+                        <td className="td text-right tabular-nums">{formatBytes(song.sizeBytes)}</td>
+                        <td className="td">{formatDate(song.createdAt)}</td>
+                        <td className="td">
+                          {song.isPublished ? (
+                            <Badge tone="brand">Live in app</Badge>
+                          ) : (
+                            <Badge tone="neutral">Hidden</Badge>
+                          )}
+                        </td>
+                        <td className="td">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                startTransition(() => {
+                                  void updateSong(song.id, {
+                                    title: editTitle,
+                                    artist: editArtist,
+                                    album: editAlbum,
+                                    category: editCategory,
+                                    artworkUrl: editArtworkUrl || null,
+                                  });
+                                  setEditingId(null);
+                                });
+                              }}
+                              className="btn-primary py-1 px-2.5 text-xs"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(null)}
+                              className="text-xs text-mist-500 hover:text-mist-100"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return (
+                    <tr key={song.id} className="transition-colors hover:bg-ink-800/60">
+                      <td className="td">
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
+                            <Glyph name="music" size={18} />
                           </span>
-                          <span className="block truncate text-xs text-mist-500">
-                            {song.artist} · {formatType(song.mimeType)}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="block truncate font-medium text-mist-100">
+                              {song.title}
+                            </span>
+                            <span className="block truncate text-xs text-mist-500">
+                              {song.artist} · {formatType(song.mimeType)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="td">{song.album}</td>
-                    <td className="td text-right tabular-nums">
-                      {formatDuration(song.durationMs)}
-                    </td>
-                    <td className="td text-right tabular-nums">{formatBytes(song.sizeBytes)}</td>
-                    <td className="td">{formatDate(song.createdAt)}</td>
-                    <td className="td">
-                      {song.isPublished ? (
-                        <Badge tone="brand">Live in app</Badge>
-                      ) : (
-                        <Badge tone="neutral">Hidden</Badge>
-                      )}
-                    </td>
-                    <td className="td">
-                      <div className="flex items-center justify-end gap-2">
-                        <Switch
-                          checked={song.isPublished}
-                          label={`Publish ${song.title}`}
-                          onChange={() =>
+                      </td>
+                      <td className="td">
+                        <select
+                          value={song.category || 'Devotional'}
+                          onChange={(e) => {
+                            const newCat = e.target.value;
                             startTransition(() => {
-                              void setPublished(song.id, !song.isPublished);
-                            })
-                          }
-                        />
-                        <button
-                          type="button"
-                          aria-label={`Remove ${song.title}`}
-                          onClick={() => {
-                            if (!confirm(`Delete "${song.title}"? This cannot be undone.`)) return;
-                            startTransition(() => {
-                              void deleteSong(song.id);
+                              void updateSong(song.id, {
+                                title: song.title,
+                                artist: song.artist,
+                                album: song.album,
+                                category: newCat,
+                                artworkUrl: song.artworkUrl,
+                              });
                             });
                           }}
-                          className="rounded-lg border border-ink-600 bg-ink-850 p-1.5 text-mist-500 transition-colors hover:border-danger-500/40 hover:text-danger-500"
+                          className="rounded border border-ink-600 bg-ink-850 px-2 py-1 text-xs text-mist-100 focus:border-brand-500 focus:outline-none"
                         >
-                          <Glyph name="trash" size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="td">{song.album}</td>
+                      <td className="td text-right tabular-nums">
+                        {formatDuration(song.durationMs)}
+                      </td>
+                      <td className="td text-right tabular-nums">{formatBytes(song.sizeBytes)}</td>
+                      <td className="td">{formatDate(song.createdAt)}</td>
+                      <td className="td">
+                        {song.isPublished ? (
+                          <Badge tone="brand">Live in app</Badge>
+                        ) : (
+                          <Badge tone="neutral">Hidden</Badge>
+                        )}
+                      </td>
+                      <td className="td">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            title="Edit song metadata"
+                            onClick={() => {
+                              setEditingId(song.id);
+                              setEditTitle(song.title);
+                              setEditArtist(song.artist);
+                              setEditAlbum(song.album);
+                              setEditCategory(song.category || 'Devotional');
+                              setEditArtworkUrl(song.artworkUrl || '');
+                            }}
+                            className="rounded-lg border border-ink-600 bg-ink-850 p-1.5 text-mist-500 transition-colors hover:border-brand-500/40 hover:text-brand-400"
+                          >
+                            <Glyph name="edit" size={16} />
+                          </button>
+                          <Switch
+                            checked={song.isPublished}
+                            label={`Publish ${song.title}`}
+                            onChange={() =>
+                              startTransition(() => {
+                                void setPublished(song.id, !song.isPublished);
+                              })
+                            }
+                          />
+                          <button
+                            type="button"
+                            aria-label={`Remove ${song.title}`}
+                            onClick={() => {
+                              if (!confirm(`Delete "${song.title}"? This cannot be undone.`)) return;
+                              startTransition(() => {
+                                void deleteSong(song.id);
+                              });
+                            }}
+                            className="rounded-lg border border-ink-600 bg-ink-850 p-1.5 text-mist-500 transition-colors hover:border-danger-500/40 hover:text-danger-500"
+                          >
+                            <Glyph name="trash" size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -445,6 +622,7 @@ const GLYPHS = {
   upload: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12',
   plus: 'M12 5v14M5 12h14',
   close: 'M18 6 6 18M6 6l12 12',
+  edit: 'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z',
   trash: 'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6',
   broadcast:
     'M4.9 19.1a10 10 0 0 1 0-14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',

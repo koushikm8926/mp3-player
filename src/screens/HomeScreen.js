@@ -22,10 +22,84 @@ import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
 
-/**
- * The dashboard: greeting, hero call-to-action, resume rail, the browse grid and the
- * recently played list.
- */
+const CATEGORY_CHIPS = [
+  { id: 'all', title: 'All', icon: 'musical-notes' },
+  { id: 'Devotional', title: 'Devotional', icon: 'flame' },
+  { id: 'Podcasts', title: 'Podcasts', icon: 'mic' },
+  { id: 'Meditation', title: 'Meditation', icon: 'leaf' },
+  { id: 'Audiobooks', title: 'Audiobooks', icon: 'book' },
+  { id: 'Kids', title: 'Kids', icon: 'sparkles' },
+  { id: 'Instrumental', title: 'Instrumental', icon: 'musical-notes' },
+  { id: 'Motivation', title: 'Motivation', icon: 'sunny' },
+  { id: 'Classical', title: 'Classical', icon: 'disc' },
+  { id: 'Romance', title: 'Romance', icon: 'heart' },
+  { id: 'Party', title: 'Party', icon: 'headset' },
+  { id: 'Hip Hop', title: 'Hip Hop', icon: 'mic-circle' },
+  { id: 'Pop', title: 'Pop', icon: 'star' },
+  { id: 'Rock', title: 'Rock', icon: 'flame-outline' },
+  { id: 'Lo-Fi', title: 'Lo-Fi', icon: 'cafe' },
+  { id: 'Workout', title: 'Workout', icon: 'fitness' },
+  { id: 'Study', title: 'Study', icon: 'bulb' },
+];
+
+const TOP_PLAYLIST_PRESETS = [
+  {
+    id: 'top50',
+    title: 'Top 50 India',
+    subtitle: '50 Songs',
+    gradient: ['#4C1D95', '#8B5CF6', '#2E1065'],
+  },
+  {
+    id: 'relax',
+    title: 'Relax & Unwind',
+    subtitle: '40 Songs',
+    gradient: ['#065F46', '#10B981', '#022C22'],
+  },
+  {
+    id: 'workout',
+    title: 'Workout Hits',
+    subtitle: '60 Songs',
+    gradient: ['#9A3412', '#F97316', '#431407'],
+  },
+  {
+    id: 'morning',
+    title: 'Morning Boost',
+    subtitle: '35 Songs',
+    gradient: ['#854D0E', '#EAB308', '#3F2C06'],
+  },
+];
+
+const RECOMMENDED_RADIOS = [
+  {
+    id: 'lofi',
+    title: 'Lo fi Beats',
+    subtitle: 'Artist Radio',
+    color: '#818CF8',
+    icon: 'cafe',
+  },
+  {
+    id: 'arijit',
+    title: 'Arijit Singh',
+    subtitle: 'Artist Radio',
+    color: '#F472B6',
+    icon: 'person',
+  },
+  {
+    id: 'spiritual',
+    title: 'Spiritual Mantras',
+    subtitle: 'Artist Radio',
+    color: '#38BDF8',
+    icon: 'flame',
+  },
+  {
+    id: 'oldisgold',
+    title: 'Old Is Gold',
+    subtitle: 'Artist Radio',
+    color: '#FBBF24',
+    icon: 'disc',
+  },
+];
+
 export function HomeScreen({ navigation }) {
   const theme = useTheme();
   const { t } = useSettings();
@@ -33,12 +107,12 @@ export function HomeScreen({ navigation }) {
   const player = usePlayer();
   const insets = useSafeAreaInsets();
   const library = useLibrary();
+
   const [sheetTrack, setSheetTrack] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  // Admin songs mode lives in LibraryContext, so flipping it re-points every screen at the
-  // panel's catalogue rather than just this one.
-  const { adminMode, setAdminMode, adminLoading, adminError } = library;
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
+  const { adminMode, setAdminMode, adminLoading, adminError } = library;
   const {
     tracks,
     albums,
@@ -57,19 +131,24 @@ export function HomeScreen({ navigation }) {
     return t('goodEvening');
   }, [t]);
 
-  // The design shows a resume bar under each card, but `track_stats` only aggregates play
-  // counts — there is no saved per-track offset. Only the track actually loaded in the player
-  // has a real position, so that is the only card that gets a bar.
-  const continueListening = useMemo(
-    () => recentTracks.slice(0, 12),
-    [recentTracks]
-  );
+  const continueListening = useMemo(() => recentTracks.slice(0, 12), [recentTracks]);
 
   const activeProgress =
     player.durationMs > 0 ? Math.min(1, player.positionMs / player.durationMs) : 0;
 
-  // Pull-to-refresh means "reload whatever is on screen", which is the panel's catalogue
-  // while the mode is on — rescanning storage there would refresh the wrong library.
+  const filteredTracks = useMemo(() => {
+    if (selectedCategory === 'all') return tracks;
+    return tracks.filter(
+      (tr) => (tr.category || tr.genre || '').toLowerCase() === selectedCategory.toLowerCase()
+    );
+  }, [tracks, selectedCategory]);
+
+  const trendingSongs = useMemo(() => filteredTracks.slice(0, 10), [filteredTracks]);
+  const recentlyAdded = useMemo(
+    () => [...filteredTracks].sort((a, b) => b.dateAdded - a.dateAdded).slice(0, 10),
+    [filteredTracks]
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
     if (adminMode) await library.refreshAdminSongs();
@@ -77,11 +156,10 @@ export function HomeScreen({ navigation }) {
     setRefreshing(false);
   };
 
+  // If library is empty and not loading
   if (tracks.length === 0 && !library.scanning && !adminLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top }}>
-        {/* In admin mode the offer must be a way out of the mode: rescanning storage would
-            not help, and the header switch is not rendered on this branch. */}
         <EmptyState
           icon={adminMode ? 'cloud-offline-outline' : 'musical-notes-outline'}
           title={adminMode ? t('adminSongsEmptyTitle') : t('emptyLibraryTitle')}
@@ -93,6 +171,263 @@ export function HomeScreen({ navigation }) {
     );
   }
 
+  // ==================== ONLINE MODE DASHBOARD ====================
+  if (adminMode) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#090713' }}>
+        <ScrollView
+          style={{ backgroundColor: '#090713' }}
+          contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 170 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#C084FC"
+              colors={['#C084FC']}
+              progressBackgroundColor="#120E24"
+            />
+          }
+        >
+          {/* Top Header */}
+          <View style={styles.header}>
+            <View style={styles.brandRow}>
+              <LinearGradient
+                colors={['#8B5CF6', '#EC4899']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.logoBadge}
+              >
+                <Ionicons name="musical-notes" size={19} color="#FFFFFF" />
+              </LinearGradient>
+              <Text style={[styles.brandTitle, { color: '#FFFFFF' }]}>MP3 Player</Text>
+            </View>
+
+            <View style={styles.headerRight}>
+              <Pressable
+                onPress={() => navigation.navigate('Search')}
+                style={styles.headerIconButton}
+                hitSlop={8}
+              >
+                <Ionicons name="search-outline" size={22} color="#FFFFFF" />
+              </Pressable>
+
+              {/* Offline / Online Pill Switch */}
+              <Pressable
+                onPress={() => setAdminMode(false)}
+                style={styles.togglePillDark}
+              >
+                <View style={styles.toggleHalf}>
+                  <Text style={[styles.toggleText, { color: 'rgba(255, 255, 255, 0.45)' }]}>
+                    Offline
+                  </Text>
+                </View>
+                <LinearGradient
+                  colors={['#9333EA', '#C084FC']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[styles.toggleHalf, styles.toggleActiveOnline]}
+                >
+                  <Text style={[styles.toggleText, { color: '#FFFFFF' }]}>
+                    Online
+                  </Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </View>
+
+          {adminError ? <AdminModeBanner error={adminError} /> : null}
+
+          {/* Featured Albums Hero Banner (Carousel) */}
+          <HeroCarousel
+            onPlay={() => player.shuffleAndPlay(filteredTracks.length > 0 ? filteredTracks : tracks)}
+          />
+
+          {/* Category Pills Bar */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryPillsScroll}
+          >
+            {CATEGORY_CHIPS.map((chip) => {
+              const isSelected = selectedCategory === chip.id;
+              return (
+                <Pressable
+                  key={chip.id}
+                  onPress={() => setSelectedCategory(chip.id)}
+                  style={[
+                    styles.categoryPill,
+                    isSelected
+                      ? styles.categoryPillSelected
+                      : { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255,255,255,0.1)' },
+                  ]}
+                >
+                  <Ionicons
+                    name={chip.icon}
+                    size={15}
+                    color={isSelected ? '#FFFFFF' : 'rgba(255, 255, 255, 0.65)'}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={[
+                      styles.categoryPillText,
+                      { color: isSelected ? '#FFFFFF' : 'rgba(255, 255, 255, 0.65)' },
+                    ]}
+                  >
+                    {chip.title}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          {/* Trending Songs Section */}
+          <SectionHeader
+            title="Trending Songs"
+            actionLabel="See All"
+            onPressAction={() => navigation.navigate('Songs')}
+          />
+          {trendingSongs.length > 0 ? (
+            <FlatList
+              horizontal
+              data={trendingSongs}
+              keyExtractor={(item) => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.rail}
+              renderItem={({ item, index }) => (
+                <View style={{ marginRight: 14 }}>
+                  <AlbumCard
+                    album={{ name: item.title, artist: item.artist, artworkUri: item.artworkUri }}
+                    size={148}
+                    playBadge
+                    onPress={() => player.playQueue(trendingSongs, index)}
+                    onPressMore={() => setSheetTrack(item)}
+                  />
+                </View>
+              )}
+            />
+          ) : (
+            <View style={styles.emptyRail}>
+              <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
+                No online songs uploaded in this category yet.
+              </Text>
+            </View>
+          )}
+
+          {/* Recently Added Section */}
+          <SectionHeader
+            title="Recently Added"
+            actionLabel="See All"
+            onPressAction={() => navigation.navigate('Songs')}
+          />
+          {recentlyAdded.length > 0 ? (
+            <FlatList
+              horizontal
+              data={recentlyAdded}
+              keyExtractor={(item) => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.rail}
+              renderItem={({ item, index }) => (
+                <View style={{ marginRight: 14 }}>
+                  <AlbumCard
+                    album={{ name: item.title, artist: item.artist, artworkUri: item.artworkUri }}
+                    size={148}
+                    onPress={() => player.playQueue(recentlyAdded, index)}
+                    onPressMore={() => setSheetTrack(item)}
+                  />
+                </View>
+              )}
+            />
+          ) : (
+            <View style={styles.emptyRail}>
+              <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
+                No recent additions.
+              </Text>
+            </View>
+          )}
+
+          {/* Top Playlists Section */}
+          <SectionHeader
+            title="Top Playlists"
+            actionLabel="See All"
+            onPressAction={() => navigation.navigate('PlaylistsTab')}
+          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.rail}
+          >
+            {TOP_PLAYLIST_PRESETS.map((pl) => (
+              <Pressable
+                key={pl.id}
+                onPress={() => navigation.navigate('PlaylistsTab')}
+                style={styles.playlistCardContainer}
+              >
+                <LinearGradient
+                  colors={pl.gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.playlistCard}
+                >
+                  <View style={styles.playlistWatermark}>
+                    <Text style={styles.watermarkText}>50</Text>
+                  </View>
+                  <View style={styles.playlistMeta}>
+                    <Text style={styles.playlistTitle} numberOfLines={1}>
+                      {pl.title}
+                    </Text>
+                    <Text style={styles.playlistSubtitle}>{pl.subtitle}</Text>
+                  </View>
+                </LinearGradient>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {/* Recommended For You Section */}
+          <SectionHeader
+            title="Recommended For You"
+            actionLabel="See All"
+            onPressAction={() => navigation.navigate('Artists')}
+          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.rail}
+          >
+            {RECOMMENDED_RADIOS.map((radio) => (
+              <Pressable
+                key={radio.id}
+                onPress={() => player.shuffleAndPlay(tracks)}
+                style={styles.radioContainer}
+              >
+                <View style={[styles.radioCircle, { backgroundColor: `${radio.color}22` }]}>
+                  <Ionicons name={radio.icon} size={32} color={radio.color} />
+                  <View style={styles.radioPlayOverlay}>
+                    <Ionicons name="play" size={12} color="#FFFFFF" style={{ marginLeft: 2 }} />
+                  </View>
+                </View>
+                <Text numberOfLines={1} style={[styles.radioTitle, { color: '#FFFFFF' }]}>
+                  {radio.title}
+                </Text>
+                <Text style={[styles.radioSubtitle, { color: 'rgba(255,255,255,0.6)' }]}>
+                  {radio.subtitle}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </ScrollView>
+
+        <TrackOptionsSheet
+          track={sheetTrack}
+          visible={sheetTrack != null}
+          onClose={() => setSheetTrack(null)}
+          navigation={navigation}
+        />
+      </View>
+    );
+  }
+
+  // ==================== ORIGINAL OFFLINE MODE DASHBOARD ====================
   return (
     <>
       <ScrollView
@@ -109,14 +444,14 @@ export function HomeScreen({ navigation }) {
           />
         }
       >
-        <View style={styles.header}>
+        <View style={styles.offlineHeader}>
           <Pressable onPress={() => navigation.navigate('Settings')} hitSlop={12}>
             <Ionicons name="menu" size={28} color={theme.colors.accent} />
           </Pressable>
 
           <View style={styles.headerTitles}>
             <Text style={[theme.font.body, { color: theme.colors.textSecondary }]}>{greeting}</Text>
-            <View style={styles.brandRow}>
+            <View style={styles.brandRowOffline}>
               <Text style={[theme.font.h1, { color: theme.colors.text }]} numberOfLines={1}>
                 {user?.name?.split(' ')[0] ?? t('appName')}
               </Text>
@@ -129,11 +464,24 @@ export function HomeScreen({ navigation }) {
             </View>
           </View>
 
-          <AdminModeSwitch
-            value={adminMode}
-            busy={adminLoading}
-            onToggle={() => setAdminMode(!adminMode)}
-          />
+          {/* Offline / Online Pill Switch in Light Theme */}
+          <Pressable
+            onPress={() => setAdminMode(true)}
+            style={[
+              styles.togglePillLight,
+              {
+                backgroundColor: theme.colors.surfaceAlt,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            <View style={[styles.toggleHalf, { backgroundColor: theme.colors.surface }]}>
+              <Text style={[styles.toggleText, { color: theme.colors.text }]}>Offline</Text>
+            </View>
+            <View style={styles.toggleHalf}>
+              <Text style={[styles.toggleText, { color: theme.colors.textSecondary }]}>Online</Text>
+            </View>
+          </Pressable>
         </View>
 
         <SearchBar
@@ -141,8 +489,6 @@ export function HomeScreen({ navigation }) {
           onPress={() => navigation.navigate('Search')}
           onPressTrailing={() => navigation.navigate('Search')}
         />
-
-        {adminMode ? <AdminModeBanner error={adminError} /> : null}
 
         <HeroBanner
           onPlay={() => player.shuffleAndPlay(tracks)}
@@ -284,109 +630,55 @@ export function HomeScreen({ navigation }) {
   );
 }
 
-/**
- * Header switch for Admin songs mode.
- *
- * It sits where the library-refresh button used to; pull-to-refresh already rescans storage,
- * so nothing was lost by giving the corner to the mode instead. Drawn by hand rather than
- * with the platform `Switch` so it can carry the mode's icon inside the same pill.
- */
-function AdminModeSwitch({ value, busy, onToggle }) {
-  const theme = useTheme();
-  const { t } = useSettings();
-
+/** Featured Albums Hero Carousel Banner matching Image 2 */
+function HeroCarousel({ onPlay }) {
   return (
-    <Pressable
-      onPress={onToggle}
-      hitSlop={10}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
-      accessibilityLabel={t('adminSongsMode')}
-      style={({ pressed }) => [
-        styles.adminSwitch,
-        theme.shadow.card,
-        {
-          borderRadius: theme.radius.pill,
-          backgroundColor: value ? theme.colors.accent : theme.colors.surface,
-          borderColor: value ? theme.colors.accent : theme.colors.border,
-          opacity: pressed ? 0.85 : 1,
-        },
-      ]}
-    >
-      {busy ? (
-        <ActivityIndicator
-          size="small"
-          color={value ? theme.colors.onAccent : theme.colors.accent}
-          style={{ width: 17, height: 17 }}
-        />
-      ) : (
-        <Ionicons
-          name={value ? 'cloud-done' : 'cloud-outline'}
-          size={17}
-          color={value ? theme.colors.onAccent : theme.colors.textSecondary}
-        />
-      )}
-      <View
-        style={[
-          styles.adminTrack,
-          { backgroundColor: value ? 'rgba(255,255,255,0.38)' : theme.colors.surfaceAlt },
-        ]}
+    <View style={styles.heroContainer}>
+      <LinearGradient
+        colors={['#2A0A4B', '#5B1A8C', '#120424']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroCard}
       >
-        <View
-          style={[
-            styles.adminKnob,
-            {
-              alignSelf: value ? 'flex-end' : 'flex-start',
-              backgroundColor: value ? theme.colors.onAccent : theme.colors.textTertiary,
-            },
-          ]}
-        />
-      </View>
-    </Pressable>
-  );
-}
+        <View style={styles.heroLeft}>
+          <View style={styles.featuredBadge}>
+            <Text style={styles.featuredBadgeText}>Featured Albums</Text>
+          </View>
 
-/** Confirms what the switch changed, so the mode is never on without the listener knowing. */
-function AdminModeBanner({ error }) {
-  const theme = useTheme();
-  const { t } = useSettings();
-  const tone = error ? theme.colors.danger : theme.colors.accent;
+          <Text style={styles.heroTitle}>Feel The</Text>
+          <Text style={styles.heroTitleGradient}>Music</Text>
 
-  return (
-    <View
-      style={[
-        styles.adminBanner,
-        {
-          backgroundColor: error ? `${theme.colors.danger}14` : theme.colors.accentSoft,
-          borderColor: error ? `${theme.colors.danger}33` : theme.colors.accentMuted,
-          borderRadius: theme.radius.lg,
-        },
-      ]}
-    >
-      <Ionicons name={error ? 'cloud-offline' : 'cloud-done'} size={19} color={tone} />
-      <View style={{ flex: 1, marginLeft: 11 }}>
-        <Text style={[theme.font.title, { color: tone }]}>{t('adminSongsMode')}</Text>
-        <Text
-          style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 2 }]}
-        >
-          {error ?? t('adminSongsModeOnBody')}
-        </Text>
+          <Text style={styles.heroSubtitle}>
+            Discover new sounds and timeless classics
+          </Text>
+
+          <Pressable onPress={onPlay} style={styles.listenButton}>
+            <Text style={styles.listenButtonText}>Listen Now</Text>
+            <Ionicons name="play" size={14} color="#FFFFFF" style={{ marginLeft: 6 }} />
+          </Pressable>
+        </View>
+
+        <View style={styles.heroRight}>
+          <View style={styles.heroGlowCircle} />
+          <Ionicons name="headset" size={96} color="rgba(192, 132, 252, 0.4)" />
+        </View>
+      </LinearGradient>
+
+      <View style={styles.dotsRow}>
+        <View style={[styles.dot, styles.dotActive]} />
+        <View style={styles.dot} />
+        <View style={styles.dot} />
+        <View style={styles.dot} />
+        <View style={styles.dot} />
       </View>
     </View>
   );
 }
 
-/**
- * Accent-gradient hero with the app promise and a shuffle-everything CTA.
- *
- * The mockup fills this with a studio photograph; a local player has no such asset, so the
- * gradient carries it and a drawn waveform stands in for the artwork.
- */
+/** Original Hero Banner for Offline mode */
 function HeroBanner({ onPlay, subtitle }) {
   const theme = useTheme();
   const { t } = useSettings();
-
-  // A fixed, hand-tuned silhouette — deterministic so the banner doesn't flicker on re-render.
   const bars = [14, 26, 38, 22, 46, 58, 34, 50, 68, 44, 30, 54, 40, 24, 36, 18, 28, 12];
 
   return (
@@ -399,7 +691,10 @@ function HeroBanner({ onPlay, subtitle }) {
       <View style={styles.heroCopy}>
         <Text style={[theme.font.h2, { color: '#FFFFFF' }]}>{t('heroTitle')}</Text>
         <Text
-          style={[theme.font.body, { color: '#FFFFFF', opacity: 0.88, marginTop: 8, lineHeight: 20 }]}
+          style={[
+            theme.font.body,
+            { color: '#FFFFFF', opacity: 0.88, marginTop: 8, lineHeight: 20 },
+          ]}
         >
           {t('heroSubtitle')}
         </Text>
@@ -441,40 +736,100 @@ function HeroBanner({ onPlay, subtitle }) {
   );
 }
 
+function AdminModeBanner({ error }) {
+  const theme = useTheme();
+  return (
+    <View
+      style={[
+        styles.adminBanner,
+        {
+          backgroundColor: `${theme.colors.danger}14`,
+          borderColor: `${theme.colors.danger}33`,
+          borderRadius: theme.radius.lg,
+        },
+      ]}
+    >
+      <Ionicons name="cloud-offline" size={19} color={theme.colors.danger} />
+      <View style={{ flex: 1, marginLeft: 11 }}>
+        <Text style={[theme.font.title, { color: theme.colors.danger }]}>Connection Warning</Text>
+        <Text style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 2 }]}>
+          {error}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  header: {
+  offlineHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 18,
   },
   headerTitles: { flex: 1, marginLeft: 14 },
-  brandRow: { flexDirection: 'row', alignItems: 'center', marginTop: 1 },
-  adminSwitch: {
+  brandRowOffline: { flexDirection: 'row', alignItems: 'center', marginTop: 1 },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    paddingLeft: 9,
-    paddingRight: 7,
-    paddingVertical: 6,
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    marginBottom: 12,
   },
-  adminTrack: {
-    width: 26,
-    height: 15,
-    borderRadius: 8,
-    marginLeft: 7,
-    padding: 2,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 10,
   },
-  adminKnob: { width: 11, height: 11, borderRadius: 6 },
-  adminBanner: {
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginTop: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  },
+  headerIconButton: {
+    marginRight: 12,
+    padding: 4,
+  },
+  togglePillDark: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 34,
+    borderRadius: 17,
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    padding: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  togglePillLight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    padding: 2,
+  },
+  toggleHalf: {
+    paddingHorizontal: 12,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 14,
+  },
+  toggleActiveOnline: {},
+  toggleText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   hero: {
     marginHorizontal: 16,
@@ -502,7 +857,127 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 70,
   },
-  rail: { paddingHorizontal: 16, paddingTop: 2 },
+  heroContainer: {
+    marginHorizontal: 16,
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  heroCard: {
+    borderRadius: 24,
+    padding: 20,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    minHeight: 180,
+  },
+  heroLeft: {
+    flex: 1,
+    zIndex: 2,
+  },
+  featuredBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  featuredBadgeText: {
+    color: '#C084FC',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 26,
+    fontWeight: '800',
+    lineHeight: 30,
+  },
+  heroTitleGradient: {
+    color: '#C084FC',
+    fontSize: 28,
+    fontWeight: '900',
+    lineHeight: 32,
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    marginBottom: 14,
+  },
+  listenButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  listenButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  heroRight: {
+    width: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  heroGlowCircle: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#8B5CF644',
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    marginHorizontal: 3,
+  },
+  dotActive: {
+    width: 16,
+    backgroundColor: '#C084FC',
+  },
+  categoryPillsScroll: {
+    paddingHorizontal: 16,
+    marginBottom: 18,
+  },
+  categoryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  categoryPillSelected: {
+    backgroundColor: '#8B5CF6',
+    borderColor: '#8B5CF6',
+  },
+  categoryPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  rail: {
+    paddingHorizontal: 16,
+    paddingTop: 2,
+    marginBottom: 16,
+  },
+  emptyRail: {
+    paddingHorizontal: 16,
+    marginVertical: 10,
+  },
   rowPlay: {
     width: 34,
     height: 34,
@@ -511,5 +986,80 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 4,
+  },
+  playlistCardContainer: {
+    width: 140,
+    height: 140,
+    marginRight: 14,
+  },
+  playlistCard: {
+    flex: 1,
+    borderRadius: 18,
+    padding: 14,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  playlistWatermark: {
+    opacity: 0.15,
+  },
+  watermarkText: {
+    color: '#FFFFFF',
+    fontSize: 48,
+    fontWeight: '900',
+  },
+  playlistMeta: {},
+  playlistTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  playlistSubtitle: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  radioContainer: {
+    width: 110,
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  radioCircle: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    position: 'relative',
+  },
+  radioPlayOverlay: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#8B5CF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  radioSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  adminBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
   },
 });

@@ -44,16 +44,18 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { SleepTimerScreen } from '../screens/SleepTimerScreen';
 import { SplashScreen } from '../screens/SplashScreen';
 
+import { CategoriesScreen } from '../screens/CategoriesScreen';
+
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 
-/** [focused, unfocused] icon pair per tab. */
+/** [focused, unfocused] icon pair per tab matching design. */
 const TAB_ICONS = {
   HomeTab: ['home', 'home-outline'],
-  LibraryTab: ['albums', 'albums-outline'],
-  Search: ['search', 'search-outline'],
-  PlaylistsTab: ['list', 'list-outline'],
-  Settings: ['settings', 'settings-outline'],
+  CategoriesTab: ['grid', 'grid-outline'],
+  DownloadsTab: ['download', 'download-outline'],
+  FavoritesTab: ['heart', 'heart-outline'],
+  Settings: ['person', 'person-outline'],
 };
 
 const TAB_BAR_HEIGHT = 62;
@@ -92,7 +94,7 @@ function MainTabs() {
       <Tabs.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: theme.colors.accent,
+          tabBarActiveTintColor: '#C084FC',
           tabBarInactiveTintColor: theme.colors.textTertiary,
           tabBarStyle: {
             backgroundColor: theme.colors.tabBar,
@@ -105,22 +107,34 @@ function MainTabs() {
           },
           tabBarLabelStyle: { ...theme.font.tiny, marginTop: 3 },
           tabBarIcon: ({ focused, color }) => {
-            const [active, inactive] = TAB_ICONS[route.name];
+            const [active, inactive] = TAB_ICONS[route.name] || ['ellipse', 'ellipse-outline'];
             return (
               <TabIcon name={focused ? active : inactive} color={color} focused={focused} />
             );
           },
         })}
       >
-        <Tabs.Screen name="HomeTab" component={HomeScreen} options={{ title: t('home') }} />
-        <Tabs.Screen name="LibraryTab" component={LibraryScreen} options={{ title: t('library') }} />
-        <Tabs.Screen name="Search" component={SearchScreen} options={{ title: t('search') }} />
+        <Tabs.Screen name="HomeTab" component={HomeScreen} options={{ title: 'Home' }} />
         <Tabs.Screen
-          name="PlaylistsTab"
-          component={PlaylistsScreen}
-          options={{ title: t('playlists') }}
+          name="CategoriesTab"
+          component={CategoriesScreen}
+          options={{ title: 'Categories' }}
         />
-        <Tabs.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings') }} />
+        <Tabs.Screen
+          name="DownloadsTab"
+          component={LibraryScreen}
+          options={{ title: 'Downloads' }}
+        />
+        <Tabs.Screen
+          name="FavoritesTab"
+          component={FavoritesScreen}
+          options={{ title: 'Favorites' }}
+        />
+        <Tabs.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: 'Profile' }}
+        />
       </Tabs.Navigator>
     </View>
   );
@@ -244,6 +258,7 @@ export function RootNavigator() {
             <Stack.Screen name="Main" component={MainTabs} options={{ animation: 'fade' }} />
 
             {/* Library browse destinations — pushed so the back arrow in each header works. */}
+            <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="Songs" component={SongsScreen} />
             <Stack.Screen name="Albums" component={AlbumsScreen} />
             <Stack.Screen name="Artists" component={ArtistsScreen} />

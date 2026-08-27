@@ -8,14 +8,33 @@ import { SORT_KEYS } from '../services/musicLibrary';
 import { CollectionScreen } from './CollectionScreen';
 
 export function AlbumDetailScreen({ route, navigation }) {
-  const { albumId, name } = route.params;
+  const { albumId, name, album: passedAlbum } = route.params || {};
   const { t } = useSettings();
-  const { albums } = useLibrary();
+  const { albums, tracks: allTracks } = useLibrary();
 
-  const album = useMemo(
-    () => albums.find((item) => item.id === albumId) ?? albums.find((item) => item.name === name),
-    [albums, albumId, name]
-  );
+  const album = useMemo(() => {
+    if (passedAlbum && Array.isArray(passedAlbum.tracks) && passedAlbum.tracks.length > 0) {
+      return passedAlbum;
+    }
+    const found =
+      (albumId && albums.find((item) => item.id === albumId)) ??
+      (name && albums.find((item) => item.name && item.name.toLowerCase() === name.toLowerCase()));
+
+    if (found && found.tracks && found.tracks.length > 0) return found;
+
+    // Fallback: dynamically filter all tracks matching this album name
+    const albumName = name || albumId || 'Album';
+    const albumTracks = allTracks.filter(
+      (t) => (t.album || '').toLowerCase() === albumName.toLowerCase()
+    );
+    return {
+      id: albumId || albumName,
+      name: albumName,
+      artist: albumTracks[0]?.artist || 'Various Artists',
+      artworkUri: albumTracks[0]?.artworkUri || null,
+      tracks: albumTracks,
+    };
+  }, [albums, albumId, name, passedAlbum, allTracks]);
 
   return (
     <CollectionScreen
@@ -34,17 +53,37 @@ export function AlbumDetailScreen({ route, navigation }) {
 }
 
 export function ArtistDetailScreen({ route, navigation }) {
-  const { name } = route.params;
+  const { name, artist: passedArtist } = route.params || {};
   const { t } = useSettings();
-  const { artists } = useLibrary();
+  const { artists, tracks: allTracks } = useLibrary();
 
-  const artist = useMemo(() => artists.find((item) => item.name === name), [artists, name]);
+  const artist = useMemo(() => {
+    if (passedArtist && Array.isArray(passedArtist.tracks) && passedArtist.tracks.length > 0) {
+      return passedArtist;
+    }
+    const found = artists.find(
+      (item) => item.name && name && item.name.toLowerCase() === name.toLowerCase()
+    );
+    if (found && found.tracks && found.tracks.length > 0) return found;
+
+    const artistName = name || 'Artist';
+    const artistTracks = allTracks.filter(
+      (t) => (t.artist || '').toLowerCase() === artistName.toLowerCase()
+    );
+    return {
+      id: artistName,
+      name: artistName,
+      albumCount: new Set(artistTracks.map((t) => t.album)).size,
+      artworkUri: artistTracks[0]?.artworkUri || null,
+      tracks: artistTracks,
+    };
+  }, [artists, name, passedArtist, allTracks]);
 
   return (
     <CollectionScreen
       navigation={navigation}
       title={artist?.name ?? name}
-      subtitle={artist ? t('albumCount', { count: artist.albumCount }) : undefined}
+      subtitle={artist ? t('albumCount', { count: artist.albumCount ?? 1 }) : undefined}
       artworkUri={artist?.artworkUri}
       artworkName={artist?.name ?? name}
       circularArtwork
@@ -57,11 +96,32 @@ export function ArtistDetailScreen({ route, navigation }) {
 }
 
 export function GenreDetailScreen({ route, navigation }) {
-  const { genreId, name } = route.params;
+  const { genreId, name, genre: passedGenre } = route.params || {};
   const { t } = useSettings();
-  const { genres } = useLibrary();
+  const { genres, tracks: allTracks } = useLibrary();
 
-  const genre = useMemo(() => genres.find((item) => item.id === genreId), [genres, genreId]);
+  const genre = useMemo(() => {
+    if (passedGenre && Array.isArray(passedGenre.tracks) && passedGenre.tracks.length > 0) {
+      return passedGenre;
+    }
+    const found = genres.find(
+      (item) =>
+        (genreId && item.id === genreId) ||
+        (name && item.name && item.name.toLowerCase() === name.toLowerCase())
+    );
+    if (found && found.tracks && found.tracks.length > 0) return found;
+
+    // Fallback: dynamically filter all tracks matching this category or genre name
+    const categoryName = name || genre?.name || genreId || 'Category';
+    const categoryTracks = allTracks.filter(
+      (t) => (t.category || t.genre || '').toLowerCase() === categoryName.toLowerCase()
+    );
+    return {
+      id: genreId || categoryName,
+      name: categoryName,
+      tracks: categoryTracks,
+    };
+  }, [genres, genreId, name, passedGenre, allTracks]);
 
   return (
     <CollectionScreen

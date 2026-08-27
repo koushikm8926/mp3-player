@@ -9,8 +9,8 @@ import { prisma } from '@/lib/prisma';
  * emulator, over the LAN or behind a domain without any of those being configured here.
  */
 export async function GET(request: Request) {
-  const auth = await authenticateMobileRequest(request);
-  if (!auth) return jsonError('Unauthorized', 401);
+  // Published tracks in Online mode are accessible to the app
+  await authenticateMobileRequest(request).catch(() => null);
 
   const songs = await prisma.song.findMany({
     where: { isPublished: true },
@@ -20,6 +20,8 @@ export async function GET(request: Request) {
       title: true,
       artist: true,
       album: true,
+      category: true,
+      artworkUrl: true,
       mimeType: true,
       sizeBytes: true,
       durationMs: true,

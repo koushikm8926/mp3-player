@@ -71,7 +71,11 @@ export function SearchScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ScreenHeader title={t('search')} subtitle={t('findYourMusic')} />
+      <ScreenHeader
+        title={t('search')}
+        subtitle={t('findYourMusic')}
+        onBack={() => navigation.goBack()}
+      />
 
       <View style={styles.searchRow}>
         <SearchBar

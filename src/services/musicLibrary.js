@@ -96,6 +96,8 @@ export function adminSongsToLibrary(songs) {
     const title = song.title || 'Untitled';
     const artist = song.artist || 'Unknown artist';
     const album = song.album || 'Unknown album';
+    const category = song.category || 'Pop';
+    const artworkUri = song.artworkUrl || null;
     return {
       id: `admin:${song.id}`,
       uri: song.url,
@@ -103,11 +105,12 @@ export function adminSongsToLibrary(songs) {
       artist,
       album,
       albumId: null,
-      genre: 'Admin panel',
+      genre: category,
+      category,
       fileName: song.originalName ?? title,
       folderPath: 'Admin panel',
       folderName: 'Admin panel',
-      artworkUri: null,
+      artworkUri,
       duration: Number(song.durationMs) || 0,
       size: Number(song.sizeBytes) || 0,
       year: 0,
@@ -115,7 +118,7 @@ export function adminSongsToLibrary(songs) {
       discNumber: 1,
       dateAdded: song.createdAt ? Math.floor(new Date(song.createdAt).getTime() / 1000) : 0,
       isAdminSong: true,
-      searchKey: normalizeForSearch(`${title} ${artist} ${album} Admin panel`),
+      searchKey: normalizeForSearch(`${title} ${artist} ${album} ${category} Admin panel`),
     };
   });
 

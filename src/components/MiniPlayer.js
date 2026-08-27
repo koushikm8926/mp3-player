@@ -5,6 +5,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 
+import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useTheme } from '../context/SettingsContext';
 import { formatDuration } from '../utils/format';
@@ -20,6 +21,7 @@ import { Artwork } from './Artwork';
 export function MiniPlayer({ bottomOffset = 0 }) {
   const theme = useTheme();
   const navigation = useNavigation();
+  const { adminMode } = useLibrary() || {};
   const { currentTrack, isPlaying, togglePlay, skipNext, skipPrevious, positionMs, durationMs } =
     usePlayer();
 
@@ -27,6 +29,8 @@ export function MiniPlayer({ bottomOffset = 0 }) {
 
   const progress = durationMs > 0 ? Math.min(1, positionMs / durationMs) : 0;
   const onAccent = '#FFFFFF';
+  const gradientColors = adminMode ? ['#2A1054', '#5B21B6'] : theme.accentGradient;
+  const playIconColor = adminMode ? '#6D28D9' : theme.colors.accent;
 
   return (
     <Animated.View
@@ -39,7 +43,7 @@ export function MiniPlayer({ bottomOffset = 0 }) {
     >
       <PressableScale onPress={() => navigation.navigate('NowPlaying')} scaleTo={0.975}>
         <LinearGradient
-          colors={theme.accentGradient}
+          colors={gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.bar, { borderRadius: theme.radius.lg }, theme.shadow.floating]}
@@ -96,7 +100,7 @@ export function MiniPlayer({ bottomOffset = 0 }) {
               <Ionicons
                 name={isPlaying ? 'pause' : 'play'}
                 size={22}
-                color={theme.colors.accent}
+                color={playIconColor}
                 style={{ marginLeft: isPlaying ? 0 : 2 }}
               />
             </PopOnChange>

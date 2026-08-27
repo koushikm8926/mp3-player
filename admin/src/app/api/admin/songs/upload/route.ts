@@ -44,6 +44,11 @@ export async function POST(request: Request) {
     return Response.json({ error: `"${file.name}" is larger than ${mb} MB.` }, { status: 413 });
   }
 
+  const categoryRaw = form.get('category');
+  const category = typeof categoryRaw === 'string' && categoryRaw.trim() ? categoryRaw.trim() : 'Pop';
+  const artworkUrlRaw = form.get('artworkUrl');
+  const artworkUrl = typeof artworkUrlRaw === 'string' && artworkUrlRaw.trim() ? artworkUrlRaw.trim() : null;
+
   const id = randomUUID();
   let saved;
   try {
@@ -59,13 +64,15 @@ export async function POST(request: Request) {
       data: {
         id,
         title: titleFromFilename(file.name),
+        category,
+        artworkUrl,
         storageKey: saved.storageKey,
         originalName: file.name,
         mimeType: saved.mimeType,
         sizeBytes: saved.sizeBytes,
         uploadedBy: admin.sub,
       },
-      select: { id: true, title: true },
+      select: { id: true, title: true, category: true },
     });
     await recordAudit(admin.sub, 'song.upload', song.id, file.name);
     return Response.json({ song });
