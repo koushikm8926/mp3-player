@@ -39,6 +39,7 @@ export function AlbumDetailScreen({ route, navigation }) {
   return (
     <CollectionScreen
       navigation={navigation}
+      showBack
       title={album?.name ?? name}
       subtitle={album?.artist}
       subtitleIsArtist
@@ -82,6 +83,7 @@ export function ArtistDetailScreen({ route, navigation }) {
   return (
     <CollectionScreen
       navigation={navigation}
+      showBack
       title={artist?.name ?? name}
       subtitle={artist ? t('albumCount', { count: artist.albumCount ?? 1 }) : undefined}
       artworkUri={artist?.artworkUri}
@@ -126,6 +128,7 @@ export function GenreDetailScreen({ route, navigation }) {
   return (
     <CollectionScreen
       navigation={navigation}
+      showBack
       title={genre?.name ?? name}
       artworkName={genre?.name ?? name}
       tracks={genre?.tracks ?? []}
@@ -146,6 +149,7 @@ export function FolderDetailScreen({ route, navigation }) {
   return (
     <CollectionScreen
       navigation={navigation}
+      showBack
       title={folder?.name ?? name}
       subtitle={path}
       artworkName={folder?.name ?? name}
@@ -183,6 +187,7 @@ export function FavoritesScreen({ navigation }) {
   return (
     <CollectionScreen
       navigation={navigation}
+      showBack={false}
       title={t('favorites')}
       heroIcon="heart"
       tracks={favoriteTracks}
@@ -200,6 +205,7 @@ export function RecentlyPlayedScreen({ navigation }) {
   return (
     <CollectionScreen
       navigation={navigation}
+      showBack
       title={t('recentlyPlayed')}
       heroIcon="time"
       description={t('recentlyPlayedBody')}
@@ -253,6 +259,7 @@ export function PlaylistDetailScreen({ route, navigation }) {
     <>
     <CollectionScreen
       navigation={navigation}
+      showBack
       title={playlist?.name ?? name}
       subtitle={t('createdByYou')}
       description={playlist?.description || undefined}

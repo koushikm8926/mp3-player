@@ -50,6 +50,7 @@ export function CollectionScreen({
   extraMenuItems = [],
   optionsContextFor,
   sortable = true,
+  showBack = false,
 }) {
   const theme = useTheme();
   const { t } = useSettings();
@@ -271,13 +272,11 @@ export function CollectionScreen({
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
-        {canGoBack ? (
+        {showBack && canGoBack ? (
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
             <Ionicons name="arrow-back" size={24} color={textColor} />
           </Pressable>
-        ) : (
-          <Ionicons name={heroIcon ?? 'musical-notes'} size={22} color={iconColor} style={{ marginLeft: 4 }} />
-        )}
+        ) : null}
         <View style={{ flex: 1 }} />
         {sortable && tracks.length > 1 ? (
           <Pressable onPress={() => setSortOpen(true)} hitSlop={12} style={{ marginRight: 18 }}>
