@@ -105,8 +105,11 @@ export function CollectionScreen({
 
   const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
   const bg = isDarkUI ? '#090713' : theme.colors.background;
+  const sheetBg = isDarkUI ? '#090713' : theme.colors.surface;
+  const sheetBorderColor = isDarkUI ? 'rgba(255, 255, 255, 0.1)' : theme.colors.border;
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
   const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const accentColor = isDarkUI ? '#C084FC' : theme.colors.accent;
 
   const isHeart = heroIcon === 'heart';
   const iconBg = isHeart
@@ -214,20 +217,20 @@ export function CollectionScreen({
           style={[
             styles.sheetTop,
             {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
+              backgroundColor: sheetBg,
+              borderColor: sheetBorderColor,
               borderTopLeftRadius: theme.radius.xl,
               borderTopRightRadius: theme.radius.xl,
             },
           ]}
         >
-          <Text style={[theme.font.title, { color: theme.colors.accent, flex: 1 }]}>
+          <Text style={[theme.font.title, { color: accentColor, flex: 1 }]}>
             {t('songCount', { count: tracks.length })}
           </Text>
           {totalDuration > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="time-outline" size={15} color={theme.colors.accent} />
-              <Text style={[theme.font.body, { color: theme.colors.accent, marginLeft: 5 }]}>
+              <Ionicons name="time-outline" size={15} color={accentColor} />
+              <Text style={[theme.font.body, { color: accentColor, marginLeft: 5 }]}>
                 {formatLongDuration(totalDuration)}
               </Text>
             </View>
@@ -254,23 +257,35 @@ export function CollectionScreen({
       playAll,
       shuffleAll,
       toggleAllFavorites,
+      bg,
+      sheetBg,
+      sheetBorderColor,
+      textColor,
+      subtitleColor,
+      accentColor,
+      iconBg,
+      iconColor,
     ]
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: bg }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.accent} />
-        </Pressable>
+        {canGoBack ? (
+          <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+            <Ionicons name="arrow-back" size={24} color={textColor} />
+          </Pressable>
+        ) : (
+          <Ionicons name={heroIcon ?? 'musical-notes'} size={22} color={iconColor} style={{ marginLeft: 4 }} />
+        )}
         <View style={{ flex: 1 }} />
         {sortable && tracks.length > 1 ? (
           <Pressable onPress={() => setSortOpen(true)} hitSlop={12} style={{ marginRight: 18 }}>
-            <Ionicons name="swap-vertical" size={22} color={theme.colors.text} />
+            <Ionicons name="swap-vertical" size={22} color={textColor} />
           </Pressable>
         ) : null}
         <Pressable onPress={() => setMenuOpen(true)} hitSlop={12}>
-          <Ionicons name="ellipsis-vertical" size={22} color={theme.colors.accent} />
+          <Ionicons name="ellipsis-vertical" size={22} color={textColor} />
         </Pressable>
       </View>
 
@@ -280,12 +295,13 @@ export function CollectionScreen({
         showIndex
         showArtwork={Boolean(heroIcon)}
         optionsContextFor={optionsContextFor}
-        contentContainerStyle={{ backgroundColor: theme.colors.surface }}
+        contentContainerStyle={{ backgroundColor: bg }}
         ListHeaderComponent={Header}
-        ListFooterComponent={<View style={{ height: 170, backgroundColor: theme.colors.surface }} />}
+        ListFooterComponent={<View style={{ height: 170, backgroundColor: bg }} />}
         ListEmptyComponent={
-          <View style={{ backgroundColor: theme.colors.background }}>
+          <View style={{ backgroundColor: bg, paddingTop: 30, paddingBottom: 60 }}>
             <EmptyState
+              icon={heroIcon ?? 'musical-notes-outline'}
               title={emptyTitle ?? t('emptyPlaylistTitle')}
               body={emptyBody ?? t('emptyPlaylistBody')}
             />
