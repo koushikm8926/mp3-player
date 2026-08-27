@@ -103,19 +103,26 @@ export function CollectionScreen({
     });
   }, [allFavorite, tracks, library]);
 
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const bg = isDarkUI ? '#090713' : theme.colors.background;
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const iconBg = isDarkUI ? 'rgba(192, 132, 252, 0.15)' : theme.colors.accentSoft;
+  const iconColor = isDarkUI ? '#C084FC' : theme.colors.accent;
+
   const Header = useCallback(
     () => (
-      <View style={{ backgroundColor: theme.colors.background }}>
+      <View style={{ backgroundColor: bg }}>
         {heroIcon ? (
           <View style={styles.simpleHero}>
-            <View style={[styles.simpleIcon, { backgroundColor: theme.colors.accentSoft }]}>
-              <Ionicons name={heroIcon} size={30} color={theme.colors.accent} />
+            <View style={[styles.simpleIcon, { backgroundColor: iconBg }]}>
+              <Ionicons name={heroIcon} size={30} color={iconColor} />
             </View>
             <View style={{ flex: 1, marginLeft: 14 }}>
-              <Text style={[theme.font.h1, { color: theme.colors.text }]} numberOfLines={1}>
+              <Text style={[theme.font.h1, { color: textColor }]} numberOfLines={1}>
                 {title}
               </Text>
-              <Text style={[theme.font.body, { color: theme.colors.textSecondary, marginTop: 3 }]}>
+              <Text style={[theme.font.body, { color: subtitleColor, marginTop: 3 }]}>
                 {meta}
               </Text>
             </View>
@@ -131,7 +138,7 @@ export function CollectionScreen({
             />
 
             <View style={styles.mediaMeta}>
-              <Text style={[theme.font.h1, { color: theme.colors.text }]} numberOfLines={2}>
+              <Text style={[theme.font.h1, { color: textColor }]} numberOfLines={2}>
                 {title}
               </Text>
 
@@ -147,18 +154,18 @@ export function CollectionScreen({
                 >
                   <Text
                     numberOfLines={1}
-                    style={[theme.font.title, { color: theme.colors.accent }]}
+                    style={[theme.font.title, { color: iconColor }]}
                   >
                     {subtitle}
                   </Text>
                   {subtitleIsArtist ? (
-                    <Ionicons name="chevron-forward" size={15} color={theme.colors.accent} />
+                    <Ionicons name="chevron-forward" size={15} color={iconColor} />
                   ) : null}
                 </Pressable>
               ) : null}
 
               <Text
-                style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 6 }]}
+                style={[theme.font.caption, { color: subtitleColor, marginTop: 6 }]}
               >
                 {meta}
               </Text>
@@ -168,7 +175,7 @@ export function CollectionScreen({
                   numberOfLines={3}
                   style={[
                     theme.font.body,
-                    { color: theme.colors.textSecondary, marginTop: 10, lineHeight: 20 },
+                    { color: subtitleColor, marginTop: 10, lineHeight: 20 },
                   ]}
                 >
                   {description}

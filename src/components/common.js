@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useLibrary } from '../context/LibraryContext';
 import { useTheme } from '../context/SettingsContext';
 import { PressableScale } from './animated';
 
@@ -31,12 +32,18 @@ export function ScreenHeader({
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const glyphColor = isDarkUI ? '#C084FC' : theme.colors.accent;
 
   return (
     <View style={[styles.screenHeader, { paddingTop: insets.top + 10 }, style]}>
       {onBack ? (
         <Pressable onPress={onBack} hitSlop={12} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+          <Ionicons name="arrow-back" size={24} color={textColor} />
         </Pressable>
       ) : null}
 
@@ -44,7 +51,7 @@ export function ScreenHeader({
         <View style={styles.titleRow}>
           <Text
             numberOfLines={1}
-            style={[large ? theme.font.h1 : theme.font.h2, { color: theme.colors.text }]}
+            style={[large ? theme.font.h1 : theme.font.h2, { color: textColor }]}
           >
             {title}
           </Text>
@@ -52,13 +59,13 @@ export function ScreenHeader({
             <Ionicons
               name={glyph}
               size={large ? 20 : 18}
-              color={theme.colors.accent}
+              color={glyphColor}
               style={{ marginLeft: 8 }}
             />
           ) : null}
         </View>
         {subtitle ? (
-          <Text style={[theme.font.body, { color: theme.colors.textSecondary, marginTop: 2 }]}>
+          <Text style={[theme.font.body, { color: subtitleColor, marginTop: 2 }]}>
             {subtitle}
           </Text>
         ) : null}
@@ -71,7 +78,7 @@ export function ScreenHeader({
           hitSlop={10}
           style={styles.headerAction}
         >
-          <Ionicons name={action.icon} size={23} color={action.tint ?? theme.colors.text} />
+          <Ionicons name={action.icon} size={23} color={action.tint ?? textColor} />
         </Pressable>
       ))}
     </View>
@@ -95,15 +102,21 @@ export function SearchBar({
   style,
 }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
   const readOnly = typeof onPress === 'function';
+
+  const iconColor = isDarkUI ? 'rgba(255, 255, 255, 0.6)' : theme.colors.textTertiary;
+  const placeholderColor = isDarkUI ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary;
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
 
   const body = (
     <>
-      <Ionicons name="search" size={19} color={theme.colors.textTertiary} />
+      <Ionicons name="search" size={19} color={iconColor} />
       {readOnly ? (
         <Text
           numberOfLines={1}
-          style={[theme.font.body, styles.searchInput, { color: theme.colors.textTertiary }]}
+          style={[theme.font.body, styles.searchInput, { color: placeholderColor }]}
         >
           {placeholder}
         </Text>
@@ -112,24 +125,24 @@ export function SearchBar({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={theme.colors.textTertiary}
+          placeholderTextColor={placeholderColor}
           autoFocus={autoFocus}
           returnKeyType="search"
-          style={[theme.font.body, styles.searchInput, { color: theme.colors.text }]}
+          style={[theme.font.body, styles.searchInput, { color: textColor }]}
         />
       )}
 
       {!readOnly && value?.length > 0 && onClear ? (
         <Pressable onPress={onClear} hitSlop={8} style={{ marginRight: 4 }}>
-          <Ionicons name="close-circle" size={18} color={theme.colors.textTertiary} />
+          <Ionicons name="close-circle" size={18} color={placeholderColor} />
         </Pressable>
       ) : null}
 
       {onPressTrailing ? (
         <Pressable onPress={onPressTrailing} hitSlop={10} style={styles.searchTrailing}>
-          <Ionicons name={trailingIcon} size={19} color={theme.colors.accent} />
+          <Ionicons name={trailingIcon} size={19} color={isDarkUI ? '#C084FC' : theme.colors.accent} />
           {trailingLabel ? (
-            <Text style={[theme.font.title, { color: theme.colors.accent, marginLeft: 6 }]}>
+            <Text style={[theme.font.title, { color: isDarkUI ? '#C084FC' : theme.colors.accent, marginLeft: 6 }]}>
               {trailingLabel}
             </Text>
           ) : null}
@@ -141,8 +154,8 @@ export function SearchBar({
   const containerStyle = [
     styles.searchBar,
     {
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
+      backgroundColor: isDarkUI ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surface,
+      borderColor: isDarkUI ? 'rgba(255, 255, 255, 0.15)' : theme.colors.border,
       borderRadius: theme.radius.pill,
     },
     theme.shadow.card,
@@ -162,14 +175,17 @@ export function SearchBar({
 /** White rounded container with a hairline border and soft shadow. */
 export function Card({ children, style, padded = false }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
   return (
     <View
       style={[
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: isDarkUI ? 'rgba(255, 255, 255, 0.06)' : theme.colors.surface,
           borderRadius: theme.radius.lg,
           borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colors.border,
+          borderColor: isDarkUI ? 'rgba(255, 255, 255, 0.12)' : theme.colors.border,
           overflow: 'hidden',
         },
         theme.shadow.card,
@@ -185,11 +201,14 @@ export function Card({ children, style, padded = false }) {
 /** Uppercase group label above a settings card. */
 export function GroupLabel({ label, style }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
   return (
     <Text
       style={[
         theme.font.overline,
-        { color: theme.colors.accent, marginLeft: 20, marginBottom: 8, marginTop: 22 },
+        { color: isDarkUI ? '#C084FC' : theme.colors.accent, marginLeft: 20, marginBottom: 8, marginTop: 22 },
         style,
       ]}
     >
@@ -201,15 +220,18 @@ export function GroupLabel({ label, style }) {
 /** Section heading with an optional trailing "See All ›" action. */
 export function SectionHeader({ title, actionLabel, onPressAction, style }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
   return (
     <View style={[styles.sectionHeader, style]}>
-      <Text style={[theme.font.h3, { color: theme.colors.text, flex: 1 }]} numberOfLines={1}>
+      <Text style={[theme.font.h3, { color: isDarkUI ? '#FFFFFF' : theme.colors.text, flex: 1 }]} numberOfLines={1}>
         {title}
       </Text>
       {actionLabel ? (
         <Pressable onPress={onPressAction} hitSlop={8} style={styles.seeAll}>
-          <Text style={[theme.font.title, { color: theme.colors.accent }]}>{actionLabel}</Text>
-          <Ionicons name="chevron-forward" size={16} color={theme.colors.accent} />
+          <Text style={[theme.font.title, { color: isDarkUI ? '#C084FC' : theme.colors.accent }]}>{actionLabel}</Text>
+          <Ionicons name="chevron-forward" size={16} color={isDarkUI ? '#C084FC' : theme.colors.accent} />
         </Pressable>
       ) : null}
     </View>
@@ -218,22 +240,25 @@ export function SectionHeader({ title, actionLabel, onPressAction, style }) {
 
 export function EmptyState({ icon = 'musical-notes-outline', title, body, action, onAction }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
   return (
     <View style={styles.empty}>
       <View
         style={[
           styles.emptyIcon,
-          { backgroundColor: theme.colors.accentSoft, borderRadius: theme.radius.xxl },
+          { backgroundColor: isDarkUI ? 'rgba(192, 132, 252, 0.15)' : theme.colors.accentSoft, borderRadius: theme.radius.xxl },
         ]}
       >
-        <Ionicons name={icon} size={36} color={theme.colors.accent} />
+        <Ionicons name={icon} size={36} color={isDarkUI ? '#C084FC' : theme.colors.accent} />
       </View>
-      <Text style={[theme.font.h3, { color: theme.colors.text, textAlign: 'center' }]}>{title}</Text>
+      <Text style={[theme.font.h3, { color: isDarkUI ? '#FFFFFF' : theme.colors.text, textAlign: 'center' }]}>{title}</Text>
       {body ? (
         <Text
           style={[
             theme.font.body,
-            { color: theme.colors.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 20 },
+            { color: isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 20 },
           ]}
         >
           {body}

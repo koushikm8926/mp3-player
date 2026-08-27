@@ -86,20 +86,28 @@ function MainTabs() {
   const theme = useTheme();
   const { t } = useSettings();
   const insets = useSafeAreaInsets();
+  const { adminMode } = useLibrary() || {};
 
   const tabBarHeight = TAB_BAR_HEIGHT + insets.bottom;
 
+  const isOnlineDark = adminMode;
+  const navBg = isOnlineDark ? '#090713' : theme.colors.background;
+  const tabBarBg = isOnlineDark ? '#0D091A' : theme.colors.tabBar;
+  const tabBarBorder = isOnlineDark ? 'rgba(255, 255, 255, 0.1)' : theme.colors.border;
+  const activeColor = isOnlineDark ? '#C084FC' : theme.colors.accent;
+  const inactiveColor = isOnlineDark ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary;
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: navBg }}>
       <Tabs.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: '#C084FC',
-          tabBarInactiveTintColor: theme.colors.textTertiary,
+          tabBarActiveTintColor: activeColor,
+          tabBarInactiveTintColor: inactiveColor,
           tabBarStyle: {
-            backgroundColor: theme.colors.tabBar,
+            backgroundColor: tabBarBg,
             borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: theme.colors.border,
+            borderTopColor: tabBarBorder,
             height: tabBarHeight,
             paddingBottom: insets.bottom,
             paddingTop: 8,

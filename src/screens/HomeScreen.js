@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -630,46 +631,174 @@ export function HomeScreen({ navigation }) {
   );
 }
 
+const CAROUSEL_ITEMS = [
+  {
+    id: '1',
+    badge: 'Featured Albums',
+    titleLine1: 'Feel The',
+    titleLine2: 'Music',
+    subtitle: 'Discover new sounds and timeless classics',
+    gradient: ['#2A0A4B', '#5B1A8C', '#120424'],
+    accentColor: '#C084FC',
+    buttonColor: '#8B5CF6',
+    icon: 'headset',
+  },
+  {
+    id: '2',
+    badge: 'Spiritual Essentials',
+    titleLine1: 'Inner Peace',
+    titleLine2: '& Harmony',
+    subtitle: 'Soothing devotional chants, mantras & melodies',
+    gradient: ['#4A041D', '#9F1239', '#1C020B'],
+    accentColor: '#FB7185',
+    buttonColor: '#E11D48',
+    icon: 'flame',
+  },
+  {
+    id: '3',
+    badge: 'Top Trending',
+    titleLine1: 'Top Hits',
+    titleLine2: '2026',
+    subtitle: 'Stream today’s top viral chartbusters & songs',
+    gradient: ['#0F172A', '#1E3A8A', '#0284C7'],
+    accentColor: '#38BDF8',
+    buttonColor: '#2563EB',
+    icon: 'trending-up',
+  },
+  {
+    id: '4',
+    badge: 'Lo-Fi Beats',
+    titleLine1: 'Focus &',
+    titleLine2: 'Unwind',
+    subtitle: 'Chill beats for studying, working or relaxing',
+    gradient: ['#1E1B4B', '#4338CA', '#312E81'],
+    accentColor: '#818CF8',
+    buttonColor: '#4945FF',
+    icon: 'cafe',
+  },
+  {
+    id: '5',
+    badge: 'Party Anthem',
+    titleLine1: 'Unstoppable',
+    titleLine2: 'Party Beats',
+    subtitle: 'High energy dance mixes to get you moving',
+    gradient: ['#701A75', '#BE185D', '#3B023E'],
+    accentColor: '#F472B6',
+    buttonColor: '#DB2777',
+    icon: 'flash',
+  },
+];
+
 /** Featured Albums Hero Carousel Banner matching Image 2 */
 function HeroCarousel({ onPlay }) {
+  const { width } = useWindowDimensions();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const flatListRef = useRef(null);
+
+  const cardWidth = Math.max(280, width - 36);
+  const cardGap = 12;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => {
+        const nextIndex = (prev + 1) % CAROUSEL_ITEMS.length;
+        flatListRef.current?.scrollToIndex({
+          index: nextIndex,
+          animated: true,
+        });
+        return nextIndex;
+      });
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleScroll = (event) => {
+    const contentOffset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffset / (cardWidth + cardGap));
+    if (index >= 0 && index < CAROUSEL_ITEMS.length && index !== activeIndex) {
+      setActiveIndex(index);
+    }
+  };
+
   return (
     <View style={styles.heroContainer}>
-      <LinearGradient
-        colors={['#2A0A4B', '#5B1A8C', '#120424']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.heroCard}
-      >
-        <View style={styles.heroLeft}>
-          <View style={styles.featuredBadge}>
-            <Text style={styles.featuredBadgeText}>Featured Albums</Text>
+      <FlatList
+        ref={flatListRef}
+        horizontal
+        data={CAROUSEL_ITEMS}
+        keyExtractor={(item) => item.id}
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={cardWidth + cardGap}
+        decelerationRate="fast"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        getItemLayout={(_, index) => ({
+          length: cardWidth + cardGap,
+          offset: (cardWidth + cardGap) * index,
+          index,
+        })}
+        renderItem={({ item }) => (
+          <View style={{ width: cardWidth, marginRight: cardGap }}>
+            <LinearGradient
+              colors={item.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroCard}
+            >
+              <View style={styles.heroLeft}>
+                <View style={[styles.featuredBadge, { backgroundColor: `${item.accentColor}25` }]}>
+                  <Text style={[styles.featuredBadgeText, { color: item.accentColor }]}>
+                    {item.badge}
+                  </Text>
+                </View>
+
+                <Text style={styles.heroTitle}>{item.titleLine1}</Text>
+                <Text style={[styles.heroTitleGradient, { color: item.accentColor }]}>
+                  {item.titleLine2}
+                </Text>
+
+                <Text style={styles.heroSubtitle}>{item.subtitle}</Text>
+
+                <Pressable
+                  onPress={() => onPlay(item)}
+                  style={[styles.listenButton, { backgroundColor: item.buttonColor }]}
+                >
+                  <Text style={styles.listenButtonText}>Listen Now</Text>
+                  <Ionicons name="play" size={14} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                </Pressable>
+              </View>
+
+              <View style={styles.heroRight}>
+                <View style={[styles.heroGlowCircle, { backgroundColor: `${item.accentColor}33` }]} />
+                <Ionicons name={item.icon} size={92} color={`${item.accentColor}66`} />
+              </View>
+            </LinearGradient>
           </View>
-
-          <Text style={styles.heroTitle}>Feel The</Text>
-          <Text style={styles.heroTitleGradient}>Music</Text>
-
-          <Text style={styles.heroSubtitle}>
-            Discover new sounds and timeless classics
-          </Text>
-
-          <Pressable onPress={onPlay} style={styles.listenButton}>
-            <Text style={styles.listenButtonText}>Listen Now</Text>
-            <Ionicons name="play" size={14} color="#FFFFFF" style={{ marginLeft: 6 }} />
-          </Pressable>
-        </View>
-
-        <View style={styles.heroRight}>
-          <View style={styles.heroGlowCircle} />
-          <Ionicons name="headset" size={96} color="rgba(192, 132, 252, 0.4)" />
-        </View>
-      </LinearGradient>
+        )}
+      />
 
       <View style={styles.dotsRow}>
-        <View style={[styles.dot, styles.dotActive]} />
-        <View style={styles.dot} />
-        <View style={styles.dot} />
-        <View style={styles.dot} />
-        <View style={styles.dot} />
+        {CAROUSEL_ITEMS.map((item, idx) => (
+          <Pressable
+            key={item.id}
+            onPress={() => {
+              setActiveIndex(idx);
+              flatListRef.current?.scrollToIndex({ index: idx, animated: true });
+            }}
+            hitSlop={8}
+          >
+            <View
+              style={[
+                styles.dot,
+                idx === activeIndex && [
+                  styles.dotActive,
+                  { backgroundColor: CAROUSEL_ITEMS[activeIndex]?.accentColor || '#C084FC' },
+                ],
+              ]}
+            />
+          </Pressable>
+        ))}
       </View>
     </View>
   );

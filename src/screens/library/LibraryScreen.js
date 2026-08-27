@@ -24,9 +24,12 @@ export function LibraryScreen({ navigation }) {
 
   const { tracks, albums, artists, genres, folders, playlists, recentlyAddedTracks } = library;
 
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const bg = isDarkUI ? '#090713' : theme.colors.background;
+
   if (tracks.length === 0 && !library.scanning) {
     return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={{ flex: 1, backgroundColor: bg }}>
         <ScreenHeader title={t('musicLibrary')} glyph="musical-notes" />
         <EmptyState
           icon="musical-notes-outline"
@@ -40,9 +43,9 @@ export function LibraryScreen({ navigation }) {
   }
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: bg }}>
       <ScrollView
-        style={{ backgroundColor: theme.colors.background }}
+        style={{ backgroundColor: bg }}
         contentContainerStyle={{ paddingBottom: 170 }}
         showsVerticalScrollIndicator={false}
       >
@@ -191,7 +194,7 @@ export function LibraryScreen({ navigation }) {
         onClose={() => setSheetTrack(null)}
         navigation={navigation}
       />
-    </>
+    </View>
   );
 }
 

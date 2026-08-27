@@ -50,8 +50,11 @@ export function SettingsScreen({ navigation }) {
     amoled: t('themeAmoled'),
   }[settings.themeMode];
 
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const bg = isDarkUI ? '#090713' : theme.colors.background;
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: bg }}>
       <ScreenHeader
         title={t('settings')}
         large={false}
@@ -68,37 +71,37 @@ export function SettingsScreen({ navigation }) {
           style={({ pressed }) => [
             styles.accountCard,
             {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
+              backgroundColor: isDarkUI ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surface,
+              borderColor: isDarkUI ? 'rgba(255, 255, 255, 0.15)' : theme.colors.border,
               borderRadius: theme.radius.lg,
               opacity: pressed ? 0.9 : 1,
             },
             theme.shadow.card,
           ]}
         >
-            <View style={[styles.avatar, { backgroundColor: theme.colors.accent }]}>
-              <Text style={{ color: theme.colors.onAccent, fontSize: 20, fontWeight: '700' }}>
+            <View style={[styles.avatar, { backgroundColor: isDarkUI ? '#8B5CF6' : theme.colors.accent }]}>
+              <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '700' }}>
                 {(user?.name ?? 'G')[0].toUpperCase()}
               </Text>
             </View>
             <View style={{ flex: 1, marginLeft: 14 }}>
-              <Text numberOfLines={1} style={[theme.font.title, { color: theme.colors.text }]}>
+              <Text numberOfLines={1} style={[theme.font.title, { color: isDarkUI ? '#FFFFFF' : theme.colors.text }]}>
                 {user?.name ?? 'Guest'}
               </Text>
-              <Text numberOfLines={1} style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}>
+              <Text numberOfLines={1} style={[theme.font.caption, { color: isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary, marginTop: 3 }]}>
                 {user?.email ?? t('continueAsGuest')}
               </Text>
             </View>
             <View
               style={[
                 styles.statusDot,
-                { backgroundColor: serverReachable ? theme.colors.success : theme.colors.textTertiary },
+                { backgroundColor: serverReachable ? theme.colors.success : (isDarkUI ? 'rgba(255,255,255,0.4)' : theme.colors.textTertiary) },
               ]}
             />
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={theme.colors.textTertiary}
+              color={isDarkUI ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary}
               style={{ marginLeft: 10 }}
             />
         </Pressable>
@@ -110,10 +113,10 @@ export function SettingsScreen({ navigation }) {
             <Ionicons
               name="color-palette-outline"
               size={21}
-              color={theme.colors.accent}
+              color={isDarkUI ? '#C084FC' : theme.colors.accent}
               style={{ width: 34 }}
             />
-            <Text style={[theme.font.title, { color: theme.colors.text, flex: 1 }]}>
+            <Text style={[theme.font.title, { color: isDarkUI ? '#FFFFFF' : theme.colors.text, flex: 1 }]}>
               {t('accentColor')}
             </Text>
             <View style={{ flexDirection: 'row' }}>
@@ -126,7 +129,7 @@ export function SettingsScreen({ navigation }) {
                     {
                       backgroundColor: ACCENTS[key],
                       borderColor:
-                        settings.accentColor === key ? theme.colors.text : 'transparent',
+                        settings.accentColor === key ? (isDarkUI ? '#FFFFFF' : theme.colors.text) : 'transparent',
                     },
                   ]}
                 />
@@ -327,28 +330,40 @@ export function Section({ title, children }) {
 
 export function Row({ icon, label, description, value, onPress, destructive }) {
   const theme = useTheme();
-  const color = destructive ? theme.colors.danger : theme.colors.text;
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const color = destructive
+    ? theme.colors.danger
+    : (isDarkUI ? '#FFFFFF' : theme.colors.text);
+  const iconColor = destructive
+    ? theme.colors.danger
+    : (isDarkUI ? '#C084FC' : theme.colors.accent);
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const valueColor = isDarkUI ? '#C084FC' : theme.colors.accent;
+  const chevronColor = isDarkUI ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary;
+
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent' },
+        { backgroundColor: pressed ? (isDarkUI ? 'rgba(255,255,255,0.08)' : theme.colors.surfacePressed) : 'transparent' },
       ]}
     >
       {icon ? (
         <Ionicons
           name={icon}
           size={21}
-          color={destructive ? theme.colors.danger : theme.colors.accent}
+          color={iconColor}
           style={{ width: 34 }}
         />
       ) : null}
       <View style={{ flex: 1, marginRight: 10 }}>
         <Text style={[theme.font.title, { color }]}>{label}</Text>
         {description ? (
-          <Text style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}>
+          <Text style={[theme.font.caption, { color: subtitleColor, marginTop: 3 }]}>
             {description}
           </Text>
         ) : null}
@@ -356,13 +371,13 @@ export function Row({ icon, label, description, value, onPress, destructive }) {
       {value ? (
         <Text
           numberOfLines={1}
-          style={[theme.font.body, { color: theme.colors.accent, maxWidth: 150 }]}
+          style={[theme.font.body, { color: valueColor, maxWidth: 150 }]}
         >
           {value}
         </Text>
       ) : null}
       {onPress ? (
-        <Ionicons name="chevron-forward" size={17} color={theme.colors.textTertiary} style={{ marginLeft: 6 }} />
+        <Ionicons name="chevron-forward" size={17} color={chevronColor} style={{ marginLeft: 6 }} />
       ) : null}
     </Pressable>
   );
@@ -370,15 +385,22 @@ export function Row({ icon, label, description, value, onPress, destructive }) {
 
 export function ToggleRow({ icon, label, description, value, onValueChange }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const iconColor = isDarkUI ? '#C084FC' : theme.colors.accent;
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+
   return (
     <View style={styles.row}>
       {icon ? (
-        <Ionicons name={icon} size={21} color={theme.colors.accent} style={{ width: 34 }} />
+        <Ionicons name={icon} size={21} color={iconColor} style={{ width: 34 }} />
       ) : null}
       <View style={{ flex: 1, marginRight: 12 }}>
-        <Text style={[theme.font.title, { color: theme.colors.text }]}>{label}</Text>
+        <Text style={[theme.font.title, { color: textColor }]}>{label}</Text>
         {description ? (
-          <Text style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}>
+          <Text style={[theme.font.caption, { color: subtitleColor, marginTop: 3 }]}>
             {description}
           </Text>
         ) : null}
@@ -386,7 +408,7 @@ export function ToggleRow({ icon, label, description, value, onValueChange }) {
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
+        trackColor={{ true: isDarkUI ? '#8B5CF6' : theme.colors.accent, false: isDarkUI ? 'rgba(255,255,255,0.2)' : theme.colors.border }}
         thumbColor="#FFFFFF"
       />
     </View>

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { memo } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { useLibrary } from '../context/LibraryContext';
 import { useTheme } from '../context/SettingsContext';
 import { PressableScale } from './animated';
 import { Artwork } from './Artwork';
@@ -23,6 +24,11 @@ export const AlbumCard = memo(function AlbumCard({
   progress,
 }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
 
   return (
     <PressableScale onPress={onPress} style={{ width: size }}>
@@ -32,23 +38,23 @@ export const AlbumCard = memo(function AlbumCard({
           <View
             style={[
               styles.playBadge,
-              { backgroundColor: theme.colors.surface },
+              { backgroundColor: isDarkUI ? '#1A1230' : theme.colors.surface },
               theme.shadow.card,
             ]}
           >
-            <Ionicons name="play" size={16} color={theme.colors.accent} style={{ marginLeft: 2 }} />
+            <Ionicons name="play" size={16} color={isDarkUI ? '#C084FC' : theme.colors.accent} style={{ marginLeft: 2 }} />
           </View>
         ) : null}
       </View>
 
       <View style={styles.cardMeta}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text numberOfLines={1} style={[theme.font.title, { color: theme.colors.text }]}>
+          <Text numberOfLines={1} style={[theme.font.title, { color: textColor }]}>
             {album.name}
           </Text>
           <Text
             numberOfLines={1}
-            style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}
+            style={[theme.font.caption, { color: subtitleColor, marginTop: 3 }]}
           >
             {subtitle ?? album.artist}
           </Text>
@@ -89,6 +95,12 @@ export const AlbumCard = memo(function AlbumCard({
 /** Circular avatar + name + count, used by the Top Artists rail. */
 export const ArtistCircle = memo(function ArtistCircle({ artist, size = 84, subtitle, onPress }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+
   return (
     <PressableScale
       onPress={onPress}
@@ -97,14 +109,14 @@ export const ArtistCircle = memo(function ArtistCircle({ artist, size = 84, subt
       <Artwork uri={artist.artworkUri} name={artist.name} size={size} radius={size / 2} />
       <Text
         numberOfLines={1}
-        style={[theme.font.body, { color: theme.colors.text, marginTop: 10, textAlign: 'center' }]}
+        style={[theme.font.body, { color: textColor, marginTop: 10, textAlign: 'center' }]}
       >
         {artist.name}
       </Text>
       {subtitle ? (
         <Text
           numberOfLines={1}
-          style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 2 }]}
+          style={[theme.font.caption, { color: subtitleColor, marginTop: 2 }]}
         >
           {subtitle}
         </Text>
@@ -116,27 +128,34 @@ export const ArtistCircle = memo(function ArtistCircle({ artist, size = 84, subt
 /** Circular avatar row used by the Artists list. */
 export const ArtistRow = memo(function ArtistRow({ artist, onPress, subtitle }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const chevronColor = isDarkUI ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary;
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent' },
+        { backgroundColor: pressed ? (isDarkUI ? 'rgba(255,255,255,0.08)' : theme.colors.surfacePressed) : 'transparent' },
       ]}
     >
       <Artwork uri={artist.artworkUri} name={artist.name} size={54} radius={27} />
       <View style={styles.meta}>
-        <Text numberOfLines={1} style={[theme.font.title, { color: theme.colors.text }]}>
+        <Text numberOfLines={1} style={[theme.font.title, { color: textColor }]}>
           {artist.name}
         </Text>
         <Text
           numberOfLines={1}
-          style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}
+          style={[theme.font.caption, { color: subtitleColor, marginTop: 3 }]}
         >
           {subtitle}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={theme.colors.textTertiary} />
+      <Ionicons name="chevron-forward" size={18} color={chevronColor} />
     </Pressable>
   );
 });
@@ -157,13 +176,22 @@ export const CollectionRow = memo(function CollectionRow({
   accentIcon = true,
 }) {
   const theme = useTheme();
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const captionColor = isDarkUI ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary;
+  const iconColor = isDarkUI ? '#C084FC' : (accentIcon ? theme.colors.accent : theme.colors.textSecondary);
+  const iconBg = isDarkUI ? 'rgba(192, 132, 252, 0.15)' : (accentIcon ? theme.colors.accentMuted : theme.colors.surfaceAlt);
+
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent' },
+        { backgroundColor: pressed ? (isDarkUI ? 'rgba(255,255,255,0.08)' : theme.colors.surfacePressed) : 'transparent' },
       ]}
     >
       {artworkUri || artworkName ? (
@@ -173,7 +201,7 @@ export const CollectionRow = memo(function CollectionRow({
           style={[
             styles.iconTile,
             {
-              backgroundColor: accentIcon ? theme.colors.accentMuted : theme.colors.surfaceAlt,
+              backgroundColor: iconBg,
               borderRadius: theme.radius.md,
             },
           ]}
@@ -181,19 +209,19 @@ export const CollectionRow = memo(function CollectionRow({
           <Ionicons
             name={icon}
             size={25}
-            color={accentIcon ? theme.colors.accent : theme.colors.textSecondary}
+            color={iconColor}
           />
         </View>
       )}
 
       <View style={styles.meta}>
-        <Text numberOfLines={1} style={[theme.font.title, { color: theme.colors.text }]}>
+        <Text numberOfLines={1} style={[theme.font.title, { color: textColor }]}>
           {title}
         </Text>
         {subtitle ? (
           <Text
             numberOfLines={1}
-            style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}
+            style={[theme.font.caption, { color: subtitleColor, marginTop: 3 }]}
           >
             {subtitle}
           </Text>
@@ -201,7 +229,7 @@ export const CollectionRow = memo(function CollectionRow({
         {caption ? (
           <Text
             numberOfLines={1}
-            style={[theme.font.caption, { color: theme.colors.textTertiary, marginTop: 2 }]}
+            style={[theme.font.caption, { color: captionColor, marginTop: 2 }]}
           >
             {caption}
           </Text>
@@ -212,18 +240,18 @@ export const CollectionRow = memo(function CollectionRow({
         <Pressable
           onPress={onPressPlay}
           hitSlop={8}
-          style={[styles.rowPlay, { backgroundColor: theme.colors.accentSoft }]}
+          style={[styles.rowPlay, { backgroundColor: isDarkUI ? 'rgba(192, 132, 252, 0.2)' : theme.colors.accentSoft }]}
         >
-          <Ionicons name="play" size={16} color={theme.colors.accent} style={{ marginLeft: 2 }} />
+          <Ionicons name="play" size={16} color={isDarkUI ? '#C084FC' : theme.colors.accent} style={{ marginLeft: 2 }} />
         </Pressable>
       ) : null}
 
       {onPressMore ? (
         <Pressable onPress={onPressMore} hitSlop={10} style={styles.rowMore}>
-          <Ionicons name="ellipsis-vertical" size={18} color={theme.colors.textTertiary} />
+          <Ionicons name="ellipsis-vertical" size={18} color={captionColor} />
         </Pressable>
       ) : trailingIcon ? (
-        <Ionicons name={trailingIcon} size={18} color={theme.colors.textTertiary} />
+        <Ionicons name={trailingIcon} size={18} color={captionColor} />
       ) : null}
     </Pressable>
   );
@@ -235,7 +263,12 @@ export const CollectionRow = memo(function CollectionRow({
  */
 export const GenreRow = memo(function GenreRow({ title, subtitle, count, icon, tint, artworkUri, onPress }) {
   const theme = useTheme();
-  const color = tint ?? theme.colors.accent;
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const color = isDarkUI ? '#C084FC' : (tint ?? theme.colors.accent);
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
 
   return (
     <Pressable
@@ -243,8 +276,8 @@ export const GenreRow = memo(function GenreRow({ title, subtitle, count, icon, t
       style={({ pressed }) => [
         styles.genreRow,
         {
-          backgroundColor: pressed ? theme.colors.surfacePressed : theme.colors.surface,
-          borderColor: theme.colors.border,
+          backgroundColor: isDarkUI ? 'rgba(255, 255, 255, 0.06)' : (pressed ? theme.colors.surfacePressed : theme.colors.surface),
+          borderColor: isDarkUI ? 'rgba(255, 255, 255, 0.12)' : theme.colors.border,
           borderRadius: theme.radius.md,
         },
       ]}
@@ -256,18 +289,18 @@ export const GenreRow = memo(function GenreRow({ title, subtitle, count, icon, t
         radius={0}
         style={{ width: 84, height: 72 }}
       />
-      <View style={[styles.genreIcon, { backgroundColor: `${color}1F` }]}>
+      <View style={[styles.genreIcon, { backgroundColor: isDarkUI ? 'rgba(192, 132, 252, 0.15)' : `${color}1F` }]}>
         <Ionicons name={icon} size={21} color={color} />
       </View>
 
       <View style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-        <Text numberOfLines={1} style={[theme.font.title, { color: theme.colors.text }]}>
+        <Text numberOfLines={1} style={[theme.font.title, { color: textColor }]}>
           {title}
         </Text>
         {subtitle ? (
           <Text
             numberOfLines={2}
-            style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3, lineHeight: 17 }]}
+            style={[theme.font.caption, { color: subtitleColor, marginTop: 3, lineHeight: 17 }]}
           >
             {subtitle}
           </Text>
@@ -278,7 +311,7 @@ export const GenreRow = memo(function GenreRow({ title, subtitle, count, icon, t
       <Ionicons
         name="chevron-forward"
         size={17}
-        color={theme.colors.textTertiary}
+        color={isDarkUI ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary}
         style={{ marginLeft: 6, marginRight: 12 }}
       />
     </Pressable>
@@ -313,7 +346,14 @@ export function TileGrid({ children, columns = 4, gap = 12, paddingHorizontal = 
  */
 export function CategoryTile({ label, icon, count, onPress, tint, width, compact = false, style }) {
   const theme = useTheme();
-  const color = tint ?? theme.colors.accent;
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const color = isDarkUI ? '#C084FC' : (tint ?? theme.colors.accent);
+  const bgColor = isDarkUI ? 'rgba(255, 255, 255, 0.06)' : theme.colors.surface;
+  const borderColor = isDarkUI ? 'rgba(255, 255, 255, 0.12)' : theme.colors.border;
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const countColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
 
   return (
     <PressableScale
@@ -322,9 +362,9 @@ export function CategoryTile({ label, icon, count, onPress, tint, width, compact
         styles.category,
         {
           width,
-          backgroundColor: theme.colors.surface,
+          backgroundColor: bgColor,
           borderRadius: theme.radius.lg,
-          borderColor: theme.colors.border,
+          borderColor: borderColor,
           paddingVertical: compact ? 16 : 22,
         },
         theme.shadow.card,
@@ -336,7 +376,7 @@ export function CategoryTile({ label, icon, count, onPress, tint, width, compact
         numberOfLines={2}
         style={[
           compact ? theme.font.caption : theme.font.title,
-          { color: theme.colors.text, marginTop: compact ? 8 : 12, textAlign: 'center' },
+          { color: textColor, marginTop: compact ? 8 : 12, textAlign: 'center' },
         ]}
       >
         {label}
@@ -344,7 +384,7 @@ export function CategoryTile({ label, icon, count, onPress, tint, width, compact
       {count != null ? (
         <Text
           numberOfLines={1}
-          style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}
+          style={[theme.font.caption, { color: countColor, marginTop: 3 }]}
         >
           {count}
         </Text>

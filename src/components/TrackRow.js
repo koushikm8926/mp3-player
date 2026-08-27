@@ -11,6 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useLibrary } from '../context/LibraryContext';
 import { useTheme } from '../context/SettingsContext';
 import { formatDuration } from '../utils/format';
 import { Artwork } from './Artwork';
@@ -90,7 +91,15 @@ function TrackRowComponent({
   moreIcon = 'ellipsis-vertical',
 }) {
   const theme = useTheme();
-  const titleColor = isActive ? theme.colors.accent : theme.colors.text;
+  const library = useLibrary() || {};
+  const isDarkUI = library.adminMode || theme.colors.isDark;
+
+  const titleColor = isActive
+    ? (isDarkUI ? '#C084FC' : theme.colors.accent)
+    : (isDarkUI ? '#FFFFFF' : theme.colors.text);
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const tertiaryColor = isDarkUI ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary;
+  const favIconColor = isDarkUI ? '#C084FC' : theme.colors.accent;
 
   return (
     <Pressable
@@ -99,15 +108,15 @@ function TrackRowComponent({
       style={({ pressed }) => [
         styles.row,
         showAlbum && styles.rowTall,
-        { backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent' },
+        { backgroundColor: pressed ? (isDarkUI ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surfacePressed) : 'transparent' },
       ]}
     >
       {showIndex ? (
         <View style={styles.indexBox}>
           {isActive ? (
-            <NowPlayingGlyph color={theme.colors.accent} paused={!isPlaying} />
+            <NowPlayingGlyph color={isDarkUI ? '#C084FC' : theme.colors.accent} paused={!isPlaying} />
           ) : (
-            <Text style={[theme.font.body, { color: theme.colors.textTertiary }]}>{index + 1}</Text>
+            <Text style={[theme.font.body, { color: tertiaryColor }]}>{index + 1}</Text>
           )}
         </View>
       ) : null}
@@ -127,14 +136,14 @@ function TrackRowComponent({
         </Text>
         <Text
           numberOfLines={1}
-          style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}
+          style={[theme.font.caption, { color: subtitleColor, marginTop: 3 }]}
         >
           {subtitle ?? track.artist}
         </Text>
         {showAlbum && track.album ? (
           <Text
             numberOfLines={1}
-            style={[theme.font.caption, { color: theme.colors.textTertiary, marginTop: 2 }]}
+            style={[theme.font.caption, { color: tertiaryColor, marginTop: 2 }]}
           >
             {track.album}
           </Text>
@@ -142,18 +151,18 @@ function TrackRowComponent({
       </View>
 
       {isFavorite ? (
-        <Ionicons name="heart" size={15} color={theme.colors.accent} style={{ marginRight: 8 }} />
+        <Ionicons name="heart" size={15} color={favIconColor} style={{ marginRight: 8 }} />
       ) : null}
 
       {trailing ?? (
-        <Text style={[theme.font.body, { color: theme.colors.textSecondary, marginRight: 4 }]}>
+        <Text style={[theme.font.body, { color: subtitleColor, marginRight: 4 }]}>
           {formatDuration(track.duration)}
         </Text>
       )}
 
       {onPressMore ? (
         <Pressable onPress={onPressMore} hitSlop={10} style={styles.more}>
-          <Ionicons name={moreIcon} size={18} color={theme.colors.textTertiary} />
+          <Ionicons name={moreIcon} size={18} color={tertiaryColor} />
         </Pressable>
       ) : null}
     </Pressable>
