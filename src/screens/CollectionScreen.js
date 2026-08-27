@@ -103,12 +103,18 @@ export function CollectionScreen({
     });
   }, [allFavorite, tracks, library]);
 
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
   const bg = isDarkUI ? '#090713' : theme.colors.background;
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
   const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
-  const iconBg = isDarkUI ? 'rgba(192, 132, 252, 0.15)' : theme.colors.accentSoft;
-  const iconColor = isDarkUI ? '#C084FC' : theme.colors.accent;
+
+  const isHeart = heroIcon === 'heart';
+  const iconBg = isHeart
+    ? (isDarkUI ? 'rgba(244, 114, 182, 0.2)' : 'rgba(244, 114, 182, 0.15)')
+    : (isDarkUI ? 'rgba(192, 132, 252, 0.15)' : theme.colors.accentSoft);
+  const iconColor = isHeart ? '#F472B6' : (isDarkUI ? '#C084FC' : theme.colors.accent);
+
+  const canGoBack = navigation.canGoBack();
 
   const Header = useCallback(
     () => (
@@ -116,7 +122,7 @@ export function CollectionScreen({
         {heroIcon ? (
           <View style={styles.simpleHero}>
             <View style={[styles.simpleIcon, { backgroundColor: iconBg }]}>
-              <Ionicons name={heroIcon} size={30} color={iconColor} />
+              <Ionicons name={heroIcon} size={32} color={iconColor} />
             </View>
             <View style={{ flex: 1, marginLeft: 14 }}>
               <Text style={[theme.font.h1, { color: textColor }]} numberOfLines={1}>

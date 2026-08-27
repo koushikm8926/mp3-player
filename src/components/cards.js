@@ -24,8 +24,8 @@ export const AlbumCard = memo(function AlbumCard({
   progress,
 }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
   const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
@@ -95,8 +95,8 @@ export const AlbumCard = memo(function AlbumCard({
 /** Circular avatar + name + count, used by the Top Artists rail. */
 export const ArtistCircle = memo(function ArtistCircle({ artist, size = 84, subtitle, onPress }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
   const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
@@ -128,8 +128,8 @@ export const ArtistCircle = memo(function ArtistCircle({ artist, size = 84, subt
 /** Circular avatar row used by the Artists list. */
 export const ArtistRow = memo(function ArtistRow({ artist, onPress, subtitle }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
   const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
@@ -176,8 +176,8 @@ export const CollectionRow = memo(function CollectionRow({
   accentIcon = true,
 }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
   const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
@@ -263,8 +263,8 @@ export const CollectionRow = memo(function CollectionRow({
  */
 export const GenreRow = memo(function GenreRow({ title, subtitle, count, icon, tint, artworkUri, onPress }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const color = isDarkUI ? '#C084FC' : (tint ?? theme.colors.accent);
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
@@ -346,8 +346,8 @@ export function TileGrid({ children, columns = 4, gap = 12, paddingHorizontal = 
  */
 export function CategoryTile({ label, icon, count, onPress, tint, width, compact = false, style }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const color = isDarkUI ? '#C084FC' : (tint ?? theme.colors.accent);
   const bgColor = isDarkUI ? 'rgba(255, 255, 255, 0.06)' : theme.colors.surface;

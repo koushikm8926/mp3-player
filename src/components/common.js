@@ -32,8 +32,8 @@ export function ScreenHeader({
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
   const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
@@ -102,8 +102,8 @@ export function SearchBar({
   style,
 }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
   const readOnly = typeof onPress === 'function';
 
   const iconColor = isDarkUI ? 'rgba(255, 255, 255, 0.6)' : theme.colors.textTertiary;
@@ -175,8 +175,8 @@ export function SearchBar({
 /** White rounded container with a hairline border and soft shadow. */
 export function Card({ children, style, padded = false }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   return (
     <View
@@ -201,8 +201,8 @@ export function Card({ children, style, padded = false }) {
 /** Uppercase group label above a settings card. */
 export function GroupLabel({ label, style }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   return (
     <Text
@@ -220,8 +220,8 @@ export function GroupLabel({ label, style }) {
 /** Section heading with an optional trailing "See All ›" action. */
 export function SectionHeader({ title, actionLabel, onPressAction, style }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   return (
     <View style={[styles.sectionHeader, style]}>
@@ -240,8 +240,8 @@ export function SectionHeader({ title, actionLabel, onPressAction, style }) {
 
 export function EmptyState({ icon = 'musical-notes-outline', title, body, action, onAction }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   return (
     <View style={styles.empty}>
@@ -289,15 +289,18 @@ export function PrimaryButton({
   size = 'md',
 }) {
   const theme = useTheme();
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
+
   const isGradient = variant === 'gradient' && !disabled;
   const isFilled = variant === 'solid' || isGradient;
   const isOutline = variant === 'outline';
 
   const textColor = disabled
-    ? theme.colors.textTertiary
+    ? (isDarkUI ? 'rgba(255,255,255,0.3)' : theme.colors.textTertiary)
     : isFilled
-      ? theme.colors.onAccent
-      : theme.colors.accent;
+      ? '#FFFFFF'
+      : (isDarkUI ? '#C084FC' : theme.colors.accent);
 
   const paddingVertical = size === 'sm' ? 10 : 14;
   const iconSize = size === 'sm' ? 16 : 19;
@@ -319,6 +322,8 @@ export function PrimaryButton({
     paddingHorizontal: size === 'sm' ? 16 : 24,
   };
 
+  const gradientColors = isDarkUI ? ['#9333EA', '#C084FC'] : theme.accentGradient;
+
   return (
     <PressableScale
       onPress={onPress}
@@ -328,7 +333,7 @@ export function PrimaryButton({
     >
       {isGradient ? (
         <LinearGradient
-          colors={theme.accentGradient}
+          colors={gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.button, shape]}
@@ -342,14 +347,16 @@ export function PrimaryButton({
             shape,
             {
               backgroundColor: disabled
-                ? theme.colors.surfaceAlt
+                ? (isDarkUI ? 'rgba(255,255,255,0.05)' : theme.colors.surfaceAlt)
                 : variant === 'solid'
-                  ? theme.colors.accent
+                  ? (isDarkUI ? '#8B5CF6' : theme.colors.accent)
                   : variant === 'ghost'
-                    ? theme.colors.surface
+                    ? (isDarkUI ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surface)
                     : 'transparent',
               borderWidth: isOutline || variant === 'ghost' ? 1.5 : 0,
-              borderColor: isOutline ? theme.colors.accent : theme.colors.border,
+              borderColor: isOutline
+                ? (isDarkUI ? '#C084FC' : theme.colors.accent)
+                : (isDarkUI ? 'rgba(255, 255, 255, 0.15)' : theme.colors.border),
             },
           ]}
         >
@@ -362,6 +369,9 @@ export function PrimaryButton({
 
 export function IconButton({ name, size = 22, color, onPress, style, disabled, hitSlop = 10 }) {
   const theme = useTheme();
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
+
   return (
     <Pressable
       onPress={onPress}
@@ -373,7 +383,7 @@ export function IconButton({ name, size = 22, color, onPress, style, disabled, h
         style,
       ]}
     >
-      <Ionicons name={name} size={size} color={color ?? theme.colors.text} />
+      <Ionicons name={name} size={size} color={color ?? (isDarkUI ? '#FFFFFF' : theme.colors.text)} />
     </Pressable>
   );
 }
@@ -381,6 +391,15 @@ export function IconButton({ name, size = 22, color, onPress, style, disabled, h
 /** Circular icon button on a bordered surface — the header/detail action treatment. */
 export function IconPill({ name, size = 20, onPress, active, diameter = 44, style }) {
   const theme = useTheme();
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
+
+  const activeBg = isDarkUI ? 'rgba(192, 132, 252, 0.2)' : theme.colors.accentMuted;
+  const normalBg = isDarkUI ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surface;
+  const activeBorder = isDarkUI ? '#C084FC' : theme.colors.accent;
+  const normalBorder = isDarkUI ? 'rgba(255, 255, 255, 0.15)' : theme.colors.border;
+  const iconColor = isDarkUI ? '#C084FC' : theme.colors.accent;
+
   return (
     <Pressable
       onPress={onPress}
@@ -390,14 +409,14 @@ export function IconPill({ name, size = 20, onPress, active, diameter = 44, styl
           width: diameter,
           height: diameter,
           borderRadius: diameter / 2,
-          backgroundColor: active ? theme.colors.accentMuted : theme.colors.surface,
-          borderColor: active ? theme.colors.accent : theme.colors.border,
+          backgroundColor: active ? activeBg : normalBg,
+          borderColor: active ? activeBorder : normalBorder,
           opacity: pressed ? 0.75 : 1,
         },
         style,
       ]}
     >
-      <Ionicons name={name} size={size} color={active ? theme.colors.accent : theme.colors.accent} />
+      <Ionicons name={name} size={size} color={iconColor} />
     </Pressable>
   );
 }

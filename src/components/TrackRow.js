@@ -91,8 +91,8 @@ function TrackRowComponent({
   moreIcon = 'ellipsis-vertical',
 }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const titleColor = isActive
     ? (isDarkUI ? '#C084FC' : theme.colors.accent)

@@ -503,6 +503,5 @@ export function LibraryProvider({ children }) {
 
 export function useLibrary() {
   const context = useContext(LibraryContext);
-  if (!context) throw new Error('useLibrary must be used inside <LibraryProvider>');
   return context;
 }

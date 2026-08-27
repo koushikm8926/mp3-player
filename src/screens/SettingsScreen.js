@@ -50,7 +50,7 @@ export function SettingsScreen({ navigation }) {
     amoled: t('themeAmoled'),
   }[settings.themeMode];
 
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
   const bg = isDarkUI ? '#090713' : theme.colors.background;
 
   return (
@@ -330,8 +330,8 @@ export function Section({ title, children }) {
 
 export function Row({ icon, label, description, value, onPress, destructive }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const color = destructive
     ? theme.colors.danger
@@ -385,8 +385,8 @@ export function Row({ icon, label, description, value, onPress, destructive }) {
 
 export function ToggleRow({ icon, label, description, value, onValueChange }) {
   const theme = useTheme();
-  const library = useLibrary() || {};
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
 
   const iconColor = isDarkUI ? '#C084FC' : theme.colors.accent;
   const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;

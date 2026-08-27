@@ -24,7 +24,7 @@ export function LibraryScreen({ navigation }) {
 
   const { tracks, albums, artists, genres, folders, playlists, recentlyAddedTracks } = library;
 
-  const isDarkUI = library.adminMode || theme.colors.isDark;
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
   const bg = isDarkUI ? '#090713' : theme.colors.background;
 
   if (tracks.length === 0 && !library.scanning) {

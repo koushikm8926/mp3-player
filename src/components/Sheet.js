@@ -3,6 +3,7 @@ import React from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useLibrary } from '../context/LibraryContext';
 import { useTheme } from '../context/SettingsContext';
 
 /**
@@ -14,6 +15,13 @@ import { useTheme } from '../context/SettingsContext';
 export function Sheet({ visible, onClose, title, subtitle, children, maxHeightRatio = 0.8 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
+
+  const sheetBg = isDarkUI ? '#130E26' : theme.colors.backgroundElevated;
+  const handleBg = isDarkUI ? 'rgba(255, 255, 255, 0.2)' : theme.colors.border;
+  const titleColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+  const subtitleColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
 
   return (
     <Modal
@@ -23,12 +31,12 @@ export function Sheet({ visible, onClose, title, subtitle, children, maxHeightRa
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <Pressable style={[styles.backdrop, { backgroundColor: theme.colors.overlay }]} onPress={onClose} />
+      <Pressable style={[styles.backdrop, { backgroundColor: isDarkUI ? 'rgba(0,0,0,0.75)' : theme.colors.overlay }]} onPress={onClose} />
       <View
         style={[
           styles.sheet,
           {
-            backgroundColor: theme.colors.backgroundElevated,
+            backgroundColor: sheetBg,
             borderTopLeftRadius: theme.radius.xl,
             borderTopRightRadius: theme.radius.xl,
             paddingBottom: insets.bottom + 12,
@@ -36,14 +44,14 @@ export function Sheet({ visible, onClose, title, subtitle, children, maxHeightRa
           },
         ]}
       >
-        <View style={[styles.handle, { backgroundColor: theme.colors.border }]} />
+        <View style={[styles.handle, { backgroundColor: handleBg }]} />
         {title ? (
           <View style={styles.header}>
-            <Text numberOfLines={1} style={[theme.font.h3, { color: theme.colors.text }]}>
+            <Text numberOfLines={1} style={[theme.font.h3, { color: titleColor }]}>
               {title}
             </Text>
             {subtitle ? (
-              <Text numberOfLines={1} style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 3 }]}>
+              <Text numberOfLines={1} style={[theme.font.caption, { color: subtitleColor, marginTop: 3 }]}>
                 {subtitle}
               </Text>
             ) : null}
@@ -64,11 +72,17 @@ export function Sheet({ visible, onClose, title, subtitle, children, maxHeightRa
 /** A single tappable line inside a sheet. */
 export function SheetItem({ icon, label, sublabel, onPress, destructive, selected, disabled }) {
   const theme = useTheme();
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
+
   const color = destructive
     ? theme.colors.danger
     : disabled
-      ? theme.colors.textTertiary
-      : theme.colors.text;
+      ? (isDarkUI ? 'rgba(255,255,255,0.3)' : theme.colors.textTertiary)
+      : (isDarkUI ? '#FFFFFF' : theme.colors.text);
+
+  const sublabelColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const pressedBg = isDarkUI ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surfacePressed;
 
   return (
     <Pressable
@@ -76,21 +90,21 @@ export function SheetItem({ icon, label, sublabel, onPress, destructive, selecte
       disabled={disabled}
       style={({ pressed }) => [
         styles.item,
-        { backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent' },
+        { backgroundColor: pressed ? pressedBg : 'transparent' },
       ]}
     >
-      {icon ? <Ionicons name={icon} size={21} color={color} style={{ width: 30 }} /> : null}
+      {icon ? <Ionicons name={icon} size={21} color={destructive ? theme.colors.danger : (isDarkUI ? '#C084FC' : color)} style={{ width: 30 }} /> : null}
       <View style={{ flex: 1 }}>
         <Text numberOfLines={1} style={[theme.font.title, { color }]}>
           {label}
         </Text>
         {sublabel ? (
-          <Text numberOfLines={1} style={[theme.font.caption, { color: theme.colors.textSecondary, marginTop: 2 }]}>
+          <Text numberOfLines={1} style={[theme.font.caption, { color: sublabelColor, marginTop: 2 }]}>
             {sublabel}
           </Text>
         ) : null}
       </View>
-      {selected ? <Ionicons name="checkmark" size={20} color={theme.colors.accent} /> : null}
+      {selected ? <Ionicons name="checkmark" size={20} color={isDarkUI ? '#C084FC' : theme.colors.accent} /> : null}
     </Pressable>
   );
 }
