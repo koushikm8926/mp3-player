@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
@@ -29,7 +30,7 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 /** Step for the seek controls flanking the seek bar. */
 const SEEK_STEP_MS = 10000;
 
-/** Full-screen player with linear gradient matching the updated reference image. */
+/** Full-screen player matching the updated design layout with blurred artwork background. */
 export function NowPlayingScreen({ navigation }) {
   const theme = useTheme();
   const { t, settings, update } = useSettings();
@@ -464,7 +465,18 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center' },
   miniTrack: { width: 96, height: 4, borderRadius: 2, marginTop: 8, overflow: 'hidden' },
   miniFill: { height: 4, borderRadius: 2 },
-  artWrap: { alignItems: 'center', justifyContent: 'center', marginTop: 20, marginBottom: 20 },
+  artWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    position: 'relative',
+  },
+  artGlow: {
+    position: 'absolute',
+    opacity: 0.7,
+    transform: [{ scale: 1.14 }],
+  },
   metaCenter: { alignItems: 'center', paddingHorizontal: 16, marginBottom: 24 },
   quickActionRow: {
     flexDirection: 'row',
