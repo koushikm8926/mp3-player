@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '../components/common';
 import { PromptDialog } from '../components/PromptDialog';
+import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
 import { formatCountdown } from '../utils/format';
@@ -18,6 +19,17 @@ export function SleepTimerScreen({ navigation }) {
   const { t } = useSettings();
   const insets = useSafeAreaInsets();
   const player = usePlayer();
+  const library = useLibrary();
+
+  const isOnlineMode = Boolean(library?.adminMode);
+
+  const bgColor = isOnlineMode ? '#090713' : theme.colors.background;
+  const cardBg = isOnlineMode ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surface;
+  const borderColor = isOnlineMode ? 'rgba(255, 255, 255, 0.15)' : theme.colors.border;
+  const textColor = isOnlineMode ? '#FFFFFF' : theme.colors.text;
+  const subtextColor = isOnlineMode ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textTertiary;
+  const accentColor = isOnlineMode ? '#C084FC' : theme.colors.accent;
+  const iconBg = isOnlineMode ? 'rgba(192, 132, 252, 0.18)' : theme.colors.accentMuted;
 
   const [customOpen, setCustomOpen] = useState(false);
   const [, forceTick] = useState(0);
@@ -38,24 +50,24 @@ export function SleepTimerScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: bgColor, paddingTop: insets.top }}>
       <Header title={t('sleepTimer')} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
         <View
           style={[
             styles.statusCard,
-            { backgroundColor: theme.colors.surface, borderRadius: theme.radius.lg },
+            { backgroundColor: cardBg, borderRadius: theme.radius.lg, borderWidth: isOnlineMode ? 1 : 0, borderColor },
           ]}
         >
-          <View style={[styles.statusIcon, { backgroundColor: theme.colors.accentMuted }]}>
+          <View style={[styles.statusIcon, { backgroundColor: iconBg }]}>
             <Ionicons
               name={active ? 'moon' : 'moon-outline'}
               size={30}
-              color={theme.colors.accent}
+              color={accentColor}
             />
           </View>
-          <Text style={[theme.font.h1, { color: theme.colors.text, marginTop: 16 }]}>
+          <Text style={[theme.font.h1, { color: textColor, marginTop: 16 }]}>
             {active
               ? active.endOfTrack
                 ? t('endOfTrack')
@@ -83,15 +95,15 @@ export function SleepTimerScreen({ navigation }) {
               style={({ pressed }) => [
                 styles.tile,
                 {
-                  backgroundColor: theme.colors.surface,
+                  backgroundColor: cardBg,
                   borderRadius: theme.radius.md,
-                  borderColor: theme.colors.border,
+                  borderColor,
                   opacity: pressed ? 0.8 : 1,
                 },
               ]}
             >
-              <Text style={[theme.font.h3, { color: theme.colors.text }]}>{minutes}</Text>
-              <Text style={[theme.font.tiny, { color: theme.colors.textTertiary, marginTop: 2 }]}>
+              <Text style={[theme.font.h3, { color: textColor }]}>{minutes}</Text>
+              <Text style={[theme.font.tiny, { color: subtextColor, marginTop: 2 }]}>
                 min
               </Text>
             </Pressable>
@@ -99,8 +111,8 @@ export function SleepTimerScreen({ navigation }) {
         </View>
 
         <Pressable onPress={() => setCustomOpen(true)} style={styles.linkRow}>
-          <Ionicons name="create-outline" size={20} color={theme.colors.accent} />
-          <Text style={[theme.font.body, { color: theme.colors.accent, marginLeft: 12 }]}>
+          <Ionicons name="create-outline" size={20} color={accentColor} />
+          <Text style={[theme.font.body, { color: accentColor, marginLeft: 12 }]}>
             {t('customDuration')}
           </Text>
         </Pressable>
@@ -112,8 +124,8 @@ export function SleepTimerScreen({ navigation }) {
           }}
           style={styles.linkRow}
         >
-          <Ionicons name="musical-note-outline" size={20} color={theme.colors.accent} />
-          <Text style={[theme.font.body, { color: theme.colors.accent, marginLeft: 12 }]}>
+          <Ionicons name="musical-note-outline" size={20} color={accentColor} />
+          <Text style={[theme.font.body, { color: accentColor, marginLeft: 12 }]}>
             {t('endOfTrack')}
           </Text>
         </Pressable>

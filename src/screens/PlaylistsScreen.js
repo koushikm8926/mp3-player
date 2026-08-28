@@ -122,8 +122,11 @@ export function PlaylistsScreen({ navigation }) {
     else player.playQueue(tracks, 0, { shuffled: false });
   };
 
+  const isOnlineMode = Boolean(library?.adminMode);
+  const bgColor = isOnlineMode ? '#090713' : theme.colors.background;
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: bgColor }}>
       <FlashList
         data={listed}
         keyExtractor={(item) => String(item.id)}
@@ -131,7 +134,7 @@ export function PlaylistsScreen({ navigation }) {
         contentContainerStyle={{ paddingBottom: 170 }}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
-          <View style={{ backgroundColor: theme.colors.background }}>
+          <View style={{ backgroundColor: bgColor }}>
             <ScreenHeader
               title={t('playlists')}
               glyph="musical-notes"

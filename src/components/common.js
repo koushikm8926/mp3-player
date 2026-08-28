@@ -464,14 +464,30 @@ export function Field({ label, error, style, leftIcon, ...inputProps }) {
 /** Rounded selectable chip used for sort options, presets and filter rows. */
 export function Chip({ label, selected, onPress, icon, style }) {
   const theme = useTheme();
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
+
+  const bg = selected
+    ? (isDarkUI ? '#9333EA' : theme.colors.accentMuted)
+    : (isDarkUI ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surface);
+  const border = selected
+    ? 'transparent'
+    : (isDarkUI ? 'rgba(255, 255, 255, 0.15)' : theme.colors.border);
+  const textColor = selected
+    ? (isDarkUI ? '#FFFFFF' : theme.colors.accent)
+    : (isDarkUI ? 'rgba(255, 255, 255, 0.75)' : theme.colors.textSecondary);
+  const iconColor = selected
+    ? (isDarkUI ? '#FFFFFF' : theme.colors.accent)
+    : (isDarkUI ? 'rgba(255, 255, 255, 0.6)' : theme.colors.textSecondary);
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
         {
-          backgroundColor: selected ? theme.colors.accentMuted : theme.colors.surface,
-          borderColor: selected ? 'transparent' : theme.colors.border,
+          backgroundColor: bg,
+          borderColor: border,
           borderRadius: theme.radius.pill,
           opacity: pressed ? 0.75 : 1,
         },
@@ -482,14 +498,14 @@ export function Chip({ label, selected, onPress, icon, style }) {
         <Ionicons
           name={icon}
           size={15}
-          color={selected ? theme.colors.accent : theme.colors.textSecondary}
+          color={iconColor}
           style={{ marginRight: 6 }}
         />
       ) : null}
       <Text
         style={[
           theme.font.body,
-          { color: selected ? theme.colors.accent : theme.colors.textSecondary },
+          { color: textColor },
         ]}
       >
         {label}
@@ -533,8 +549,15 @@ export function ChipRow({ options, value, onChange, style, contentStyle }) {
  */
 export function SegmentedTabs({ options, value, onChange, style }) {
   const theme = useTheme();
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
+
+  const borderBottomColor = isDarkUI ? 'rgba(255, 255, 255, 0.12)' : theme.colors.border;
+  const activeColor = isDarkUI ? '#C084FC' : theme.colors.accent;
+  const inactiveColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+
   return (
-    <View style={[styles.segmented, { borderBottomColor: theme.colors.border }, style]}>
+    <View style={[styles.segmented, { borderBottomColor }, style]}>
       {options.map((option) => {
         const selected = option.key === value;
         return (
@@ -547,7 +570,7 @@ export function SegmentedTabs({ options, value, onChange, style }) {
               numberOfLines={1}
               style={[
                 theme.font.title,
-                { color: selected ? theme.colors.accent : theme.colors.textSecondary },
+                { color: selected ? activeColor : inactiveColor },
               ]}
             >
               {option.label}
@@ -555,7 +578,7 @@ export function SegmentedTabs({ options, value, onChange, style }) {
             <View
               style={[
                 styles.segmentedIndicator,
-                { backgroundColor: selected ? theme.colors.accent : 'transparent' },
+                { backgroundColor: selected ? activeColor : 'transparent' },
               ]}
             />
           </Pressable>

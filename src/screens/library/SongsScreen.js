@@ -77,8 +77,11 @@ export function SongsScreen({ navigation, route }) {
     [letterIndex]
   );
 
+  const isOnlineMode = Boolean(library?.adminMode);
+  const bgColor = isOnlineMode ? '#090713' : theme.colors.background;
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: bgColor }}>
       <FlashList
         ref={listRef}
         data={listed}
@@ -87,7 +90,7 @@ export function SongsScreen({ navigation, route }) {
         contentContainerStyle={{ paddingBottom: 170 }}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
-          <View style={{ backgroundColor: theme.colors.background }}>
+          <View style={{ backgroundColor: bgColor }}>
             <ScreenHeader
               title={t('songs')}
               glyph="musical-notes"

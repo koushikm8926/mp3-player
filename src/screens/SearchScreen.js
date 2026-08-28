@@ -69,8 +69,10 @@ export function SearchScreen({ navigation }) {
 
   const show = (section) => filter === 'all' || filter === section;
 
+  const isOnlineMode = Boolean(library?.adminMode);
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: isOnlineMode ? '#090713' : theme.colors.background }}>
       <ScreenHeader
         title={t('search')}
         subtitle={t('findYourMusic')}
@@ -87,7 +89,9 @@ export function SearchScreen({ navigation }) {
         />
         {term.length > 0 ? (
           <Pressable onPress={cancel} hitSlop={10} style={{ marginLeft: 14 }}>
-            <Text style={[theme.font.title, { color: theme.colors.accent }]}>{t('cancel')}</Text>
+            <Text style={[theme.font.title, { color: isOnlineMode ? '#C084FC' : theme.colors.accent }]}>
+              {t('cancel')}
+            </Text>
           </Pressable>
         ) : null}
       </View>

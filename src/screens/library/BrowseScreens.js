@@ -27,7 +27,10 @@ function matches(text, query) {
 export function AlbumsScreen({ navigation }) {
   const theme = useTheme();
   const { t, settings } = useSettings();
-  const { albums } = useLibrary();
+  const library = useLibrary();
+  const { albums } = library;
+  const isOnlineMode = Boolean(library?.adminMode);
+  const bgColor = isOnlineMode ? '#090713' : theme.colors.background;
   const { width } = useWindowDimensions();
 
   const [query, setQuery] = useState('');
@@ -42,7 +45,7 @@ export function AlbumsScreen({ navigation }) {
   const tileSize = Math.floor((width - GRID_PADDING * 2 - GRID_GAP * (columns - 1)) / columns);
 
   const header = (
-    <View style={{ backgroundColor: theme.colors.background }}>
+    <View style={{ backgroundColor: bgColor }}>
       <ScreenHeader
         title={t('albums')}
         glyph="disc"
@@ -72,7 +75,7 @@ export function AlbumsScreen({ navigation }) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: bgColor }}>
       {mode === 'grid' ? (
         <FlashList
           data={filtered}
@@ -134,7 +137,10 @@ export function AlbumsScreen({ navigation }) {
 export function ArtistsScreen({ navigation }) {
   const theme = useTheme();
   const { t } = useSettings();
-  const { artists } = useLibrary();
+  const library = useLibrary();
+  const { artists } = library;
+  const isOnlineMode = Boolean(library?.adminMode);
+  const bgColor = isOnlineMode ? '#090713' : theme.colors.background;
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(
@@ -143,14 +149,14 @@ export function ArtistsScreen({ navigation }) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: bgColor }}>
       <FlashList
         data={filtered}
         keyExtractor={(item) => item.id}
         estimatedItemSize={76}
         contentContainerStyle={{ paddingBottom: 170 }}
         ListHeaderComponent={
-          <View style={{ backgroundColor: theme.colors.background, paddingBottom: 12 }}>
+          <View style={{ backgroundColor: bgColor, paddingBottom: 12 }}>
             <ScreenHeader
               title={t('artists')}
               glyph="person"
@@ -187,7 +193,10 @@ export function ArtistsScreen({ navigation }) {
 export function GenresScreen({ navigation }) {
   const theme = useTheme();
   const { t } = useSettings();
-  const { genres } = useLibrary();
+  const library = useLibrary();
+  const { genres } = library;
+  const isOnlineMode = Boolean(library?.adminMode);
+  const bgColor = isOnlineMode ? '#090713' : theme.colors.background;
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(
@@ -196,14 +205,14 @@ export function GenresScreen({ navigation }) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: bgColor }}>
       <FlashList
         data={filtered}
         keyExtractor={(item) => item.id}
         estimatedItemSize={82}
         contentContainerStyle={{ paddingBottom: 170 }}
         ListHeaderComponent={
-          <View style={{ backgroundColor: theme.colors.background, paddingBottom: 14 }}>
+          <View style={{ backgroundColor: bgColor, paddingBottom: 14 }}>
             <ScreenHeader
               title={t('genres')}
               glyph="pricetag"
@@ -250,7 +259,10 @@ export function GenresScreen({ navigation }) {
 export function FoldersScreen({ navigation }) {
   const theme = useTheme();
   const { t } = useSettings();
-  const { folders, hideFolder } = useLibrary();
+  const library = useLibrary();
+  const { folders, hideFolder } = library;
+  const isOnlineMode = Boolean(library?.adminMode);
+  const bgColor = isOnlineMode ? '#090713' : theme.colors.background;
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState('folders');
@@ -277,14 +289,14 @@ export function FoldersScreen({ navigation }) {
   }, [folders, query, tab]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: bgColor }}>
       <FlashList
         data={listed}
         keyExtractor={(item) => item.folder.id}
         estimatedItemSize={76}
         contentContainerStyle={{ paddingBottom: 170 }}
         ListHeaderComponent={
-          <View style={{ backgroundColor: theme.colors.background }}>
+          <View style={{ backgroundColor: bgColor }}>
             <ScreenHeader
               title={t('folders')}
               glyph="folder"

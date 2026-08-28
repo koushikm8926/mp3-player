@@ -491,9 +491,8 @@ export function HomeScreen({ navigation }) {
           onPressTrailing={() => navigation.navigate('Search')}
         />
 
-        <HeroBanner
+        <HeroCarousel
           onPlay={() => player.shuffleAndPlay(tracks)}
-          subtitle={t('songCount', { count: tracks.length })}
         />
 
         {continueListening.length > 0 ? (

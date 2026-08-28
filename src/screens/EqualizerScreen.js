@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import * as MusicCore from '../../modules/expo-music-core';
 import { Chip, EmptyState } from '../components/common';
+import { useLibrary } from '../context/LibraryContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
 
 /**
@@ -89,9 +90,21 @@ export function EqualizerScreen({ navigation }) {
     });
   };
 
+  const library = useLibrary();
+  const isOnlineMode = Boolean(library?.adminMode);
+
+  const bgColor = isOnlineMode ? '#090713' : theme.colors.background;
+  const cardBg = isOnlineMode ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surface;
+  const borderColor = isOnlineMode ? 'rgba(255, 255, 255, 0.15)' : theme.colors.border;
+  const textColor = isOnlineMode ? '#FFFFFF' : theme.colors.text;
+  const subtextColor = isOnlineMode ? 'rgba(255, 255, 255, 0.65)' : theme.colors.textSecondary;
+  const tertiaryColor = isOnlineMode ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary;
+  const accentColor = isOnlineMode ? '#C084FC' : theme.colors.accent;
+  const trackMax = isOnlineMode ? 'rgba(255, 255, 255, 0.2)' : theme.colors.border;
+
   if (!state.supported) {
     return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top }}>
+      <View style={{ flex: 1, backgroundColor: bgColor, paddingTop: insets.top }}>
         <Header title={t('equalizer')} onBack={() => navigation.goBack()} />
         <EmptyState
           icon="options-outline"
@@ -108,7 +121,7 @@ export function EqualizerScreen({ navigation }) {
   const disabled = !settings.equalizerEnabled;
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: bgColor, paddingTop: insets.top }}>
       <Header
         title={t('equalizer')}
         onBack={() => navigation.goBack()}
@@ -116,7 +129,7 @@ export function EqualizerScreen({ navigation }) {
           <Switch
             value={settings.equalizerEnabled}
             onValueChange={setEnabled}
-            trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
+            trackColor={{ true: accentColor, false: borderColor }}
             thumbColor="#FFFFFF"
           />
         }
@@ -124,7 +137,7 @@ export function EqualizerScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         <View style={[styles.section, { opacity: disabled ? 0.45 : 1 }]} pointerEvents={disabled ? 'none' : 'auto'}>
-          <Text style={[theme.font.caption, { color: theme.colors.textSecondary, marginBottom: 10 }]}>
+          <Text style={[theme.font.caption, { color: subtextColor, marginBottom: 10 }]}>
             {t('presets')}
           </Text>
           <View style={styles.chipRow}>
@@ -141,12 +154,12 @@ export function EqualizerScreen({ navigation }) {
         </View>
 
         <View
-          style={[styles.bandsCard, { backgroundColor: theme.colors.surface, borderRadius: theme.radius.md, opacity: disabled ? 0.45 : 1 }]}
+          style={[styles.bandsCard, { backgroundColor: cardBg, borderRadius: theme.radius.md, borderWidth: isOnlineMode ? 1 : 0, borderColor, opacity: disabled ? 0.45 : 1 }]}
           pointerEvents={disabled ? 'none' : 'auto'}
         >
           {state.bands.map((band, index) => (
             <View key={band.index} style={styles.bandRow}>
-              <Text style={[theme.font.tiny, { color: theme.colors.textSecondary, width: 54 }]}>
+              <Text style={[theme.font.tiny, { color: subtextColor, width: 54 }]}>
                 {formatFrequency(band.centerFrequency)}
               </Text>
               <Slider
@@ -157,12 +170,12 @@ export function EqualizerScreen({ navigation }) {
                 value={levels[index] ?? band.level}
                 onValueChange={(value) => setBand(index, value)}
                 onSlidingComplete={(value) => commitBands(index, value)}
-                minimumTrackTintColor={theme.colors.accent}
-                maximumTrackTintColor={theme.colors.border}
-                thumbTintColor={theme.colors.accent}
+                minimumTrackTintColor={accentColor}
+                maximumTrackTintColor={trackMax}
+                thumbTintColor={accentColor}
               />
               <Text
-                style={[theme.font.tiny, { color: theme.colors.textTertiary, width: 46, textAlign: 'right' }]}
+                style={[theme.font.tiny, { color: tertiaryColor, width: 46, textAlign: 'right' }]}
               >
                 {formatGain(levels[index] ?? band.level)}
               </Text>
@@ -178,6 +191,10 @@ export function EqualizerScreen({ navigation }) {
               max={1000}
               onChange={(value) => MusicCore.setBassBoost(value)}
               onCommit={(value) => update('bassBoost', value)}
+              accentColor={accentColor}
+              textColor={textColor}
+              subtextColor={tertiaryColor}
+              trackMax={trackMax}
             />
           ) : null}
           {state.hasVirtualizer ? (
@@ -187,6 +204,10 @@ export function EqualizerScreen({ navigation }) {
               max={1000}
               onChange={(value) => MusicCore.setVirtualizer(value)}
               onCommit={(value) => update('virtualizer', value)}
+              accentColor={accentColor}
+              textColor={textColor}
+              subtextColor={tertiaryColor}
+              trackMax={trackMax}
             />
           ) : null}
           {state.hasLoudnessEnhancer ? (
@@ -196,20 +217,24 @@ export function EqualizerScreen({ navigation }) {
               max={2000}
               onChange={(value) => MusicCore.setLoudness(value)}
               onCommit={(value) => update('loudness', value)}
+              accentColor={accentColor}
+              textColor={textColor}
+              subtextColor={tertiaryColor}
+              trackMax={trackMax}
             />
           ) : null}
         </View>
 
         <Pressable onPress={reset} style={styles.linkRow}>
-          <Ionicons name="refresh-outline" size={19} color={theme.colors.accent} />
-          <Text style={[theme.font.body, { color: theme.colors.accent, marginLeft: 10 }]}>
+          <Ionicons name="refresh-outline" size={19} color={accentColor} />
+          <Text style={[theme.font.body, { color: accentColor, marginLeft: 10 }]}>
             {t('resetEqualizer')}
           </Text>
         </Pressable>
 
         <Pressable onPress={() => MusicCore.openSystemEqualizer(0)} style={styles.linkRow}>
-          <Ionicons name="open-outline" size={19} color={theme.colors.accent} />
-          <Text style={[theme.font.body, { color: theme.colors.accent, marginLeft: 10 }]}>
+          <Ionicons name="open-outline" size={19} color={accentColor} />
+          <Text style={[theme.font.body, { color: accentColor, marginLeft: 10 }]}>
             {t('openSystemEqualizer')}
           </Text>
         </Pressable>
@@ -218,7 +243,7 @@ export function EqualizerScreen({ navigation }) {
   );
 }
 
-function EffectSlider({ label, value, max, onChange, onCommit }) {
+function EffectSlider({ label, value, max, onChange, onCommit, accentColor, textColor, subtextColor, trackMax }) {
   const theme = useTheme();
   const [local, setLocal] = useState(value);
 
@@ -227,8 +252,8 @@ function EffectSlider({ label, value, max, onChange, onCommit }) {
   return (
     <View style={{ marginBottom: 14 }}>
       <View style={styles.effectHeader}>
-        <Text style={[theme.font.body, { color: theme.colors.text, flex: 1 }]}>{label}</Text>
-        <Text style={[theme.font.tiny, { color: theme.colors.textTertiary }]}>
+        <Text style={[theme.font.body, { color: textColor ?? theme.colors.text, flex: 1 }]}>{label}</Text>
+        <Text style={[theme.font.tiny, { color: subtextColor ?? theme.colors.textTertiary }]}>
           {Math.round((local / max) * 100)}%
         </Text>
       </View>
@@ -242,9 +267,9 @@ function EffectSlider({ label, value, max, onChange, onCommit }) {
           onChange(next);
         }}
         onSlidingComplete={(next) => onCommit(Math.round(next))}
-        minimumTrackTintColor={theme.colors.accent}
-        maximumTrackTintColor={theme.colors.border}
-        thumbTintColor={theme.colors.accent}
+        minimumTrackTintColor={accentColor ?? theme.colors.accent}
+        maximumTrackTintColor={trackMax ?? theme.colors.border}
+        thumbTintColor={accentColor ?? theme.colors.accent}
       />
     </View>
   );
@@ -252,12 +277,16 @@ function EffectSlider({ label, value, max, onChange, onCommit }) {
 
 export function Header({ title, onBack, right }) {
   const theme = useTheme();
+  const library = useLibrary();
+  const isDarkUI = Boolean(library?.adminMode) || theme.colors.isDark;
+  const textColor = isDarkUI ? '#FFFFFF' : theme.colors.text;
+
   return (
     <View style={styles.header}>
       <Pressable onPress={onBack} hitSlop={10}>
-        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        <Ionicons name="arrow-back" size={24} color={textColor} />
       </Pressable>
-      <Text style={[theme.font.h3, { color: theme.colors.text, flex: 1, marginLeft: 16 }]}>
+      <Text style={[theme.font.h3, { color: textColor, flex: 1, marginLeft: 16 }]}>
         {title}
       </Text>
       {right}
