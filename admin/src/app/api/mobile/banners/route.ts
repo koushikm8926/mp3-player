@@ -15,22 +15,25 @@ export async function GET(request: Request) {
 
     const origin = requestOrigin(request);
 
-    const formatted = banners.map((b: any) => ({
-      id: b.id,
-      badge: b.badge,
-      titleLine1: b.titleLine1,
-      titleLine2: b.titleLine2,
-      subtitle: b.subtitle,
-      accentColor: b.accentColor,
-      buttonColor: b.buttonColor,
-      gradient: [b.gradientStart, b.gradientEnd],
-      icon: b.icon,
-      imageUrl: b.imageUrl
-        ? b.imageUrl.startsWith('http')
-          ? b.imageUrl
-          : `${origin}${b.imageUrl.startsWith('/') ? '' : '/'}${b.imageUrl}`
-        : null,
-    }));
+    const formatted = banners.map((b: any) => {
+      let imageUrl: string | null = null;
+      if (b.storageKey || b.imageUrl) {
+        imageUrl = `${origin}/api/mobile/banners/${b.id}/image`;
+      }
+
+      return {
+        id: b.id,
+        badge: b.badge,
+        titleLine1: b.titleLine1,
+        titleLine2: b.titleLine2,
+        subtitle: b.subtitle,
+        accentColor: b.accentColor,
+        buttonColor: b.buttonColor,
+        gradient: [b.gradientStart, b.gradientEnd],
+        icon: b.icon,
+        imageUrl,
+      };
+    });
 
     return NextResponse.json({ banners: formatted });
   } catch (error) {

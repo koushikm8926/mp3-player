@@ -24,7 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
-import { api } from '../services/api';
+import { api, getBaseUrl } from '../services/api';
 
 const CATEGORY_CHIPS = [
   { id: 'all', title: 'All', icon: 'musical-notes' },
@@ -46,31 +46,15 @@ const CATEGORY_CHIPS = [
   { id: 'Study', title: 'Study', icon: 'bulb' },
 ];
 
-const TOP_PLAYLIST_PRESETS = [
-  {
-    id: 'top50',
-    title: 'Top 50 India',
-    subtitle: '50 Songs',
-    gradient: ['#4C1D95', '#8B5CF6', '#2E1065'],
-  },
-  {
-    id: 'relax',
-    title: 'Relax & Unwind',
-    subtitle: '40 Songs',
-    gradient: ['#065F46', '#10B981', '#022C22'],
-  },
-  {
-    id: 'workout',
-    title: 'Workout Hits',
-    subtitle: '60 Songs',
-    gradient: ['#9A3412', '#F97316', '#431407'],
-  },
-  {
-    id: 'morning',
-    title: 'Morning Boost',
-    subtitle: '35 Songs',
-    gradient: ['#854D0E', '#EAB308', '#3F2C06'],
-  },
+const CATEGORY_GRADIENTS = [
+  ['#4C1D95', '#8B5CF6', '#2E1065'], // Purple
+  ['#065F46', '#10B981', '#022C22'], // Emerald
+  ['#9A3412', '#F97316', '#431407'], // Orange
+  ['#831843', '#F43F5E', '#4C0519'], // Rose
+  ['#0369A1', '#38BDF8', '#0C4A6E'], // Sky Blue
+  ['#854D0E', '#EAB308', '#3F2C06'], // Gold
+  ['#701A75', '#D946EF', '#4A044E'], // Fuchsia
+  ['#1E1B4B', '#6366F1', '#312E81'], // Indigo
 ];
 
 const RECOMMENDED_RADIOS = [
@@ -126,6 +110,7 @@ export function HomeScreen({ navigation }) {
     playlists,
     favoriteTracks,
     recentTracks,
+    statsMap,
   } = library;
 
   const greeting = useMemo(() => {
@@ -152,6 +137,53 @@ export function HomeScreen({ navigation }) {
     () => [...filteredTracks].sort((a, b) => b.dateAdded - a.dateAdded).slice(0, 10),
     [filteredTracks]
   );
+
+  const userTopCategories = useMemo(() => {
+    const catMap = new Map();
+
+    // 1. Analyze play frequency from recent tracks & statsMap (User Behavior)
+    recentTracks.forEach((track) => {
+      const cat = track.category || track.genre || 'Pop';
+      const stats = statsMap?.get ? statsMap.get(track.id) : null;
+      const playCount = (stats?.playCount || 1) + 1;
+      catMap.set(cat, (catMap.get(cat) || 0) + playCount);
+    });
+
+    // 2. Scan all tracks to ensure categories with content are ranked
+    tracks.forEach((track) => {
+      const cat = track.category || track.genre || 'Pop';
+      if (!catMap.has(cat)) {
+        catMap.set(cat, 1);
+      }
+    });
+
+    // 3. Sort categories by user play frequency descending
+    const sortedCats = Array.from(catMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => name);
+
+    const baseCats =
+      sortedCats.length > 0
+        ? sortedCats
+        : ['Pop', 'Devotional', 'Podcasts', 'Lo-Fi', 'Instrumental', 'Workout'];
+
+    return baseCats.slice(0, 8).map((catName, index) => {
+      const catTracks = tracks.filter(
+        (t) => (t.category || t.genre || '').toLowerCase() === catName.toLowerCase()
+      );
+      const count = catTracks.length || Math.max(5, (index + 1) * 8);
+      const gradient = CATEGORY_GRADIENTS[index % CATEGORY_GRADIENTS.length];
+
+      return {
+        id: `user-cat-${catName}-${index}`,
+        categoryName: catName,
+        title: catName,
+        subtitle: `${count} Songs`,
+        count,
+        gradient,
+      };
+    });
+  }, [recentTracks, tracks, statsMap]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -354,17 +386,17 @@ export function HomeScreen({ navigation }) {
           <SectionHeader
             title="Top Playlists"
             actionLabel="See All"
-            onPressAction={() => navigation.navigate('PlaylistsTab')}
+            onPressAction={() => navigation.navigate('CategoriesTab')}
           />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.rail}
           >
-            {TOP_PLAYLIST_PRESETS.map((pl) => (
+            {userTopCategories.map((pl) => (
               <Pressable
                 key={pl.id}
-                onPress={() => navigation.navigate('PlaylistsTab')}
+                onPress={() => navigation.navigate('GenreDetail', { name: pl.categoryName })}
                 style={styles.playlistCardContainer}
               >
                 <LinearGradient
@@ -374,7 +406,7 @@ export function HomeScreen({ navigation }) {
                   style={styles.playlistCard}
                 >
                   <View style={styles.playlistWatermark}>
-                    <Text style={styles.watermarkText}>50</Text>
+                    <Text style={styles.watermarkText}>{pl.count}</Text>
                   </View>
                   <View style={styles.playlistMeta}>
                     <Text style={styles.playlistTitle} numberOfLines={1}>
@@ -704,37 +736,57 @@ function HeroCarousel({ onPlay }) {
   useEffect(() => {
     let active = true;
 
-    // Load cached dynamic banners first
-    AsyncStorage.getItem('minax.cachedBanners')
-      .then((cached) => {
-        if (active && cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setDynamicBanners(parsed);
-            }
-          } catch {}
-        }
-      })
-      .catch(() => {});
+    const loadBanners = async () => {
+      const baseUrl = await getBaseUrl().catch(() => '');
 
-    // Fetch dynamic online banners if network/server is available
-    api
-      .banners()
-      .then((res) => {
-        if (active && res.ok && Array.isArray(res.data?.banners) && res.data.banners.length > 0) {
-          setDynamicBanners(res.data.banners);
-          AsyncStorage.setItem('minax.cachedBanners', JSON.stringify(res.data.banners)).catch(() => {});
-        }
-      })
-      .catch(() => {});
+      // Load cached dynamic banners first
+      const cached = await AsyncStorage.getItem('minax.cachedBanners').catch(() => null);
+      if (active && cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setDynamicBanners(parsed);
+          }
+        } catch {}
+      }
+
+      // Fetch dynamic online banners if network/server is available
+      const res = await api.banners().catch(() => null);
+      if (active && res?.ok && Array.isArray(res.data?.banners) && res.data.banners.length > 0) {
+        const resolved = res.data.banners.map((b) => {
+          let imageUrl = b.imageUrl;
+          if (imageUrl) {
+            if (imageUrl.startsWith('/')) {
+              imageUrl = `${baseUrl}${imageUrl}`;
+            } else if (imageUrl.includes('localhost') && baseUrl) {
+              try {
+                const urlObj = new URL(imageUrl);
+                const baseObj = new URL(baseUrl);
+                urlObj.protocol = baseObj.protocol;
+                urlObj.host = baseObj.host;
+                imageUrl = urlObj.toString();
+              } catch {}
+            }
+          }
+          return { ...b, imageUrl };
+        });
+
+        setDynamicBanners(resolved);
+        AsyncStorage.setItem('minax.cachedBanners', JSON.stringify(resolved)).catch(() => {});
+      }
+    };
+
+    loadBanners();
 
     return () => {
       active = false;
     };
   }, []);
 
-  const items = dynamicBanners.length > 0 ? dynamicBanners : CAROUSEL_ITEMS;
+  const items = useMemo(
+    () => (dynamicBanners.length > 0 ? [...CAROUSEL_ITEMS, ...dynamicBanners] : CAROUSEL_ITEMS),
+    [dynamicBanners]
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -779,20 +831,45 @@ function HeroCarousel({ onPlay }) {
         renderItem={({ item }) => (
           <View style={{ width: cardWidth, marginRight: cardGap }}>
             <LinearGradient
-              colors={item.gradient}
+              colors={
+                Array.isArray(item.gradient) && item.gradient.length >= 2
+                  ? item.gradient
+                  : ['#2A0A4B', '#5B1A8C', '#120424']
+              }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.heroCard}
             >
+              {item.imageUrl ? (
+                <>
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={StyleSheet.absoluteFillObject}
+                    resizeMode="cover"
+                  />
+                  <LinearGradient
+                    colors={['rgba(9, 7, 19, 0.45)', 'rgba(9, 7, 19, 0.85)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                </>
+              ) : null}
+
               <View style={styles.heroLeft}>
-                <View style={[styles.featuredBadge, { backgroundColor: `${item.accentColor}25` }]}>
-                  <Text style={[styles.featuredBadgeText, { color: item.accentColor }]}>
+                <View
+                  style={[
+                    styles.featuredBadge,
+                    { backgroundColor: `${item.accentColor || '#C084FC'}35` },
+                  ]}
+                >
+                  <Text style={[styles.featuredBadgeText, { color: item.accentColor || '#C084FC' }]}>
                     {item.badge}
                   </Text>
                 </View>
 
                 <Text style={styles.heroTitle}>{item.titleLine1}</Text>
-                <Text style={[styles.heroTitleGradient, { color: item.accentColor }]}>
+                <Text style={[styles.heroTitleGradient, { color: item.accentColor || '#C084FC' }]}>
                   {item.titleLine2}
                 </Text>
 
@@ -800,27 +877,28 @@ function HeroCarousel({ onPlay }) {
 
                 <Pressable
                   onPress={() => onPlay(item)}
-                  style={[styles.listenButton, { backgroundColor: item.buttonColor }]}
+                  style={[styles.listenButton, { backgroundColor: item.buttonColor || '#8B5CF6' }]}
                 >
                   <Text style={styles.listenButtonText}>Listen Now</Text>
                   <Ionicons name="play" size={14} color="#FFFFFF" style={{ marginLeft: 6 }} />
                 </Pressable>
               </View>
 
-              <View style={styles.heroRight}>
-                {item.imageUrl ? (
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={{ width: 86, height: 86, borderRadius: 16, borderWidth: 1.5, borderColor: `${item.accentColor}66` }}
-                    resizeMode="cover"
+              {!item.imageUrl ? (
+                <View style={styles.heroRight}>
+                  <View
+                    style={[
+                      styles.heroGlowCircle,
+                      { backgroundColor: `${item.accentColor || '#C084FC'}33` },
+                    ]}
                   />
-                ) : (
-                  <>
-                    <View style={[styles.heroGlowCircle, { backgroundColor: `${item.accentColor}33` }]} />
-                    <Ionicons name={item.icon || 'sparkles'} size={92} color={`${item.accentColor}66`} />
-                  </>
-                )}
-              </View>
+                  <Ionicons
+                    name={item.icon || 'sparkles'}
+                    size={92}
+                    color={`${item.accentColor || '#C084FC'}66`}
+                  />
+                </View>
+              ) : null}
             </LinearGradient>
           </View>
         )}

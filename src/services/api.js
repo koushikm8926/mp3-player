@@ -123,5 +123,6 @@ export const api = {
       body: { durationMs },
     }),
   remoteSettings: () => request('/settings', { auth: false }),
+  getBaseUrl: () => getBaseUrl(),
   logout: () => request('/logout', { method: 'POST' }),
 };
