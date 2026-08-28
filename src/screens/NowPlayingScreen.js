@@ -266,7 +266,7 @@ export function NowPlayingScreen({ navigation }) {
                 setScrubbing(null);
               }}
               minimumTrackTintColor={theme.colors.accent}
-              maximumTrackTintColor={theme.colors.surfaceAlt}
+              maximumTrackTintColor={theme.colors.isDark ? '#374151' : '#D1D5DB'}
               thumbTintColor={theme.colors.accent}
             />
           </View>
