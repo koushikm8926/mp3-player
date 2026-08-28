@@ -230,13 +230,21 @@ export function BannersManager({ initialBanners }: { initialBanners: BannerItem[
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-mist-400 mb-1">Banner Cover Image</label>
+              <label className="block text-xs font-medium text-mist-400 mb-1">
+                Banner Cover Image
+                <span className="ml-2 inline-block rounded bg-brand-500/20 px-2 py-0.5 text-[10px] font-semibold text-brand-300">
+                  Recommended: 1200×600 px (2:1 Rectangular Widescreen)
+                </span>
+              </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
                 className="w-full text-xs text-mist-400 file:mr-3 file:rounded-md file:border-0 file:bg-brand-500/20 file:px-3 file:py-2 file:text-xs file:font-medium file:text-brand-400 hover:file:bg-brand-500/30 cursor-pointer"
               />
+              <p className="mt-1 text-[11px] text-mist-500">
+                Recommended dimension: <strong>1200×600 px</strong> or <strong>1000×500 px</strong> (Rectangular 2:1 widescreen aspect ratio). The image covers the entire hero carousel card.
+              </p>
             </div>
           </div>
 

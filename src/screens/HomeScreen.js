@@ -738,41 +738,57 @@ function HeroCarousel({ onPlay }) {
 
     const loadBanners = async () => {
       const baseUrl = await getBaseUrl().catch(() => '');
+      const serverUrl = (baseUrl || 'http://10.0.2.2:3000').replace(/\/+$/, '');
 
-      // Load cached dynamic banners first
-      const cached = await AsyncStorage.getItem('minax.cachedBanners').catch(() => null);
-      if (active && cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setDynamicBanners(parsed);
-          }
-        } catch {}
-      }
-
-      // Fetch dynamic online banners if network/server is available
+      // Fetch fresh banners from server first (do not show stale cached URLs)
       const res = await api.banners().catch(() => null);
       if (active && res?.ok && Array.isArray(res.data?.banners) && res.data.banners.length > 0) {
         const resolved = res.data.banners.map((b) => {
           let imageUrl = b.imageUrl;
           if (imageUrl) {
-            if (imageUrl.startsWith('/')) {
-              imageUrl = `${baseUrl}${imageUrl}`;
-            } else if (imageUrl.includes('localhost') && baseUrl) {
+            // Always rewrite the host to the correct server address for this device
+            let path = imageUrl;
+            if (imageUrl.startsWith('http')) {
               try {
-                const urlObj = new URL(imageUrl);
-                const baseObj = new URL(baseUrl);
-                urlObj.protocol = baseObj.protocol;
-                urlObj.host = baseObj.host;
-                imageUrl = urlObj.toString();
+                path = new URL(imageUrl).pathname;
               } catch {}
             }
+            if (!path.startsWith('/')) path = '/' + path;
+            imageUrl = `${serverUrl}${path}`;
           }
           return { ...b, imageUrl };
         });
 
-        setDynamicBanners(resolved);
-        AsyncStorage.setItem('minax.cachedBanners', JSON.stringify(resolved)).catch(() => {});
+        if (active) {
+          setDynamicBanners(resolved);
+          // Cache with resolved absolute URL so offline mode also works
+          AsyncStorage.setItem('minax.cachedBanners', JSON.stringify(resolved)).catch(() => {});
+        }
+        return;
+      }
+
+      // If server unreachable, fall back to cache
+      const cached = await AsyncStorage.getItem('minax.cachedBanners').catch(() => null);
+      if (active && cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Re-resolve URLs from cache against current serverUrl in case server IP changed
+            const reresolved = parsed.map((b) => {
+              let imageUrl = b.imageUrl;
+              if (imageUrl) {
+                let path = imageUrl;
+                if (imageUrl.startsWith('http')) {
+                  try { path = new URL(imageUrl).pathname; } catch {}
+                }
+                if (!path.startsWith('/')) path = '/' + path;
+                imageUrl = `${serverUrl}${path}`;
+              }
+              return { ...b, imageUrl };
+            });
+            setDynamicBanners(reresolved);
+          }
+        } catch {}
       }
     };
 
@@ -829,33 +845,59 @@ function HeroCarousel({ onPlay }) {
           index,
         })}
         renderItem={({ item }) => (
-          <View style={{ width: cardWidth, marginRight: cardGap }}>
-            <LinearGradient
-              colors={
-                Array.isArray(item.gradient) && item.gradient.length >= 2
-                  ? item.gradient
-                  : ['#2A0A4B', '#5B1A8C', '#120424']
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroCard}
-            >
-              {item.imageUrl ? (
-                <>
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={StyleSheet.absoluteFillObject}
-                    resizeMode="cover"
-                  />
-                  <LinearGradient
-                    colors={['rgba(9, 7, 19, 0.45)', 'rgba(9, 7, 19, 0.85)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={StyleSheet.absoluteFillObject}
-                  />
-                </>
-              ) : null}
+          <View
+            style={{
+              width: cardWidth,
+              height: 200,
+              marginRight: cardGap,
+              borderRadius: 24,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Background: uploaded image or gradient */}
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={[StyleSheet.absoluteFillObject, { width: cardWidth, height: 200 }]}
+                resizeMode="cover"
+              />
+            ) : (
+              <LinearGradient
+                colors={
+                  Array.isArray(item.gradient) && item.gradient.length >= 2
+                    ? item.gradient
+                    : ['#2A0A4B', '#5B1A8C', '#120424']
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[StyleSheet.absoluteFillObject, { width: cardWidth, height: 200 }]}
+              />
+            )}
 
+            {/* Dark overlay for image cards so text is readable */}
+            {item.imageUrl ? (
+              <LinearGradient
+                colors={['rgba(9, 7, 19, 0.45)', 'rgba(9, 7, 19, 0.80)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[StyleSheet.absoluteFillObject, { width: cardWidth, height: 200 }]}
+              />
+            ) : null}
+
+            {/* Foreground: text + icons — always on top */}
+            <View
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                padding: 20,
+                paddingBottom: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
               <View style={styles.heroLeft}>
                 <View
                   style={[
@@ -873,7 +915,9 @@ function HeroCarousel({ onPlay }) {
                   {item.titleLine2}
                 </Text>
 
-                <Text style={styles.heroSubtitle}>{item.subtitle}</Text>
+                <Text style={styles.heroSubtitle} numberOfLines={1}>
+                  {item.subtitle}
+                </Text>
 
                 <Pressable
                   onPress={() => onPlay(item)}
@@ -884,22 +928,20 @@ function HeroCarousel({ onPlay }) {
                 </Pressable>
               </View>
 
-              {!item.imageUrl ? (
-                <View style={styles.heroRight}>
-                  <View
-                    style={[
-                      styles.heroGlowCircle,
-                      { backgroundColor: `${item.accentColor || '#C084FC'}33` },
-                    ]}
-                  />
-                  <Ionicons
-                    name={item.icon || 'sparkles'}
-                    size={92}
-                    color={`${item.accentColor || '#C084FC'}66`}
-                  />
-                </View>
-              ) : null}
-            </LinearGradient>
+              <View style={styles.heroRight}>
+                <View
+                  style={[
+                    styles.heroGlowCircle,
+                    { backgroundColor: `${item.accentColor || '#C084FC'}33` },
+                  ]}
+                />
+                <Ionicons
+                  name={item.icon || 'sparkles'}
+                  size={92}
+                  color={`${item.accentColor || '#C084FC'}66`}
+                />
+              </View>
+            </View>
           </View>
         )}
       />
@@ -1174,10 +1216,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroRight: {
-    width: 100,
+    width: 104,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+  },
+  heroImageFrame: {
+    width: 104,
+    height: 104,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    elevation: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCoverImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
   },
   heroGlowCircle: {
     position: 'absolute',
