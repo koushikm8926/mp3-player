@@ -928,19 +928,21 @@ function HeroCarousel({ onPlay }) {
                 </Pressable>
               </View>
 
-              <View style={styles.heroRight}>
-                <View
-                  style={[
-                    styles.heroGlowCircle,
-                    { backgroundColor: `${item.accentColor || '#C084FC'}33` },
-                  ]}
-                />
-                <Ionicons
-                  name={item.icon || 'sparkles'}
-                  size={92}
-                  color={`${item.accentColor || '#C084FC'}66`}
-                />
-              </View>
+              {!item.imageUrl && (
+                <View style={styles.heroRight}>
+                  <View
+                    style={[
+                      styles.heroGlowCircle,
+                      { backgroundColor: `${item.accentColor || '#C084FC'}33` },
+                    ]}
+                  />
+                  <Ionicons
+                    name={item.icon || 'sparkles'}
+                    size={92}
+                    color={`${item.accentColor || '#C084FC'}66`}
+                  />
+                </View>
+              )}
             </View>
           </View>
         )}
