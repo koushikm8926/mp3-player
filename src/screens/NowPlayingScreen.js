@@ -25,10 +25,10 @@ import { formatCountdown, formatDuration } from '../utils/format';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-/** Step for the two seek controls flanking the play button. */
+/** Step for the seek controls flanking the seek bar. */
 const SEEK_STEP_MS = 10000;
 
-/** Full-screen player with artwork, seek bar and every transport control. */
+/** Full-screen player matching the updated design layout. */
 export function NowPlayingScreen({ navigation }) {
   const theme = useTheme();
   const { t, settings, update } = useSettings();
@@ -114,8 +114,6 @@ export function NowPlayingScreen({ navigation }) {
           </Pressable>
         </View>
 
-        {/* Keyed on the track so each new song's artwork mounts fresh and fades up, rather
-            than swapping in on a single frame. */}
         <Animated.View key={track.id} entering={FadeIn.duration(320)} style={styles.artWrap}>
           <Artwork
             uri={track.artworkUri}
@@ -126,81 +124,166 @@ export function NowPlayingScreen({ navigation }) {
           />
         </Animated.View>
 
-        <View style={styles.metaRow}>
+        {/* Track details centered */}
+        <View style={styles.metaCenter}>
+          <Text numberOfLines={1} style={[theme.font.h2, { color: theme.colors.text }]}>
+            {track.title}
+          </Text>
+          <Pressable onPress={() => navigation.navigate('ArtistDetail', { name: track.artist })}>
+            <Text
+              numberOfLines={1}
+              style={[theme.font.title, { color: theme.colors.accent, marginTop: 6 }]}
+            >
+              {track.artist}
+            </Text>
+          </Pressable>
+          {track.album ? (
+            <Text
+              numberOfLines={1}
+              style={[theme.font.body, { color: theme.colors.textSecondary, marginTop: 4 }]}
+            >
+              {track.album}
+            </Text>
+          ) : null}
+        </View>
+
+        {/* Quick Action Icons Row directly under title & artist (matching updated layout) */}
+        <View style={styles.quickActionRow}>
           <PressableScale
             onPress={() => {
               tap();
               library.toggleFavorite(track);
             }}
             hitSlop={12}
-            style={styles.metaSide}
             scaleTo={0.82}
+            style={styles.iconButton}
           >
             <PopOnChange trigger={favorite}>
               <Ionicons
                 name={favorite ? 'heart' : 'heart-outline'}
-                size={28}
+                size={24}
                 color={favorite ? theme.colors.accent : theme.colors.textSecondary}
               />
             </PopOnChange>
           </PressableScale>
 
-          <View style={styles.metaCenter}>
-            <Text numberOfLines={1} style={[theme.font.h2, { color: theme.colors.text }]}>
-              {track.title}
-            </Text>
-            <Pressable onPress={() => navigation.navigate('ArtistDetail', { name: track.artist })}>
-              <Text
-                numberOfLines={1}
-                style={[theme.font.title, { color: theme.colors.accent, marginTop: 6 }]}
-              >
-                {track.artist}
-              </Text>
-            </Pressable>
-            {track.album ? (
-              <Text
-                numberOfLines={1}
-                style={[theme.font.body, { color: theme.colors.textSecondary, marginTop: 4 }]}
-              >
-                {track.album}
-              </Text>
-            ) : null}
-          </View>
-
-          <Pressable
-            onPress={() => setPlaylistPickerOpen(true)}
-            hitSlop={12}
-            style={styles.metaSide}
-          >
-            <Ionicons name="add-circle-outline" size={28} color={theme.colors.accent} />
-          </Pressable>
-        </View>
-
-        <View style={styles.seekSection}>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={duration}
-            value={position}
-            onValueChange={setScrubbing}
-            onSlidingComplete={(value) => {
-              player.seekTo(value);
-              setScrubbing(null);
+          <PressableScale
+            onPress={() => {
+              tap();
+              setPlaylistPickerOpen(true);
             }}
-            minimumTrackTintColor={theme.colors.accent}
-            maximumTrackTintColor={theme.colors.surfaceAlt}
-            thumbTintColor={theme.colors.accent}
-          />
-          <View style={styles.times}>
-            <Text style={[theme.font.caption, { color: theme.colors.textSecondary }]}>
-              {formatDuration(position)}
-            </Text>
-            <Text style={[theme.font.caption, { color: theme.colors.textSecondary }]}>
-              {formatDuration(duration)}
-            </Text>
-          </View>
+            hitSlop={12}
+            scaleTo={0.85}
+            style={styles.iconButton}
+          >
+            <Ionicons name="add-circle-outline" size={24} color={theme.colors.textSecondary} />
+          </PressableScale>
+
+          <PressableScale
+            onPress={() => {
+              tap();
+              navigation.navigate('Equalizer');
+            }}
+            hitSlop={12}
+            scaleTo={0.85}
+            style={styles.iconButton}
+          >
+            <View style={styles.activeIconContainer}>
+              <Ionicons
+                name="options-outline"
+                size={24}
+                color={settings.equalizerEnabled ? theme.colors.accent : theme.colors.textSecondary}
+              />
+              {settings.equalizerEnabled ? (
+                <View style={[styles.activeDot, { backgroundColor: theme.colors.accent }]} />
+              ) : null}
+            </View>
+          </PressableScale>
+
+          <PressableScale
+            onPress={() => {
+              tap();
+              navigation.navigate('SleepTimer');
+            }}
+            hitSlop={12}
+            scaleTo={0.85}
+            style={styles.iconButton}
+          >
+            <View style={styles.activeIconContainer}>
+              <Ionicons
+                name="moon-outline"
+                size={24}
+                color={player.sleepTimer != null ? theme.colors.accent : theme.colors.textSecondary}
+              />
+              {player.sleepTimer != null ? (
+                <View style={[styles.activeDot, { backgroundColor: theme.colors.accent }]} />
+              ) : null}
+            </View>
+          </PressableScale>
+
+          <PressableScale
+            onPress={() => {
+              tap();
+              navigation.navigate('Queue');
+            }}
+            hitSlop={12}
+            scaleTo={0.85}
+            style={styles.iconButton}
+          >
+            <Ionicons name="list-outline" size={24} color={theme.colors.textSecondary} />
+          </PressableScale>
         </View>
 
+        {/* Seek section flanked by 10s Rewind and Fast-Forward controls */}
+        <View style={styles.seekRow}>
+          <PressableSpin
+            onPress={() => {
+              tap();
+              player.seekBy(-SEEK_STEP_MS);
+            }}
+            degrees={-40}
+            hitSlop={12}
+          >
+            <MaterialCommunityIcons name="rewind-10" size={28} color={theme.colors.text} />
+          </PressableSpin>
+
+          <View style={styles.seekCenterContainer}>
+            <View style={styles.timePillContainer}>
+              <View style={[styles.timePill, { backgroundColor: theme.colors.surfaceAlt }]}>
+                <Text style={[theme.font.caption, { color: theme.colors.text, fontWeight: '600', fontSize: 12 }]}>
+                  {formatDuration(position)} / {formatDuration(duration)}
+                </Text>
+              </View>
+            </View>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={duration}
+              value={position}
+              onValueChange={setScrubbing}
+              onSlidingComplete={(value) => {
+                player.seekTo(value);
+                setScrubbing(null);
+              }}
+              minimumTrackTintColor={theme.colors.accent}
+              maximumTrackTintColor={theme.colors.surfaceAlt}
+              thumbTintColor={theme.colors.accent}
+            />
+          </View>
+
+          <PressableSpin
+            onPress={() => {
+              tap();
+              player.seekBy(SEEK_STEP_MS);
+            }}
+            degrees={40}
+            hitSlop={12}
+          >
+            <MaterialCommunityIcons name="fast-forward-10" size={28} color={theme.colors.text} />
+          </PressableSpin>
+        </View>
+
+        {/* Main transport controls (Shuffle | Skip Back | Play/Pause | Skip Forward | Repeat) */}
         <View style={styles.controls}>
           <PressableScale
             onPress={() => {
@@ -223,17 +306,6 @@ export function NowPlayingScreen({ navigation }) {
             <Ionicons name="play-skip-back" size={30} color={theme.colors.text} />
           </PressableScale>
 
-          <PressableSpin
-            onPress={() => {
-              tap();
-              player.seekBy(-SEEK_STEP_MS);
-            }}
-            degrees={-40}
-            hitSlop={12}
-          >
-            <MaterialCommunityIcons name="rewind-10" size={30} color={theme.colors.text} />
-          </PressableSpin>
-
           <PressableScale
             onPress={() => {
               tap();
@@ -255,17 +327,6 @@ export function NowPlayingScreen({ navigation }) {
               />
             </PopOnChange>
           </PressableScale>
-
-          <PressableSpin
-            onPress={() => {
-              tap();
-              player.seekBy(SEEK_STEP_MS);
-            }}
-            degrees={40}
-            hitSlop={12}
-          >
-            <MaterialCommunityIcons name="fast-forward-10" size={30} color={theme.colors.text} />
-          </PressableSpin>
 
           <PressableScale onPress={player.skipNext} hitSlop={12} scaleTo={0.86}>
             <Ionicons name="play-skip-forward" size={30} color={theme.colors.text} />
@@ -299,61 +360,6 @@ export function NowPlayingScreen({ navigation }) {
               </View>
             </PopOnChange>
           </PressableScale>
-        </View>
-
-        <View style={styles.actionRow}>
-          <ActionTile
-            icon="list"
-            label={t('queue')}
-            onPress={() => navigation.navigate('Queue')}
-          />
-          <ActionTile
-            icon="information-circle-outline"
-            label={t('trackDetails')}
-            onPress={() => setDetailsOpen(true)}
-          />
-          <ActionTile
-            icon="options"
-            label={t('equalizer')}
-            active={settings.equalizerEnabled}
-            onPress={() => navigation.navigate('Equalizer')}
-          />
-          <ActionTile
-            icon="moon"
-            label={t('sleepTimer')}
-            active={player.sleepTimer != null}
-            onPress={() => navigation.navigate('SleepTimer')}
-          />
-          <ActionTile
-            icon="speedometer"
-            label={`${settings.playbackSpeed}×`}
-            active={settings.playbackSpeed !== 1}
-            onPress={() => setSpeedOpen(true)}
-          />
-        </View>
-
-        <View
-          style={[
-            styles.volumeRow,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-              borderRadius: theme.radius.lg,
-            },
-          ]}
-        >
-          <Ionicons name="volume-low" size={20} color={theme.colors.accent} />
-          <Slider
-            style={styles.volumeSlider}
-            minimumValue={0}
-            maximumValue={1}
-            value={player.volume}
-            onValueChange={player.setVolume}
-            minimumTrackTintColor={theme.colors.accent}
-            maximumTrackTintColor={theme.colors.surfaceAlt}
-            thumbTintColor={theme.colors.accent}
-          />
-          <Ionicons name="volume-high" size={20} color={theme.colors.accent} />
         </View>
       </ScrollView>
 
@@ -396,6 +402,14 @@ export function NowPlayingScreen({ navigation }) {
           }}
         />
         <SheetItem
+          icon="speedometer-outline"
+          label={`${t('playbackSpeed')} (${settings.playbackSpeed}×)`}
+          onPress={() => {
+            setMenuOpen(false);
+            setTimeout(() => setSpeedOpen(true), 220);
+          }}
+        />
+        <SheetItem
           icon="eye-off-outline"
           label={t('hideTrack')}
           destructive
@@ -432,32 +446,6 @@ export function NowPlayingScreen({ navigation }) {
   );
 }
 
-/** One of the five squares beneath the transport controls. */
-function ActionTile({ icon, label, onPress, active }) {
-  const theme = useTheme();
-  return (
-    <PressableScale
-      onPress={onPress}
-      style={[
-        styles.actionTile,
-        {
-          backgroundColor: active ? theme.colors.accentMuted : theme.colors.surface,
-          borderColor: active ? 'transparent' : theme.colors.border,
-          borderRadius: theme.radius.md,
-        },
-      ]}
-    >
-      <Ionicons name={icon} size={21} color={theme.colors.accent} />
-      <Text
-        numberOfLines={2}
-        style={[theme.font.tiny, { color: theme.colors.text, marginTop: 6, textAlign: 'center' }]}
-      >
-        {label}
-      </Text>
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { paddingHorizontal: 24, flexGrow: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -465,19 +453,59 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center' },
   miniTrack: { width: 96, height: 4, borderRadius: 2, marginTop: 8, overflow: 'hidden' },
   miniFill: { height: 4, borderRadius: 2 },
-  artWrap: { alignItems: 'center', justifyContent: 'center', marginTop: 26, marginBottom: 26 },
-  metaRow: { flexDirection: 'row', alignItems: 'center' },
-  metaSide: { width: 40, alignItems: 'center' },
-  metaCenter: { flex: 1, alignItems: 'center', paddingHorizontal: 8 },
-  seekSection: { marginTop: 20 },
-  slider: { width: '100%', height: 32, marginHorizontal: -2 },
-  times: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -4 },
+  artWrap: { alignItems: 'center', justifyContent: 'center', marginTop: 20, marginBottom: 20 },
+  metaCenter: { alignItems: 'center', paddingHorizontal: 16, marginBottom: 24 },
+  quickActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: 28,
+    paddingHorizontal: 8,
+  },
+  iconButton: {
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeIconContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  seekRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 28,
+  },
+  seekCenterContainer: {
+    flex: 1,
+    marginHorizontal: 12,
+  },
+  timePillContainer: {
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  timePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  slider: { width: '100%', height: 32 },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 18,
-    marginBottom: 26,
+    marginBottom: 24,
+    paddingHorizontal: 8,
   },
   playButton: {
     width: 76,
@@ -496,22 +524,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionRow: { flexDirection: 'row', gap: 8 },
-  actionTile: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 4,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  volumeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginTop: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  volumeSlider: { flex: 1, height: 36, marginHorizontal: 10 },
 });
