@@ -57,6 +57,8 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
   const [, startTransition] = useTransition();
   const [staged, setStaged] = useState<File[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Devotional');
+  const [uploadArtist, setUploadArtist] = useState<string>('');
+  const [uploadAlbum, setUploadAlbum] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +102,8 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
       const body = new FormData();
       body.append('file', file);
       body.append('category', selectedCategory);
+      if (uploadArtist.trim()) body.append('artist', uploadArtist.trim());
+      if (uploadAlbum.trim()) body.append('album', uploadAlbum.trim());
       try {
         const response = await fetch('/api/admin/songs/upload', { method: 'POST', body });
         if (!response.ok) {
@@ -171,22 +175,52 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
         description="Audio picked here is stored on the server. New uploads start hidden until you publish them."
       >
         <div className="p-5">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <label htmlFor="upload-category" className="text-xs font-semibold uppercase tracking-wide text-mist-400">
-              Song Category:
-            </label>
-            <select
-              id="upload-category"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="rounded-lg border border-ink-600 bg-ink-850 px-3 py-1.5 text-xs text-mist-100 focus:border-brand-500 focus:outline-none"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+          <div className="mb-4 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label htmlFor="upload-category" className="text-xs font-semibold uppercase tracking-wide text-mist-400">
+                Category:
+              </label>
+              <select
+                id="upload-category"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="rounded-lg border border-ink-600 bg-ink-850 px-3 py-1.5 text-xs text-mist-100 focus:border-brand-500 focus:outline-none"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="upload-artist" className="text-xs font-semibold uppercase tracking-wide text-mist-400">
+                Artist:
+              </label>
+              <input
+                id="upload-artist"
+                type="text"
+                value={uploadArtist}
+                onChange={(e) => setUploadArtist(e.target.value)}
+                placeholder="Artist Name (optional)"
+                className="rounded-lg border border-ink-600 bg-ink-850 px-3 py-1.5 text-xs text-mist-100 placeholder:text-mist-500 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="upload-album" className="text-xs font-semibold uppercase tracking-wide text-mist-400">
+                Album:
+              </label>
+              <input
+                id="upload-album"
+                type="text"
+                value={uploadAlbum}
+                onChange={(e) => setUploadAlbum(e.target.value)}
+                placeholder="Album Name (optional)"
+                className="rounded-lg border border-ink-600 bg-ink-850 px-3 py-1.5 text-xs text-mist-100 placeholder:text-mist-500 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
           </div>
 
           <div

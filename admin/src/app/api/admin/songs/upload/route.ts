@@ -46,6 +46,10 @@ export async function POST(request: Request) {
 
   const categoryRaw = form.get('category');
   const category = typeof categoryRaw === 'string' && categoryRaw.trim() ? categoryRaw.trim() : 'Pop';
+  const artistRaw = form.get('artist');
+  const artist = typeof artistRaw === 'string' && artistRaw.trim() ? artistRaw.trim() : 'Unknown artist';
+  const albumRaw = form.get('album');
+  const album = typeof albumRaw === 'string' && albumRaw.trim() ? albumRaw.trim() : 'Unknown album';
   const artworkUrlRaw = form.get('artworkUrl');
   const artworkUrl = typeof artworkUrlRaw === 'string' && artworkUrlRaw.trim() ? artworkUrlRaw.trim() : null;
 
@@ -64,6 +68,8 @@ export async function POST(request: Request) {
       data: {
         id,
         title: titleFromFilename(file.name),
+        artist,
+        album,
         category,
         artworkUrl,
         storageKey: saved.storageKey,
@@ -72,7 +78,7 @@ export async function POST(request: Request) {
         sizeBytes: saved.sizeBytes,
         uploadedBy: admin.sub,
       },
-      select: { id: true, title: true, category: true },
+      select: { id: true, title: true, artist: true, album: true, category: true },
     });
     await recordAudit(admin.sub, 'song.upload', song.id, file.name);
     return Response.json({ song });
