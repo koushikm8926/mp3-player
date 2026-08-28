@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
 import {
@@ -28,7 +29,7 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 /** Step for the seek controls flanking the seek bar. */
 const SEEK_STEP_MS = 10000;
 
-/** Full-screen player matching the updated design layout. */
+/** Full-screen player with linear gradient matching the updated reference image. */
 export function NowPlayingScreen({ navigation }) {
   const theme = useTheme();
   const { t, settings, update } = useSettings();
@@ -47,21 +48,22 @@ export function NowPlayingScreen({ navigation }) {
 
   if (!track) {
     return (
-      <View
+      <LinearGradient
+        colors={['#8A1B57', '#34215B', '#113366']}
         style={[
           styles.container,
-          { backgroundColor: theme.colors.background, paddingTop: insets.top },
+          { flex: 1, paddingTop: insets.top },
         ]}
       >
         <Pressable onPress={() => navigation.goBack()} style={styles.chevron} hitSlop={12}>
-          <Ionicons name="chevron-down" size={26} color={theme.colors.text} />
+          <Ionicons name="chevron-down" size={26} color="#FFFFFF" />
         </Pressable>
         <View style={styles.centered}>
-          <Text style={[theme.font.h3, { color: theme.colors.textSecondary }]}>
+          <Text style={[theme.font.h3, { color: 'rgba(255,255,255,0.7)' }]}>
             {t('emptyQueueTitle')}
           </Text>
         </View>
-      </View>
+      </LinearGradient>
     );
   }
 
@@ -75,7 +77,12 @@ export function NowPlayingScreen({ navigation }) {
   const tap = () => Haptics.selectionAsync().catch(() => {});
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <LinearGradient
+      colors={['#8A1B57', '#34215B', '#113366']}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={{ flex: 1 }}
+    >
       <ScrollView
         contentContainerStyle={[
           styles.container,
@@ -83,23 +90,26 @@ export function NowPlayingScreen({ navigation }) {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Top Bar */}
         <View style={styles.topBar}>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-            <Ionicons name="chevron-down" size={26} color={theme.colors.text} />
+            <Ionicons name="chevron-down" size={26} color="#FFFFFF" />
           </Pressable>
 
           <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={[theme.font.h3, { color: theme.colors.text }]}>{t('nowPlaying')}</Text>
-            <View style={[styles.miniTrack, { backgroundColor: theme.colors.surfaceAlt }]}>
+            <Text style={[theme.font.h3, { color: '#FFFFFF', fontWeight: '700' }]}>
+              {t('nowPlaying')}
+            </Text>
+            <View style={[styles.miniTrack, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]}>
               <View
                 style={[
                   styles.miniFill,
-                  { backgroundColor: theme.colors.accent, width: `${progress * 100}%` },
+                  { backgroundColor: '#FFFFFF', width: `${progress * 100}%` },
                 ]}
               />
             </View>
             {player.sleepTimer ? (
-              <Text style={[theme.font.tiny, { color: theme.colors.accent, marginTop: 4 }]}>
+              <Text style={[theme.font.tiny, { color: '#FBBF24', marginTop: 4 }]}>
                 {player.sleepTimer.endOfTrack
                   ? t('endOfTrack')
                   : t('sleepTimerActive', {
@@ -110,10 +120,11 @@ export function NowPlayingScreen({ navigation }) {
           </View>
 
           <Pressable onPress={() => setMenuOpen(true)} hitSlop={12}>
-            <Ionicons name="ellipsis-vertical" size={22} color={theme.colors.text} />
+            <Ionicons name="ellipsis-vertical" size={22} color="#FFFFFF" />
           </Pressable>
         </View>
 
+        {/* Artwork */}
         <Animated.View key={track.id} entering={FadeIn.duration(320)} style={styles.artWrap}>
           <Artwork
             uri={track.artworkUri}
@@ -124,15 +135,15 @@ export function NowPlayingScreen({ navigation }) {
           />
         </Animated.View>
 
-        {/* Track details centered */}
+        {/* Track Title & Artist */}
         <View style={styles.metaCenter}>
-          <Text numberOfLines={1} style={[theme.font.h2, { color: theme.colors.text }]}>
+          <Text numberOfLines={1} style={[theme.font.h2, { color: '#FFFFFF', fontSize: 24, fontWeight: '700' }]}>
             {track.title}
           </Text>
           <Pressable onPress={() => navigation.navigate('ArtistDetail', { name: track.artist })}>
             <Text
               numberOfLines={1}
-              style={[theme.font.title, { color: theme.colors.accent, marginTop: 6 }]}
+              style={[theme.font.title, { color: 'rgba(255, 255, 255, 0.75)', marginTop: 6, fontSize: 16 }]}
             >
               {track.artist}
             </Text>
@@ -140,14 +151,14 @@ export function NowPlayingScreen({ navigation }) {
           {track.album ? (
             <Text
               numberOfLines={1}
-              style={[theme.font.body, { color: theme.colors.textSecondary, marginTop: 4 }]}
+              style={[theme.font.body, { color: 'rgba(255, 255, 255, 0.55)', marginTop: 4 }]}
             >
               {track.album}
             </Text>
           ) : null}
         </View>
 
-        {/* Quick Action Icons Row directly under title & artist (matching updated layout) */}
+        {/* Quick Action Icons Row directly under title & artist */}
         <View style={styles.quickActionRow}>
           <PressableScale
             onPress={() => {
@@ -161,8 +172,8 @@ export function NowPlayingScreen({ navigation }) {
             <PopOnChange trigger={favorite}>
               <Ionicons
                 name={favorite ? 'heart' : 'heart-outline'}
-                size={24}
-                color={favorite ? theme.colors.accent : theme.colors.textSecondary}
+                size={26}
+                color={favorite ? '#FF4D6D' : 'rgba(255, 255, 255, 0.9)'}
               />
             </PopOnChange>
           </PressableScale>
@@ -176,7 +187,7 @@ export function NowPlayingScreen({ navigation }) {
             scaleTo={0.85}
             style={styles.iconButton}
           >
-            <Ionicons name="add-circle-outline" size={24} color={theme.colors.textSecondary} />
+            <Ionicons name="add-circle-outline" size={26} color="rgba(255, 255, 255, 0.9)" />
           </PressableScale>
 
           <PressableScale
@@ -191,11 +202,11 @@ export function NowPlayingScreen({ navigation }) {
             <View style={styles.activeIconContainer}>
               <Ionicons
                 name="options-outline"
-                size={24}
-                color={settings.equalizerEnabled ? theme.colors.accent : theme.colors.textSecondary}
+                size={26}
+                color={settings.equalizerEnabled ? '#60A5FA' : 'rgba(255, 255, 255, 0.9)'}
               />
               {settings.equalizerEnabled ? (
-                <View style={[styles.activeDot, { backgroundColor: theme.colors.accent }]} />
+                <View style={[styles.activeDot, { backgroundColor: '#60A5FA' }]} />
               ) : null}
             </View>
           </PressableScale>
@@ -212,11 +223,11 @@ export function NowPlayingScreen({ navigation }) {
             <View style={styles.activeIconContainer}>
               <Ionicons
                 name="moon-outline"
-                size={24}
-                color={player.sleepTimer != null ? theme.colors.accent : theme.colors.textSecondary}
+                size={26}
+                color={player.sleepTimer != null ? '#FBBF24' : 'rgba(255, 255, 255, 0.9)'}
               />
               {player.sleepTimer != null ? (
-                <View style={[styles.activeDot, { backgroundColor: theme.colors.accent }]} />
+                <View style={[styles.activeDot, { backgroundColor: '#FBBF24' }]} />
               ) : null}
             </View>
           </PressableScale>
@@ -230,11 +241,20 @@ export function NowPlayingScreen({ navigation }) {
             scaleTo={0.85}
             style={styles.iconButton}
           >
-            <Ionicons name="list-outline" size={24} color={theme.colors.textSecondary} />
+            <Ionicons name="list-outline" size={26} color="rgba(255, 255, 255, 0.9)" />
           </PressableScale>
         </View>
 
-        {/* Seek section flanked by 10s Rewind and Fast-Forward controls */}
+        {/* Time indicator pill centered above seek bar */}
+        <View style={styles.timePillContainer}>
+          <View style={[styles.timePill, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+            <Text style={[theme.font.caption, { color: '#FFFFFF', fontWeight: '600', fontSize: 12 }]}>
+              {formatDuration(position)} / {formatDuration(duration)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Seek row: 10s Rewind | Slider Line | 10s Fast-Forward perfectly centered on the line axis */}
         <View style={styles.seekRow}>
           <PressableSpin
             onPress={() => {
@@ -243,18 +263,12 @@ export function NowPlayingScreen({ navigation }) {
             }}
             degrees={-40}
             hitSlop={12}
+            style={styles.seekFlankIcon}
           >
-            <MaterialCommunityIcons name="rewind-10" size={28} color={theme.colors.text} />
+            <MaterialCommunityIcons name="rewind-10" size={26} color="#FFFFFF" />
           </PressableSpin>
 
           <View style={styles.seekCenterContainer}>
-            <View style={styles.timePillContainer}>
-              <View style={[styles.timePill, { backgroundColor: theme.colors.surfaceAlt }]}>
-                <Text style={[theme.font.caption, { color: theme.colors.text, fontWeight: '600', fontSize: 12 }]}>
-                  {formatDuration(position)} / {formatDuration(duration)}
-                </Text>
-              </View>
-            </View>
             <Slider
               style={styles.slider}
               minimumValue={0}
@@ -265,9 +279,9 @@ export function NowPlayingScreen({ navigation }) {
                 player.seekTo(value);
                 setScrubbing(null);
               }}
-              minimumTrackTintColor={theme.colors.accent}
-              maximumTrackTintColor={theme.colors.isDark ? '#374151' : '#D1D5DB'}
-              thumbTintColor={theme.colors.accent}
+              minimumTrackTintColor="#FFFFFF"
+              maximumTrackTintColor="rgba(255, 255, 255, 0.3)"
+              thumbTintColor="#FFFFFF"
             />
           </View>
 
@@ -278,12 +292,13 @@ export function NowPlayingScreen({ navigation }) {
             }}
             degrees={40}
             hitSlop={12}
+            style={styles.seekFlankIcon}
           >
-            <MaterialCommunityIcons name="fast-forward-10" size={28} color={theme.colors.text} />
+            <MaterialCommunityIcons name="fast-forward-10" size={26} color="#FFFFFF" />
           </PressableSpin>
         </View>
 
-        {/* Main transport controls (Shuffle | Skip Back | Play/Pause | Skip Forward | Repeat) */}
+        {/* Main transport controls */}
         <View style={styles.controls}>
           <PressableScale
             onPress={() => {
@@ -296,14 +311,14 @@ export function NowPlayingScreen({ navigation }) {
             <PopOnChange trigger={player.shuffle}>
               <Ionicons
                 name="shuffle"
-                size={22}
-                color={player.shuffle ? theme.colors.accent : theme.colors.textSecondary}
+                size={24}
+                color={player.shuffle ? '#60A5FA' : 'rgba(255, 255, 255, 0.85)'}
               />
             </PopOnChange>
           </PressableScale>
 
           <PressableScale onPress={player.skipPrevious} hitSlop={12} scaleTo={0.86}>
-            <Ionicons name="play-skip-back" size={30} color={theme.colors.text} />
+            <Ionicons name="play-skip-back" size={32} color="#FFFFFF" />
           </PressableScale>
 
           <PressableScale
@@ -312,24 +327,20 @@ export function NowPlayingScreen({ navigation }) {
               player.togglePlay();
             }}
             scaleTo={0.9}
-            style={[
-              styles.playButton,
-              { backgroundColor: theme.colors.accent },
-              theme.shadow.floating,
-            ]}
+            style={styles.playButton}
           >
             <PopOnChange trigger={player.isPlaying}>
               <Ionicons
                 name={player.isPlaying ? 'pause' : 'play'}
                 size={34}
-                color={theme.colors.onAccent}
+                color="#FFFFFF"
                 style={{ marginLeft: player.isPlaying ? 0 : 3 }}
               />
             </PopOnChange>
           </PressableScale>
 
           <PressableScale onPress={player.skipNext} hitSlop={12} scaleTo={0.86}>
-            <Ionicons name="play-skip-forward" size={30} color={theme.colors.text} />
+            <Ionicons name="play-skip-forward" size={32} color="#FFFFFF" />
           </PressableScale>
 
           <PressableScale
@@ -344,15 +355,15 @@ export function NowPlayingScreen({ navigation }) {
               <View>
                 <Ionicons
                   name="repeat"
-                  size={22}
-                  color={repeatActive ? theme.colors.accent : theme.colors.textSecondary}
+                  size={24}
+                  color={repeatActive ? '#60A5FA' : 'rgba(255, 255, 255, 0.85)'}
                 />
                 {player.repeatMode === REPEAT_MODES.ONE ? (
                   <Animated.View
                     entering={FadeIn.duration(160)}
-                    style={[styles.repeatBadge, { backgroundColor: theme.colors.accent }]}
+                    style={styles.repeatBadge}
                   >
-                    <Text style={{ color: theme.colors.onAccent, fontSize: 8, fontWeight: '800' }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 8, fontWeight: '800' }}>
                       1
                     </Text>
                   </Animated.View>
@@ -442,7 +453,7 @@ export function NowPlayingScreen({ navigation }) {
         tracks={[track]}
         onClose={() => setPlaylistPickerOpen(false)}
       />
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -480,24 +491,31 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
+  timePillContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  timePill: {
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
   seekRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 28,
   },
+  seekFlankIcon: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   seekCenterContainer: {
     flex: 1,
-    marginHorizontal: 12,
-  },
-  timePillContainer: {
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  timePill: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    marginHorizontal: 4,
+    justifyContent: 'center',
   },
   slider: { width: '100%', height: 32 },
   controls: {
@@ -511,8 +529,11 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 38,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   repeatBadge: {
     position: 'absolute',
@@ -521,6 +542,7 @@ const styles = StyleSheet.create({
     width: 13,
     height: 13,
     borderRadius: 7,
+    backgroundColor: '#60A5FA',
     alignItems: 'center',
     justifyContent: 'center',
   },
