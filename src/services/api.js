@@ -112,7 +112,7 @@ export const api = {
   /** Published tracks for Admin songs mode. Each carries an absolute streaming URL. */
   songs: () => request('/songs'),
   /** Published carousel banners uploaded from the admin panel. */
-  banners: () => request('/banners'),
+  banners: () => request('/banners', { auth: false }),
   /**
    * Reports a measured track length. The panel cannot decode audio server-side, so uploads
    * have no duration until a device that has played one sends the value back.

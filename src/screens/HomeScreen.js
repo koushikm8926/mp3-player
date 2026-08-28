@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -702,11 +703,31 @@ function HeroCarousel({ onPlay }) {
 
   useEffect(() => {
     let active = true;
-    api.banners().then((res) => {
-      if (active && res.ok && Array.isArray(res.data?.banners) && res.data.banners.length > 0) {
-        setDynamicBanners(res.data.banners);
-      }
-    }).catch(() => {});
+
+    // Load cached dynamic banners first
+    AsyncStorage.getItem('minax.cachedBanners')
+      .then((cached) => {
+        if (active && cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setDynamicBanners(parsed);
+            }
+          } catch {}
+        }
+      })
+      .catch(() => {});
+
+    // Fetch dynamic online banners if network/server is available
+    api
+      .banners()
+      .then((res) => {
+        if (active && res.ok && Array.isArray(res.data?.banners) && res.data.banners.length > 0) {
+          setDynamicBanners(res.data.banners);
+          AsyncStorage.setItem('minax.cachedBanners', JSON.stringify(res.data.banners)).catch(() => {});
+        }
+      })
+      .catch(() => {});
 
     return () => {
       active = false;

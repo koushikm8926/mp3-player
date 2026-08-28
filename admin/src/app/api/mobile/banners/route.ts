@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server';
 
 import { prisma } from '@/lib/prisma';
 import { requestOrigin } from '@/lib/mobile';
+import { ensureDefaultBanners } from '@/lib/seedBanners';
 
 export async function GET(request: Request) {
   try {
+    await ensureDefaultBanners();
+
     const banners = await prisma.banner.findMany({
       where: { isPublished: true },
       orderBy: { order: 'asc' },

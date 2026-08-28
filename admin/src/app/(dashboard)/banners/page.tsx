@@ -3,12 +3,14 @@ import type { Metadata } from 'next';
 import { BannersManager } from '@/components/BannersManager';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { ensureDefaultBanners } from '@/lib/seedBanners';
 
 export const metadata: Metadata = { title: 'Carousel Banners' };
 export const dynamic = 'force-dynamic';
 
 export default async function BannersPage() {
   await requireAdmin();
+  await ensureDefaultBanners();
 
   const banners = await prisma.banner.findMany({
     orderBy: { order: 'asc' },
