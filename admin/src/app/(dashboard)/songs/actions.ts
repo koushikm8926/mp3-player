@@ -19,7 +19,14 @@ export async function setPublished(id: string, isPublished: boolean): Promise<vo
 /** Updates the editable metadata fields. */
 export async function updateSong(
   id: string,
-  fields: { title: string; artist: string; album: string; category?: string; artworkUrl?: string | null }
+  fields: {
+    title: string;
+    artist: string;
+    album: string;
+    category?: string;
+    artworkUrl?: string | null;
+    durationMs?: number | null;
+  }
 ): Promise<void> {
   const admin = await requireAdmin();
   await prisma.song.update({
@@ -30,6 +37,7 @@ export async function updateSong(
       album: fields.album.trim() || 'Unknown album',
       category: fields.category?.trim() || 'Pop',
       artworkUrl: fields.artworkUrl?.trim() || null,
+      durationMs: fields.durationMs !== undefined ? fields.durationMs : undefined,
     },
   });
   await recordAudit(admin.sub, 'song.update', id);

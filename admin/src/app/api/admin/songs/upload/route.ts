@@ -57,6 +57,10 @@ export async function POST(request: Request) {
     artworkUrl = artworkUrlRaw.trim();
   }
 
+  const durationMsRaw = form.get('durationMs');
+  const durationMsParsed = durationMsRaw ? parseInt(String(durationMsRaw), 10) : null;
+  const durationMs = Number.isFinite(durationMsParsed) && durationMsParsed! > 0 ? durationMsParsed : null;
+
   const id = randomUUID();
 
   const artworkFile = form.get('artworkFile');
@@ -86,13 +90,14 @@ export async function POST(request: Request) {
         album,
         category,
         artworkUrl,
+        durationMs,
         storageKey: saved.storageKey,
         originalName: file.name,
         mimeType: saved.mimeType,
         sizeBytes: saved.sizeBytes,
         uploadedBy: admin.sub,
       },
-      select: { id: true, title: true, artist: true, album: true, category: true },
+      select: { id: true, title: true, artist: true, album: true, category: true, durationMs: true },
     });
     await recordAudit(admin.sub, 'song.upload', song.id, file.name);
     return Response.json({ song });

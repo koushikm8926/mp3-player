@@ -74,6 +74,8 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
   const [editAlbum, setEditAlbum] = useState('');
   const [editCategory, setEditCategory] = useState('');
   const [editArtworkUrl, setEditArtworkUrl] = useState('');
+  const [editDuration, setEditDuration] = useState('');
+  const [stagedDurations, setStagedDurations] = useState<Record<string, number>>({});
 
   const publishedCount = songs.filter((song) => song.isPublished).length;
   const storedBytes = songs.reduce((sum, song) => sum + song.sizeBytes, 0);
@@ -89,7 +91,16 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
   }, [songs, query, filter]);
 
   /** Mirrors the input's FileList into state so the staged list can render it. */
-  const syncStaged = () => setStaged(Array.from(inputRef.current?.files ?? []));
+  const syncStaged = async () => {
+    const files = Array.from(inputRef.current?.files ?? []);
+    setStaged(files);
+    const map: Record<string, number> = {};
+    for (const file of files) {
+      const ms = await readAudioDuration(file);
+      if (ms) map[file.name] = ms;
+    }
+    setStagedDurations((prev) => ({ ...prev, ...map }));
+  };
 
   /** Posts the staged files one at a time, stopping at the first failure. */
   const upload = async () => {
@@ -106,6 +117,8 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
       if (uploadArtist.trim()) body.append('artist', uploadArtist.trim());
       if (uploadAlbum.trim()) body.append('album', uploadAlbum.trim());
       if (stagedArtwork) body.append('artworkFile', stagedArtwork);
+      const dur = stagedDurations[file.name];
+      if (dur) body.append('durationMs', String(dur));
       try {
         const response = await fetch('/api/admin/songs/upload', { method: 'POST', body });
         if (!response.ok) {
@@ -136,7 +149,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
     const transfer = new DataTransfer();
     files.forEach((file) => transfer.items.add(file));
     inputRef.current.files = transfer.files;
-    syncStaged();
+    void syncStaged();
   };
 
   return (
@@ -495,7 +508,13 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                           />
                         </td>
                         <td className="td text-right tabular-nums">
-                          {formatDuration(song.durationMs)}
+                          <input
+                            type="text"
+                            value={editDuration}
+                            onChange={(e) => setEditDuration(e.target.value)}
+                            placeholder="e.g. 3:45"
+                            className="input w-20 py-1 text-xs text-right"
+                          />
                         </td>
                         <td className="td text-right tabular-nums">{formatBytes(song.sizeBytes)}</td>
                         <td className="td">{formatDate(song.createdAt)}</td>
@@ -511,6 +530,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                             <button
                               type="button"
                               onClick={() => {
+                                const parsedMs = parseDurationInput(editDuration);
                                 startTransition(() => {
                                   void updateSong(song.id, {
                                     title: editTitle,
@@ -518,6 +538,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                                     album: editAlbum,
                                     category: editCategory,
                                     artworkUrl: editArtworkUrl || null,
+                                    durationMs: parsedMs,
                                   });
                                   setEditingId(null);
                                 });
@@ -609,6 +630,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                               setEditAlbum(song.album);
                               setEditCategory(song.category || 'Devotional');
                               setEditArtworkUrl(song.artworkUrl || '');
+                              setEditDuration(song.durationMs ? formatDuration(song.durationMs) : '');
                             }}
                             className="rounded-lg border border-ink-600 bg-ink-850 p-1.5 text-mist-500 transition-colors hover:border-brand-500/40 hover:text-brand-400"
                           >
@@ -662,7 +684,45 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`;
 }
 
-/** Duration is unknown until the app reports it — the panel cannot decode audio itself. */
+function readAudioDuration(file: File): Promise<number | null> {
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const audio = document.createElement('audio');
+      audio.preload = 'metadata';
+      audio.src = url;
+      audio.onloadedmetadata = () => {
+        URL.revokeObjectURL(url);
+        if (Number.isFinite(audio.duration) && audio.duration > 0) {
+          resolve(Math.round(audio.duration * 1000));
+        } else {
+          resolve(null);
+        }
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function parseDurationInput(input: string): number | null {
+  if (!input || !input.trim()) return null;
+  const str = input.trim();
+  if (str.includes(':')) {
+    const parts = str.split(':');
+    const mins = parseInt(parts[0], 10) || 0;
+    const secs = parseInt(parts[1], 10) || 0;
+    return (mins * 60 + secs) * 1000;
+  }
+  const secs = parseFloat(str);
+  if (Number.isFinite(secs) && secs > 0) return Math.round(secs * 1000);
+  return null;
+}
+
 function formatDuration(ms: number | null): string {
   if (!ms) return '—';
   const total = Math.round(ms / 1000);
