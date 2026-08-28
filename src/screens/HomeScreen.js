@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -22,6 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
+import { api } from '../services/api';
 
 const CATEGORY_CHIPS = [
   { id: 'all', title: 'All', icon: 'musical-notes' },
@@ -692,15 +694,31 @@ const CAROUSEL_ITEMS = [
 function HeroCarousel({ onPlay }) {
   const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [dynamicBanners, setDynamicBanners] = useState([]);
   const flatListRef = useRef(null);
 
   const cardWidth = Math.max(280, width - 36);
   const cardGap = 12;
 
   useEffect(() => {
+    let active = true;
+    api.banners().then((res) => {
+      if (active && res.ok && Array.isArray(res.data?.banners) && res.data.banners.length > 0) {
+        setDynamicBanners(res.data.banners);
+      }
+    }).catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const items = dynamicBanners.length > 0 ? dynamicBanners : CAROUSEL_ITEMS;
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setActiveIndex((prev) => {
-        const nextIndex = (prev + 1) % CAROUSEL_ITEMS.length;
+        const nextIndex = (prev + 1) % items.length;
         flatListRef.current?.scrollToIndex({
           index: nextIndex,
           animated: true,
@@ -710,12 +728,12 @@ function HeroCarousel({ onPlay }) {
     }, 4000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [items.length]);
 
   const handleScroll = (event) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
     const index = Math.round(contentOffset / (cardWidth + cardGap));
-    if (index >= 0 && index < CAROUSEL_ITEMS.length && index !== activeIndex) {
+    if (index >= 0 && index < items.length && index !== activeIndex) {
       setActiveIndex(index);
     }
   };
@@ -725,7 +743,7 @@ function HeroCarousel({ onPlay }) {
       <FlatList
         ref={flatListRef}
         horizontal
-        data={CAROUSEL_ITEMS}
+        data={items}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
         snapToInterval={cardWidth + cardGap}
@@ -769,8 +787,18 @@ function HeroCarousel({ onPlay }) {
               </View>
 
               <View style={styles.heroRight}>
-                <View style={[styles.heroGlowCircle, { backgroundColor: `${item.accentColor}33` }]} />
-                <Ionicons name={item.icon} size={92} color={`${item.accentColor}66`} />
+                {item.imageUrl ? (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={{ width: 86, height: 86, borderRadius: 16, borderWidth: 1.5, borderColor: `${item.accentColor}66` }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <>
+                    <View style={[styles.heroGlowCircle, { backgroundColor: `${item.accentColor}33` }]} />
+                    <Ionicons name={item.icon || 'sparkles'} size={92} color={`${item.accentColor}66`} />
+                  </>
+                )}
               </View>
             </LinearGradient>
           </View>
@@ -778,7 +806,7 @@ function HeroCarousel({ onPlay }) {
       />
 
       <View style={styles.dotsRow}>
-        {CAROUSEL_ITEMS.map((item, idx) => (
+        {items.map((item, idx) => (
           <Pressable
             key={item.id}
             onPress={() => {
@@ -792,7 +820,7 @@ function HeroCarousel({ onPlay }) {
                 styles.dot,
                 idx === activeIndex && [
                   styles.dotActive,
-                  { backgroundColor: CAROUSEL_ITEMS[activeIndex]?.accentColor || '#C084FC' },
+                  { backgroundColor: items[activeIndex]?.accentColor || '#C084FC' },
                 ],
               ]}
             />

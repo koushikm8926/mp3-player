@@ -194,3 +194,26 @@ model Song {
   @@index([isPublished])
   @@index([createdAt])
 }
+
+/// Carousel Banners uploaded from the admin panel and displayed on the mobile app Home screen.
+model Banner {
+  id            String   @id @default(cuid())
+  badge         String   @default("FEATURED")
+  titleLine1    String
+  titleLine2    String
+  subtitle      String   @default("")
+  accentColor   String   @default("#C084FC")
+  buttonColor   String   @default("#8B5CF6")
+  gradientStart String   @default("#1A0B2E")
+  gradientEnd   String   @default("#3B1560")
+  icon          String   @default("sparkles")
+  imageUrl      String?
+  storageKey    String?
+  isPublished   Boolean  @default(true)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([order])
+}

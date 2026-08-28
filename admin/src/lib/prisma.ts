@@ -23,9 +23,25 @@ function createClient(): PrismaClient {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createClient();
+function getClient(): PrismaClient {
+  const existing = globalForPrisma.prisma;
+  if (existing && 'banner' in existing && (existing as any).banner) {
+    return existing;
+  }
+  const fresh = createClient();
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = fresh;
+  }
+  return fresh;
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getClient();
+    const value = (client as any)[prop];
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+});
 
 /** BigInt does not survive JSON.stringify; `User.listeningMs` is the only field that needs this. */
 export function serialize<T>(value: T): T {
