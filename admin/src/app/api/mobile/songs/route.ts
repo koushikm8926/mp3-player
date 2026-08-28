@@ -34,6 +34,11 @@ export async function GET(request: Request) {
   return jsonOk({
     songs: songs.map((song) => ({
       ...song,
+      artworkUrl: song.artworkUrl
+        ? song.artworkUrl.startsWith('/')
+          ? `${origin}${song.artworkUrl}`
+          : song.artworkUrl
+        : null,
       createdAt: song.createdAt.toISOString(),
       url: `${origin}/api/mobile/songs/${song.id}/stream`,
     })),

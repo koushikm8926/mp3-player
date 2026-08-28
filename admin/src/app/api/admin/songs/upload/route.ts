@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { getCurrentAdmin, recordAudit } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { AUDIO_TYPES, MAX_UPLOAD_BYTES, deleteAudio, saveAudio } from '@/lib/songStorage';
+import { AUDIO_TYPES, MAX_UPLOAD_BYTES, deleteAudio, saveAudio, saveArtwork } from '@/lib/songStorage';
 
 /**
  * Receives one uploaded track.
@@ -50,10 +50,24 @@ export async function POST(request: Request) {
   const artist = typeof artistRaw === 'string' && artistRaw.trim() ? artistRaw.trim() : 'Unknown artist';
   const albumRaw = form.get('album');
   const album = typeof albumRaw === 'string' && albumRaw.trim() ? albumRaw.trim() : 'Unknown album';
+  
+  let artworkUrl: string | null = null;
   const artworkUrlRaw = form.get('artworkUrl');
-  const artworkUrl = typeof artworkUrlRaw === 'string' && artworkUrlRaw.trim() ? artworkUrlRaw.trim() : null;
+  if (typeof artworkUrlRaw === 'string' && artworkUrlRaw.trim()) {
+    artworkUrl = artworkUrlRaw.trim();
+  }
 
   const id = randomUUID();
+
+  const artworkFile = form.get('artworkFile');
+  if (artworkFile instanceof File && artworkFile.size > 0) {
+    try {
+      await saveArtwork(artworkFile, id);
+      artworkUrl = `/api/mobile/songs/${id}/artwork`;
+    } catch (err) {
+      console.error('Failed to save artwork image:', err);
+    }
+  }
   let saved;
   try {
     saved = await saveAudio(file, id);

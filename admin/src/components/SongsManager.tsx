@@ -59,6 +59,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('Devotional');
   const [uploadArtist, setUploadArtist] = useState<string>('');
   const [uploadAlbum, setUploadAlbum] = useState<string>('');
+  const [stagedArtwork, setStagedArtwork] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +105,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
       body.append('category', selectedCategory);
       if (uploadArtist.trim()) body.append('artist', uploadArtist.trim());
       if (uploadAlbum.trim()) body.append('album', uploadAlbum.trim());
+      if (stagedArtwork) body.append('artworkFile', stagedArtwork);
       try {
         const response = await fetch('/api/admin/songs/upload', { method: 'POST', body });
         if (!response.ok) {
@@ -220,6 +222,24 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                 placeholder="Album Name (optional)"
                 className="rounded-lg border border-ink-600 bg-ink-850 px-3 py-1.5 text-xs text-mist-100 placeholder:text-mist-500 focus:border-brand-500 focus:outline-none"
               />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="upload-artwork" className="text-xs font-semibold uppercase tracking-wide text-mist-400">
+                Cover Image:
+              </label>
+              <input
+                id="upload-artwork"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setStagedArtwork(e.target.files?.[0] ?? null)}
+                className="text-xs text-mist-300 file:mr-2 file:rounded-lg file:border-0 file:bg-brand-500/20 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-brand-400 hover:file:bg-brand-500/30 cursor-pointer"
+              />
+              {stagedArtwork ? (
+                <span className="text-xs font-medium text-brand-400">
+                  ✓ {stagedArtwork.name}
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -416,6 +436,35 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                               placeholder="Artist"
                               className="input w-full py-1 text-xs"
                             />
+                            <div className="pt-1">
+                              <label className="block text-[10px] font-semibold uppercase tracking-wider text-mist-400 mb-0.5">
+                                Cover Image File:
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  const formData = new FormData();
+                                  formData.append('artworkFile', file);
+                                  try {
+                                    const res = await fetch(`/api/admin/songs/${song.id}/artwork`, {
+                                      method: 'POST',
+                                      body: formData,
+                                    });
+                                    const data = await res.json();
+                                    if (data.artworkUrl) {
+                                      setEditArtworkUrl(data.artworkUrl);
+                                      router.refresh();
+                                    }
+                                  } catch {
+                                    alert('Failed to upload artwork');
+                                  }
+                                }}
+                                className="text-[11px] text-mist-300 file:mr-2 file:rounded file:border-0 file:bg-brand-500/20 file:px-2 file:py-0.5 file:text-[10px] file:text-brand-400 cursor-pointer"
+                              />
+                            </div>
                           </div>
                         </td>
                         <td className="td">
@@ -429,7 +478,7 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                           <select
                             value={editCategory}
                             onChange={(e) => setEditCategory(e.target.value)}
-                            className="input w-full py-1 text-xs"
+                            className="input w-full py-1 text-xs mb-1"
                           >
                             {CATEGORIES.map((cat) => (
                               <option key={cat} value={cat}>
@@ -437,6 +486,13 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                               </option>
                             ))}
                           </select>
+                          <input
+                            type="text"
+                            value={editArtworkUrl}
+                            onChange={(e) => setEditArtworkUrl(e.target.value)}
+                            placeholder="Or Image URL"
+                            className="input w-full py-1 text-xs"
+                          />
                         </td>
                         <td className="td text-right tabular-nums">
                           {formatDuration(song.durationMs)}
@@ -487,8 +543,12 @@ export function SongsManager({ songs }: { songs: SongRow[] }) {
                     <tr key={song.id} className="transition-colors hover:bg-ink-800/60">
                       <td className="td">
                         <div className="flex items-center gap-3">
-                          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-500">
-                            <Glyph name="music" size={18} />
+                          <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-ink-700 bg-brand-500/10 text-brand-500">
+                            {song.artworkUrl ? (
+                              <img src={song.artworkUrl} alt={song.title} className="size-full object-cover" />
+                            ) : (
+                              <Glyph name="music" size={18} />
+                            )}
                           </span>
                           <div className="min-w-0">
                             <span className="block truncate font-medium text-mist-100">

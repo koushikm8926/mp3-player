@@ -1,21 +1,10 @@
 import { createReadStream } from 'node:fs';
-import { mkdir, stat, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
 /**
- * Where uploaded audio lives.
- *
- * Files sit on the same disk as the panel, so serving them costs no bandwidth beyond the
- * server's own. Everything storage-specific is confined to this module: swapping to S3/R2
- * later means reimplementing these four functions, not touching routes or actions.
- *
- * `SONG_UPLOADS_DIR` overrides the location — set it to a mounted volume in production so
- * uploads survive a redeploy.
- *
- * The `turbopackIgnore` comments below tell the build tracer not to follow these paths. They
- * are computed at runtime and always constrained to the uploads directory by
- * `resolveStoredPath`; without the hints the tracer bundles the entire project as a guess.
+ * Where uploaded audio and artwork live.
  */
 
 const UPLOADS_DIR = process.env.SONG_UPLOADS_DIR
@@ -32,13 +21,19 @@ export const AUDIO_TYPES: Record<string, string> = {
   '.ogg': 'audio/ogg',
 };
 
+/** Image extensions accepted for song artwork. */
+export const IMAGE_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+};
+
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
 /**
  * Resolves a stored file, refusing anything that escapes the uploads directory.
- *
- * Storage keys are generated here, never supplied by a client, but the streaming route takes
- * an id from the URL — so this stays defensive regardless.
  */
 export function resolveStoredPath(storageKey: string): string | null {
   if (!storageKey || storageKey.includes('/') || storageKey.includes('\\')) return null;
@@ -47,7 +42,7 @@ export function resolveStoredPath(storageKey: string): string | null {
   return resolved;
 }
 
-/** Writes an uploaded file and returns the key needed to read it back. */
+/** Writes an uploaded audio file and returns the key needed to read it back. */
 export async function saveAudio(
   file: File,
   id: string
@@ -68,19 +63,42 @@ export async function saveAudio(
   return { storageKey, sizeBytes: bytes.byteLength, mimeType };
 }
 
-/** Removes a stored file. A missing file is not an error — the row is going away regardless. */
+/** Saves an uploaded artwork image file and returns its storage key. */
+export async function saveArtwork(
+  file: File,
+  id: string
+): Promise<{ artworkKey: string; mimeType: string }> {
+  const extension = path.extname(file.name).toLowerCase() || '.jpg';
+  const mimeType = IMAGE_TYPES[extension] || 'image/jpeg';
+
+  await mkdir(UPLOADS_DIR, { recursive: true });
+
+  // Clean up any old artwork files for this song id
+  const existingFiles = await readdir(UPLOADS_DIR).catch(() => []);
+  for (const existing of existingFiles) {
+    if (existing.startsWith(`art_${id}.`)) {
+      await unlink(path.join(UPLOADS_DIR, existing)).catch(() => undefined);
+    }
+  }
+
+  const artworkKey = `art_${id}${extension}`;
+  const target = resolveStoredPath(artworkKey);
+  if (!target) throw new Error('Could not resolve a storage path for artwork.');
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  await writeFile(/*turbopackIgnore: true*/ target, bytes);
+
+  return { artworkKey, mimeType };
+}
+
+/** Removes a stored file. */
 export async function deleteAudio(storageKey: string): Promise<void> {
   const target = resolveStoredPath(storageKey);
   if (!target) return;
   await unlink(/*turbopackIgnore: true*/ target).catch(() => undefined);
 }
 
-/**
- * Opens a stored file for streaming, honouring a byte range when one is asked for.
- *
- * Range support is what makes seeking work in the app: the player asks for the slice around
- * the new position instead of refetching the whole track.
- */
+/** Opens a stored audio file for streaming. */
 export async function openAudio(
   storageKey: string,
   rangeHeader: string | null
@@ -105,7 +123,6 @@ export async function openAudio(
     if (rawStart === '' && rawEnd === '') return { ok: false, reason: 'unsatisfiable', size };
 
     if (rawStart === '') {
-      // "bytes=-500" means the final 500 bytes.
       const suffix = Number(rawEnd);
       start = Math.max(0, size - suffix);
     } else {
@@ -127,5 +144,34 @@ export async function openAudio(
     start,
     end,
     partial,
+  };
+}
+
+/** Opens an artwork image file for serving. */
+export async function openArtwork(
+  id: string
+): Promise<
+  | { ok: true; stream: ReadableStream; mimeType: string; size: number }
+  | { ok: false; reason: 'missing' }
+> {
+  const files = await readdir(UPLOADS_DIR).catch(() => []);
+  const match = files.find((f) => f.startsWith(`art_${id}.`) || f === id || f.startsWith(`${id}.`));
+  if (!match) return { ok: false, reason: 'missing' };
+
+  const target = resolveStoredPath(match);
+  if (!target) return { ok: false, reason: 'missing' };
+
+  const info = await stat(/*turbopackIgnore: true*/ target).catch(() => null);
+  if (!info?.isFile()) return { ok: false, reason: 'missing' };
+
+  const extension = path.extname(target).toLowerCase();
+  const mimeType = IMAGE_TYPES[extension] || 'image/jpeg';
+
+  const nodeStream = createReadStream(/*turbopackIgnore: true*/ target);
+  return {
+    ok: true,
+    stream: Readable.toWeb(nodeStream) as ReadableStream,
+    mimeType,
+    size: info.size,
   };
 }
