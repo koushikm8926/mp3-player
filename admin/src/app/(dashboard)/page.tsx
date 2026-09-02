@@ -27,10 +27,8 @@ export default async function DashboardPage() {
     newToday,
     newWeek,
     guests,
-    suspended,
     totals,
     recentUsers,
-    versionRows,
     eventTotals,
   ] = await Promise.all([
     // Guests have their own tile below, so this one counts signed-up accounts only —
@@ -42,7 +40,6 @@ export default async function DashboardPage() {
     prisma.user.count({ where: { createdAt: { gte: new Date(now - DAY) } } }),
     prisma.user.count({ where: { createdAt: { gte: new Date(now - 7 * DAY) } } }),
     prisma.user.count({ where: { isGuest: true } }),
-    prisma.user.count({ where: { status: 'suspended' } }),
     prisma.user.aggregate({ _sum: { totalListens: true, listeningMs: true } }),
     prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
@@ -57,11 +54,9 @@ export default async function DashboardPage() {
         lastSeenAt: true,
       },
     }),
-    prisma.device.groupBy({ by: ['appVersion'], _count: { _all: true } }),
     prisma.usageEvent.groupBy({ by: ['type'], _count: { _all: true } }),
   ]);
 
-  const totalDevices = versionRows.reduce((sum, row) => sum + row._count._all, 0);
   const totalEvents = eventTotals.reduce((sum, row) => sum + row._count._all, 0);
 
   // Signups per day for the last 14 days, drawn as a small inline column chart.
@@ -106,18 +101,16 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatTile label="New today" value={formatNumber(newToday)} tone="neutral" />
         <StatTile label="Active this week" value={formatNumber(activeWeek)} tone="neutral" />
         <StatTile label="Guest installs" value={formatNumber(guests)} tone="neutral" />
-        <StatTile label="Suspended" value={formatNumber(suspended)} tone="neutral" />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-3">
+      <div className="mt-6">
         <Card
           title="Signups — last 14 days"
           description={`${formatNumber(signupWindow.length)} accounts created`}
-          className="xl:col-span-2"
         >
           <div className="flex h-52 items-end gap-1.5 px-5 py-5">
             {buckets.map((bucket) => (
@@ -132,26 +125,6 @@ export default async function DashboardPage() {
                 <span className="text-[10px] tabular-nums text-mist-500">{bucket.label}</span>
               </div>
             ))}
-          </div>
-        </Card>
-
-        <Card title="App versions in the wild" description={`${formatNumber(totalDevices)} devices`}>
-          <div className="py-2">
-            {versionRows.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-mist-500">No devices reported yet.</p>
-            ) : (
-              versionRows
-                .toSorted((a, b) => b._count._all - a._count._all)
-                .map((row, index) => (
-                  <BarRow
-                    key={row.appVersion ?? 'unknown'}
-                    label={row.appVersion ? `v${row.appVersion}` : 'Unknown'}
-                    value={row._count._all}
-                    total={totalDevices}
-                    tone={index === 0 ? 'brand' : 'neutral'}
-                  />
-                ))
-            )}
           </div>
         </Card>
       </div>

@@ -24,7 +24,6 @@ export default async function StatisticsPage() {
     topListeners,
     allUsers,
     osRows,
-    versionRows,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { isGuest: false } }),
@@ -49,7 +48,6 @@ export default async function StatisticsPage() {
     }),
     prisma.user.findMany({ select: { createdAt: true, lastSeenAt: true, totalListens: true } }),
     prisma.device.groupBy({ by: ['osVersion'], _count: { _all: true } }),
-    prisma.device.groupBy({ by: ['appVersion'], _count: { _all: true } }),
   ]);
 
   // Monthly signup cohorts with how many of each are still active in the last 30 days.
@@ -68,7 +66,7 @@ export default async function StatisticsPage() {
       .length,
   }));
 
-  const totalDevices = versionRows.reduce((sum, row) => sum + row._count._all, 0);
+  const totalDevices = osRows.reduce((sum, row) => sum + row._count._all, 0);
   const avgListens = Math.round(totals._avg.totalListens ?? 0);
 
   return (
@@ -157,27 +155,7 @@ export default async function StatisticsPage() {
         </Card>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <Card title="App version spread" description={`${formatNumber(totalDevices)} devices`}>
-          <div className="py-2">
-            {versionRows.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-mist-500">No devices reported.</p>
-            ) : (
-              versionRows
-                .sort((a, b) => b._count._all - a._count._all)
-                .map((row, index) => (
-                  <BarRow
-                    key={row.appVersion ?? 'unknown'}
-                    label={row.appVersion ? `v${row.appVersion}` : 'Unknown'}
-                    value={row._count._all}
-                    total={totalDevices}
-                    tone={(['brand', 'info', 'violet', 'warn', 'danger'] as const)[index % 5]}
-                  />
-                ))
-            )}
-          </div>
-        </Card>
-
+      <div className="mt-5">
         <Card title="Android version spread" description="Reported at last check-in">
           <div className="py-2">
             {osRows.length === 0 ? (

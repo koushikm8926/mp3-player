@@ -10,17 +10,18 @@ export const metadata: Metadata = { title: 'Settings' };
 export const dynamic = 'force-dynamic';
 
 const GROUP_LABELS: Record<string, { title: string; description: string }> = {
-  general: { title: 'General', description: 'Application identity and maintenance.' },
   auth: { title: 'Authentication', description: 'How users get into the app.' },
   player: { title: 'Player defaults', description: 'Suggested defaults for new installs.' },
-  analytics: { title: 'Analytics', description: 'How activity is measured and retained.' },
 };
 
 export default async function SettingsPage() {
   const admin = await requireAdmin();
 
   const [settings, auditLogs, adminRecord] = await Promise.all([
-    prisma.setting.findMany({ orderBy: [{ group: 'asc' }, { key: 'asc' }] }),
+    prisma.setting.findMany({
+      where: { group: { notIn: ['analytics', 'general'] } },
+      orderBy: [{ group: 'asc' }, { key: 'asc' }],
+    }),
     prisma.auditLog.findMany({
       orderBy: { createdAt: 'desc' },
       take: 15,
@@ -39,7 +40,7 @@ export default async function SettingsPage() {
       />
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+        <div className="space-y-5 xl:col-span-2">
           <SettingsForm
             groups={groups.map((group) => ({
               key: group,
@@ -57,28 +58,6 @@ export default async function SettingsPage() {
                 })),
             }))}
           />
-        </div>
-
-        <div className="space-y-5">
-          <Card title="Your account" description={adminRecord?.email ?? admin.email}>
-            <dl className="space-y-2.5 border-b border-ink-700 px-5 py-4 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-mist-500">Name</dt>
-                <dd className="text-mist-200">{adminRecord?.name ?? admin.name}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-mist-500">Role</dt>
-                <dd className="text-mist-200">{adminRecord?.role ?? admin.role}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-mist-500">Last sign-in</dt>
-                <dd className="text-mist-200">{formatDateTime(adminRecord?.lastLoginAt)}</dd>
-              </div>
-            </dl>
-            <div className="p-5">
-              <PasswordForm />
-            </div>
-          </Card>
 
           <Card title="Recent admin activity" description="Last 15 audited actions">
             <div className="overflow-x-auto">
@@ -105,6 +84,28 @@ export default async function SettingsPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </Card>
+        </div>
+
+        <div className="space-y-5">
+          <Card title="Your account" description={adminRecord?.email ?? admin.email}>
+            <dl className="space-y-2.5 border-b border-ink-700 px-5 py-4 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-mist-500">Name</dt>
+                <dd className="text-mist-200">{adminRecord?.name ?? admin.name}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-mist-500">Role</dt>
+                <dd className="text-mist-200">{adminRecord?.role ?? admin.role}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-mist-500">Last sign-in</dt>
+                <dd className="text-mist-200">{formatDateTime(adminRecord?.lastLoginAt)}</dd>
+              </div>
+            </dl>
+            <div className="p-5">
+              <PasswordForm />
             </div>
           </Card>
         </div>
