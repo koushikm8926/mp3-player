@@ -163,7 +163,7 @@ const CATEGORY_PRESETS = [
 const MOODS = [
   { id: 'happy', label: 'Happy', icon: 'sunny-outline', color: '#FBBF24' },
   { id: 'relax', label: 'Relax', icon: 'leaf-outline', color: '#34D399' },
-  { id: 'sad', label: 'Sad', icon: 'cloud-rain-outline', color: '#60A5FA' },
+  { id: 'sad', label: 'Sad', icon: 'rainy-outline', color: '#60A5FA' },
   { id: 'energetic', label: 'Energetic', icon: 'flash-outline', color: '#F87171' },
   { id: 'calm', label: 'Calm', icon: 'moon-outline', color: '#C084FC' },
 ];

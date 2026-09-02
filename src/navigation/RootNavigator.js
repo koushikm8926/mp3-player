@@ -53,7 +53,6 @@ const Tabs = createBottomTabNavigator();
 const TAB_ICONS = {
   HomeTab: ['home', 'home-outline'],
   CategoriesTab: ['grid', 'grid-outline'],
-  DownloadsTab: ['download', 'download-outline'],
   FavoritesTab: ['heart', 'heart-outline'],
   Settings: ['person', 'person-outline'],
 };
@@ -127,11 +126,6 @@ function MainTabs() {
           name="CategoriesTab"
           component={CategoriesScreen}
           options={{ title: 'Categories' }}
-        />
-        <Tabs.Screen
-          name="DownloadsTab"
-          component={LibraryScreen}
-          options={{ title: 'Downloads' }}
         />
         <Tabs.Screen
           name="FavoritesTab"
