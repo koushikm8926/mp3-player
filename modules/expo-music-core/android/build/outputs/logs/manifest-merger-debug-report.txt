@@ -1,14 +1,14 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml:1:1-2:12
-INJECTED from /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml:1:1-2:12
+ADDED from /Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml:1:1-2:12
+INJECTED from /Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml:1:1-2:12
 	package
-		INJECTED from /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
+		INJECTED from /Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
 uses-sdk
-INJECTED from /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
-INJECTED from /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
-INJECTED from /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
+INJECTED from /Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
+INJECTED from /Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
 	android:targetSdkVersion
-		INJECTED from /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
+		INJECTED from /Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
 	android:minSdkVersion
-		INJECTED from /Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml
+		INJECTED from /Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android/src/main/AndroidManifest.xml

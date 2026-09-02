@@ -169,16 +169,16 @@ export function HomeScreen({ navigation }) {
 
     return baseCats.slice(0, 8).map((catName, index) => {
       const catTracks = tracks.filter(
-        (t) => (t.category || t.genre || '').toLowerCase() === catName.toLowerCase()
+        (t) => (t.category || t.genre || '').trim().toLowerCase() === catName.trim().toLowerCase()
       );
-      const count = catTracks.length || Math.max(5, (index + 1) * 8);
+      const count = catTracks.length;
       const gradient = CATEGORY_GRADIENTS[index % CATEGORY_GRADIENTS.length];
 
       return {
         id: `user-cat-${catName}-${index}`,
         categoryName: catName,
         title: catName,
-        subtitle: `${count} Songs`,
+        subtitle: `${count} ${count === 1 ? 'Song' : 'Songs'}`,
         count,
         gradient,
       };

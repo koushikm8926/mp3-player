@@ -18,7 +18,6 @@ const CATEGORY_PRESETS = [
     id: 'Devotional',
     title: 'Devotional',
     unit: 'Songs',
-    fallbackCount: 475,
     icon: 'flame',
     gradientDark: ['#4A041D', '#831843', '#1A020B'],
     gradientLight: ['#FFF1F2', '#FFE4E6', '#FECDD3'],
@@ -28,7 +27,6 @@ const CATEGORY_PRESETS = [
     id: 'Podcasts',
     title: 'Podcasts',
     unit: 'Episodes',
-    fallbackCount: 320,
     icon: 'mic',
     gradientDark: ['#3B0764', '#7E22CE', '#140029'],
     gradientLight: ['#F3E8FF', '#E9D5FF', '#D8B4FE'],
@@ -38,7 +36,6 @@ const CATEGORY_PRESETS = [
     id: 'Meditation',
     title: 'Meditation',
     unit: 'Tracks',
-    fallbackCount: 287,
     icon: 'leaf',
     gradientDark: ['#0369A1', '#0284C7', '#032B43'],
     gradientLight: ['#E0F2FE', '#BAE6FD', '#7DD3FC'],
@@ -48,7 +45,6 @@ const CATEGORY_PRESETS = [
     id: 'Audiobooks',
     title: 'Audiobooks',
     unit: 'Books',
-    fallbackCount: 150,
     icon: 'book',
     gradientDark: ['#581C87', '#9333EA', '#280548'],
     gradientLight: ['#FAF5FF', '#F3E8FF', '#E9D5FF'],
@@ -58,7 +54,6 @@ const CATEGORY_PRESETS = [
     id: 'Kids',
     title: 'Kids',
     unit: 'Songs',
-    fallbackCount: 330,
     icon: 'sparkles',
     gradientDark: ['#831843', '#DB2777', '#42031E'],
     gradientLight: ['#FCE7F3', '#FBCFE8', '#F472B6'],
@@ -68,7 +63,6 @@ const CATEGORY_PRESETS = [
     id: 'Instrumental',
     title: 'Instrumental',
     unit: 'Tracks',
-    fallbackCount: 420,
     icon: 'musical-notes',
     gradientDark: ['#1E3A8A', '#2563EB', '#0F1A4A'],
     gradientLight: ['#EFF6FF', '#DBEAFE', '#BFDBFE'],
@@ -78,7 +72,6 @@ const CATEGORY_PRESETS = [
     id: 'Motivation',
     title: 'Motivation',
     unit: 'Tracks',
-    fallbackCount: 215,
     icon: 'sunny',
     gradientDark: ['#7C2D12', '#EA580C', '#331003'],
     gradientLight: ['#FFEDD5', '#FED7AA', '#FDBA74'],
@@ -88,7 +81,6 @@ const CATEGORY_PRESETS = [
     id: 'Classical',
     title: 'Classical',
     unit: 'Tracks',
-    fallbackCount: 310,
     icon: 'disc',
     gradientDark: ['#78350F', '#D97706', '#361603'],
     gradientLight: ['#FEF3C7', '#FDE68A', '#FCD34D'],
@@ -98,7 +90,6 @@ const CATEGORY_PRESETS = [
     id: 'Romance',
     title: 'Romance',
     unit: 'Songs',
-    fallbackCount: 410,
     icon: 'heart',
     gradientDark: ['#881337', '#E11D48', '#3F0413'],
     gradientLight: ['#FFE4E6', '#FECDD3', '#FDA4AF'],
@@ -108,7 +99,6 @@ const CATEGORY_PRESETS = [
     id: 'Party',
     title: 'Party',
     unit: 'Songs',
-    fallbackCount: 350,
     icon: 'headset',
     gradientDark: ['#4338CA', '#6366F1', '#1B1754'],
     gradientLight: ['#EEF2FF', '#E0E7FF', '#C7D2FE'],
@@ -118,7 +108,6 @@ const CATEGORY_PRESETS = [
     id: 'Hip Hop',
     title: 'Hip Hop',
     unit: 'Songs',
-    fallbackCount: 280,
     icon: 'mic-circle',
     gradientDark: ['#0F766E', '#14B8A6', '#05312E'],
     gradientLight: ['#CCFBF1', '#99F6E4', '#5EEAD4'],
@@ -128,7 +117,6 @@ const CATEGORY_PRESETS = [
     id: 'Pop',
     title: 'Pop',
     unit: 'Songs',
-    fallbackCount: 375,
     icon: 'star',
     gradientDark: ['#701A75', '#C026D3', '#3B023E'],
     gradientLight: ['#FAE8FF', '#F5D0FE', '#F0ABFC'],
@@ -138,7 +126,6 @@ const CATEGORY_PRESETS = [
     id: 'Rock',
     title: 'Rock',
     unit: 'Songs',
-    fallbackCount: 295,
     icon: 'flame-outline',
     gradientDark: ['#991B1B', '#DC2626', '#470404'],
     gradientLight: ['#FEE2E2', '#FECACA', '#FCA5A5'],
@@ -148,7 +135,6 @@ const CATEGORY_PRESETS = [
     id: 'Lo-Fi',
     title: 'Lo-Fi',
     unit: 'Tracks',
-    fallbackCount: 260,
     icon: 'cafe',
     gradientDark: ['#1E293B', '#334155', '#0B101D'],
     gradientLight: ['#F1F5F9', '#E2E8F0', '#CBD5E1'],
@@ -158,7 +144,6 @@ const CATEGORY_PRESETS = [
     id: 'Workout',
     title: 'Workout',
     unit: 'Tracks',
-    fallbackCount: 245,
     icon: 'fitness',
     gradientDark: ['#065F46', '#059669', '#02291E'],
     gradientLight: ['#D1FAE5', '#A7F3D0', '#6EE7B7'],
@@ -168,7 +153,6 @@ const CATEGORY_PRESETS = [
     id: 'Study',
     title: 'Study',
     unit: 'Tracks',
-    fallbackCount: 190,
     icon: 'bulb',
     gradientDark: ['#713F12', '#CA8A04', '#362103'],
     gradientLight: ['#FEF9C3', '#FEF08A', '#FDE047'],
@@ -193,7 +177,7 @@ export function CategoriesScreen({ navigation }) {
   const categoryCounts = useMemo(() => {
     const counts = {};
     for (const track of tracks) {
-      const cat = track.category || track.genre || 'Pop';
+      const cat = (track.category || track.genre || 'Pop').trim().toLowerCase();
       counts[cat] = (counts[cat] || 0) + 1;
     }
     return counts;
@@ -209,7 +193,6 @@ export function CategoriesScreen({ navigation }) {
           id: g.name,
           title: g.name,
           unit: 'Songs',
-          fallbackCount: g.trackCount,
           icon: 'musical-notes',
           gradientDark: ['#3B0764', '#7E22CE', '#140029'],
           gradientLight: ['#F3E8FF', '#E9D5FF', '#D8B4FE'],
@@ -217,15 +200,25 @@ export function CategoriesScreen({ navigation }) {
         });
       }
     }
-    return list;
-  }, [genres]);
+
+    // Sort so categories with tracks in the library appear first
+    return list.sort((a, b) => {
+      const countA = categoryCounts[a.title.toLowerCase()] || 0;
+      const countB = categoryCounts[b.title.toLowerCase()] || 0;
+      if (countA > 0 && countB === 0) return -1;
+      if (countA === 0 && countB > 0) return 1;
+      if (countA !== countB) return countB - countA;
+      return 0;
+    });
+  }, [genres, categoryCounts]);
 
   const handleCategoryPress = (category) => {
+    const targetName = category.title.trim().toLowerCase();
     const categoryTracks = tracks.filter(
-      (t) => (t.category || t.genre || '').toLowerCase() === category.title.toLowerCase()
+      (t) => (t.category || t.genre || '').trim().toLowerCase() === targetName
     );
     const matchingGenre = genres.find(
-      (g) => g.name.toLowerCase() === category.title.toLowerCase()
+      (g) => (g.name || '').trim().toLowerCase() === targetName
     );
 
     const genreObj = {
@@ -345,7 +338,7 @@ export function CategoriesScreen({ navigation }) {
         {/* 2-Column Categories Grid */}
         <View style={styles.grid}>
           {categoriesList.map((item) => {
-            const count = categoryCounts[item.title] ?? (adminMode ? 0 : item.fallbackCount);
+            const count = categoryCounts[item.title.toLowerCase()] || 0;
             const cardGradients = isDarkUI ? item.gradientDark : item.gradientLight;
             const cardTitleColor = isDarkUI ? '#FFFFFF' : '#0F172A';
             const cardCountColor = isDarkUI ? 'rgba(255, 255, 255, 0.65)' : '#475569';
