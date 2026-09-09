@@ -14,11 +14,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "124985582120-degikfik4a5feb712vfo9j7ekg3tf963.apps.googleusercontent.com",
+          "client_id": "124985582120-8me8pd4hc5ermijbeu6nskud55m5d7p2.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.minaxdigital.mp3player",
-            "certificate_hash": "bb9351532dcced86909d3ea7fe3f24930fb8528a"
+            "certificate_hash": "8a05d09340f27b9a77931691ac3ad0f963d7ba60"
+          }
+        },
+        {
+          "client_id": "124985582120-tml9f11qac1u9qujc8o5qs0a35n55bgn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.minaxdigital.mp3player",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
         {
