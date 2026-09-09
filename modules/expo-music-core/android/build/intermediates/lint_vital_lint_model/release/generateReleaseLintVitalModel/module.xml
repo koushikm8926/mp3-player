@@ -1,6 +1,6 @@
 <lint-module
     format="1"
-    dir="/Users/koushikmondal/Desktop/mp3 player/modules/expo-music-core/android"
+    dir="/Users/koushikmondal/Desktop/minax/mp3 player/modules/expo-music-core/android"
     name=":expo-music-core"
     type="LIBRARY"
     maven="expo.modules.musiccore:expo-music-core:0.1.0"
