@@ -14,23 +14,35 @@ const TOKEN_KEY = 'minax.auth.token';
 const BASE_URL_KEY = 'minax.api.baseUrl';
 const REQUEST_TIMEOUT_MS = 12000;
 
-const DEFAULT_BASE_URL =
-  Constants.expoConfig?.extra?.adminApiUrl ?? 'http://10.0.2.2:3000';
+/**
+ * Empty in shipping builds: no public backend is deployed, so the app runs offline-first and
+ * every call short-circuits below rather than waiting out the timeout against an address that
+ * cannot answer. Settings still points a build at a server at runtime through `setBaseUrl`.
+ */
+const DEFAULT_BASE_URL = Constants.expoConfig?.extra?.adminApiUrl ?? '';
 
 let cachedBaseUrl = null;
+// Tracked separately from the value, which is legitimately '' when no server is configured.
+let baseUrlResolved = false;
 let cachedToken = null;
 
 export async function getBaseUrl() {
-  if (cachedBaseUrl != null) return cachedBaseUrl;
+  if (baseUrlResolved) return cachedBaseUrl;
   const stored = await SecureStore.getItemAsync(BASE_URL_KEY).catch(() => null);
   cachedBaseUrl = stored || DEFAULT_BASE_URL;
+  baseUrlResolved = true;
   return cachedBaseUrl;
 }
 
 export async function setBaseUrl(url) {
   const cleaned = url.trim().replace(/\/+$/, '');
   cachedBaseUrl = cleaned || DEFAULT_BASE_URL;
-  await SecureStore.setItemAsync(BASE_URL_KEY, cachedBaseUrl);
+  baseUrlResolved = true;
+  if (cachedBaseUrl) {
+    await SecureStore.setItemAsync(BASE_URL_KEY, cachedBaseUrl);
+  } else {
+    await SecureStore.deleteItemAsync(BASE_URL_KEY).catch(() => {});
+  }
 }
 
 export async function getToken() {
@@ -50,6 +62,10 @@ export async function setToken(token) {
 
 async function request(path, { method = 'GET', body, auth = true } = {}) {
   const baseUrl = await getBaseUrl();
+  // No server configured — report the shape a network failure produces, immediately, instead
+  // of holding the caller for REQUEST_TIMEOUT_MS on a connection that cannot succeed.
+  if (!baseUrl) return { ok: false, offline: true, error: 'No server configured' };
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 

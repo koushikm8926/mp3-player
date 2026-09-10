@@ -738,7 +738,7 @@ function HeroCarousel({ onPlay }) {
 
     const loadBanners = async () => {
       const baseUrl = await getBaseUrl().catch(() => '');
-      const serverUrl = (baseUrl || 'http://10.0.2.2:3000').replace(/\/+$/, '');
+      const serverUrl = (baseUrl || '').replace(/\/+$/, '');
 
       // Fetch fresh banners from server first (do not show stale cached URLs)
       const res = await api.banners().catch(() => null);
