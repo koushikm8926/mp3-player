@@ -50,6 +50,10 @@ function resultForError(error) {
       // A second tap while the account picker is already open — not worth an error banner.
       return { ok: false, cancelled: true };
     default:
+      // The SDK's own code is the only signal for setup faults: DEVELOPER_ERROR (10) means the
+      // installed app's signing certificate is not registered in the Firebase project, which
+      // the generic translated copy below hides completely.
+      console.warn('[googleAuth] sign-in failed:', error?.code, error?.message);
       return { ok: false, errorKey: 'signInFailed' };
   }
 }

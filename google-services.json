@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "124985582120-imioa331o5dnd55uvpjuofi35ck82ng2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.minaxdigital.mp3player",
+            "certificate_hash": "cec8b64561552102f475f91904915a471c13b885"
+          }
+        },
+        {
           "client_id": "124985582120-tml9f11qac1u9qujc8o5qs0a35n55bgn.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
