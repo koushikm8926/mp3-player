@@ -1,14 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Field, PrimaryButton } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
 import { LANGUAGES, resolveDeviceLanguage } from '../i18n';
-import { api, getBaseUrl, setBaseUrl } from '../services/api';
+import { api } from '../services/api';
 import { Header } from './EqualizerScreen';
 import { Row, Section } from './SettingsScreen';
 
@@ -72,54 +71,6 @@ function LanguageRow({ label, nativeLabel, selected, onPress }) {
       </View>
       {selected ? <Ionicons name="checkmark" size={21} color={theme.colors.accent} /> : null}
     </Pressable>
-  );
-}
-
-/** Lets the operator point the app at their own admin/API deployment. */
-export function ServerSettingsScreen({ navigation }) {
-  const theme = useTheme();
-  const { t } = useSettings();
-  const insets = useSafeAreaInsets();
-  const [url, setUrl] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    getBaseUrl().then(setUrl);
-  }, []);
-
-  const save = async () => {
-    setSaving(true);
-    await setBaseUrl(url);
-    const response = await api.remoteSettings();
-    setSaving(false);
-    Alert.alert(
-      t('serverUrl'),
-      response.ok ? t('upToDate') : t('offlineNotice')
-    );
-    if (response.ok) navigation.goBack();
-  };
-
-  return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top }}>
-      <Header title={t('serverUrl')} onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Field
-          label={t('serverUrl')}
-          leftIcon="server-outline"
-          value={url}
-          onChangeText={setUrl}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          placeholder="http://10.0.2.2:3000"
-        />
-        <Text style={[theme.font.caption, { color: theme.colors.textTertiary, lineHeight: 18 }]}>
-          Use http://10.0.2.2:3000 from the Android emulator, or your machine&apos;s LAN address
-          (for example http://192.168.1.20:3000) from a physical device.
-        </Text>
-        <PrimaryButton label={t('save')} onPress={save} loading={saving} style={{ marginTop: 24 }} />
-      </ScrollView>
-    </View>
   );
 }
 

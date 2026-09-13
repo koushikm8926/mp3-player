@@ -34,7 +34,7 @@ import {
 } from '../screens/library/BrowseScreens';
 import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { SongsScreen } from '../screens/library/SongsScreen';
-import { AboutScreen, LanguageScreen, ServerSettingsScreen } from '../screens/MiscScreens';
+import { AboutScreen, LanguageScreen } from '../screens/MiscScreens';
 import { NowPlayingScreen } from '../screens/NowPlayingScreen';
 import { PermissionScreen } from '../screens/PermissionScreen';
 import { PlaylistsScreen } from '../screens/PlaylistsScreen';
@@ -288,7 +288,6 @@ export function RootNavigator() {
             <Stack.Screen name="Equalizer" component={EqualizerScreen} />
             <Stack.Screen name="SleepTimer" component={SleepTimerScreen} />
             <Stack.Screen name="Language" component={LanguageScreen} />
-            <Stack.Screen name="ServerSettings" component={ServerSettingsScreen} />
             <Stack.Screen name="HiddenMusic" component={HiddenMusicScreen} />
             <Stack.Screen name="BackupRestore" component={BackupRestoreScreen} />
             <Stack.Screen name="About" component={AboutScreen} />

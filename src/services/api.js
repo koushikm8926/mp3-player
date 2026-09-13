@@ -17,7 +17,7 @@ const REQUEST_TIMEOUT_MS = 12000;
 /**
  * Empty in shipping builds: no public backend is deployed, so the app runs offline-first and
  * every call short-circuits below rather than waiting out the timeout against an address that
- * cannot answer. Settings still points a build at a server at runtime through `setBaseUrl`.
+ * cannot answer. There is no in-app screen for changing it; `setBaseUrl` is kept for v2.
  */
 const DEFAULT_BASE_URL = Constants.expoConfig?.extra?.adminApiUrl ?? '';
 

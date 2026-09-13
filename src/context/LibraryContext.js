@@ -212,7 +212,7 @@ export function LibraryProvider({ children }) {
       if (!response.ok) {
         setAdminError(
           response.offline
-            ? 'Could not reach the admin panel. Check the server URL in Settings → Server.'
+            ? 'Could not reach the admin panel.'
             : (response.error ?? 'The admin panel refused the request.')
         );
         return -1;

@@ -66,15 +66,13 @@ export function SettingsScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         {/* ------------------------------------------------------------ account */}
-        <Pressable
-          onPress={() => navigation.navigate('ServerSettings')}
-          style={({ pressed }) => [
+        <View
+          style={[
             styles.accountCard,
             {
               backgroundColor: isDarkUI ? 'rgba(255, 255, 255, 0.08)' : theme.colors.surface,
               borderColor: isDarkUI ? 'rgba(255, 255, 255, 0.15)' : theme.colors.border,
               borderRadius: theme.radius.lg,
-              opacity: pressed ? 0.9 : 1,
             },
             theme.shadow.card,
           ]}
@@ -98,13 +96,7 @@ export function SettingsScreen({ navigation }) {
                 { backgroundColor: serverReachable ? theme.colors.success : (isDarkUI ? 'rgba(255,255,255,0.4)' : theme.colors.textTertiary) },
               ]}
             />
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={isDarkUI ? 'rgba(255, 255, 255, 0.45)' : theme.colors.textTertiary}
-              style={{ marginLeft: 10 }}
-            />
-        </Pressable>
+        </View>
 
         {/* ------------------------------------------------------------ appearance */}
         <Section title={t('appearance')}>
@@ -241,11 +233,6 @@ export function SettingsScreen({ navigation }) {
 
         {/* ------------------------------------------------------------ about */}
         <Section title={t('aboutSection')}>
-          <Row
-            icon="server-outline"
-            label={t('serverUrl')}
-            onPress={() => navigation.navigate('ServerSettings')}
-          />
           <Row
             icon="information-circle-outline"
             label={t('about')}
