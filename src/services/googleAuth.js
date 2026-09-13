@@ -59,6 +59,31 @@ function resultForError(error) {
 }
 
 /**
+ * Opens the Google account picker and wraps the returned ID token as a Firebase credential,
+ * without signing in with it. Sign-in exchanges it for a session; account deletion uses it to
+ * re-authenticate, because Firebase only deletes an account that signed in recently.
+ */
+export async function getGoogleCredential() {
+  if (!isGoogleConfigured) return { ok: false, errorKey: 'googleNotConfigured' };
+
+  try {
+    // Throws on devices without a usable Play Services install, which is the one hard
+    // requirement of this approach.
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+    const response = await GoogleSignin.signIn();
+    if (response.type === 'cancelled') return { ok: false, cancelled: true };
+
+    const idToken = response.data?.idToken;
+    if (!idToken) return { ok: false, errorKey: 'signInFailed' };
+
+    return { ok: true, credential: GoogleAuthProvider.credential(idToken) };
+  } catch (error) {
+    return resultForError(error);
+  }
+}
+
+/**
  * Returns `{ signInWithGoogle, ready }`.
  *
  * Unlike the previous browser-based implementation there is no auth request to build, so
@@ -66,21 +91,11 @@ function resultForError(error) {
  */
 export function useGoogleSignIn() {
   const signInWithGoogle = useCallback(async () => {
-    if (!isGoogleConfigured) return { ok: false, errorKey: 'googleNotConfigured' };
+    const google = await getGoogleCredential();
+    if (!google.ok) return google;
 
     try {
-      // Throws on devices without a usable Play Services install, which is the one hard
-      // requirement of this approach.
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-
-      const response = await GoogleSignin.signIn();
-      if (response.type === 'cancelled') return { ok: false, cancelled: true };
-
-      const idToken = response.data?.idToken;
-      if (!idToken) return { ok: false, errorKey: 'signInFailed' };
-
-      const credential = GoogleAuthProvider.credential(idToken);
-      const result = await signInWithCredential(firebaseAuth(), credential);
+      const result = await signInWithCredential(firebaseAuth(), google.credential);
       return { ok: true, user: result.user };
     } catch (error) {
       return resultForError(error);
@@ -101,4 +116,18 @@ export async function signOutGoogle() {
   } catch {
     // Never block the app's sign-out on the Google SDK failing to clear its cache.
   }
+}
+
+/**
+ * Withdraws the app's access to the Google account after the account is deleted, so the next
+ * Google sign-in asks for consent again instead of quietly re-linking the same identity.
+ */
+export async function revokeGoogleAccess() {
+  if (!isGoogleConfigured) return;
+  try {
+    await GoogleSignin.revokeAccess();
+  } catch {
+    // Already revoked, or access was never granted on this device.
+  }
+  await signOutGoogle();
 }

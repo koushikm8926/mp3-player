@@ -76,6 +76,9 @@ export function authErrorKey(code) {
       return 'accountDisabled';
     case 'auth/too-many-requests':
       return 'tooManyAttempts';
+    case 'auth/user-mismatch':
+      // Re-authenticated with a different Google account than the one signed in.
+      return 'wrongGoogleAccount';
     case 'auth/network-request-failed':
       return 'offlineNotice';
     case 'auth/invalid-credential':

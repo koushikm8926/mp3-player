@@ -137,3 +137,13 @@ export async function resetUserData() {
     DELETE FROM queue_state;
   `);
 }
+
+/**
+ * Drops everything this device holds about its user, including analytics still waiting to be
+ * sent. Used by account deletion. Settings stay: they describe the device, not the person.
+ */
+export async function deleteLocalAccountData() {
+  await resetUserData();
+  const db = await getDatabase();
+  await db.execAsync('DELETE FROM pending_events;');
+}

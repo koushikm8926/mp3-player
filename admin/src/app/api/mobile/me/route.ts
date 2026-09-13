@@ -33,3 +33,17 @@ export async function PATCH(request: Request) {
 
   return jsonOk({ user: publicUser(user) });
 }
+
+/**
+ * DELETE /api/mobile/me — permanently deletes the caller's account.
+ *
+ * Devices, sessions and usage events go with it (`onDelete: Cascade`). The app calls this just
+ * before deleting the Firebase account, while its ID token still verifies.
+ */
+export async function DELETE(request: Request) {
+  const principal = await authenticateMobileRequest(request);
+  if (!principal) return jsonError('Unauthorized', 401);
+
+  await prisma.user.delete({ where: { id: principal.userId } });
+  return jsonOk({ ok: true });
+}

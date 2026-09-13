@@ -352,6 +352,18 @@ export const en = {
   onlineComingSoonBody:
     'Streaming and the online catalogue arrive in the next update. For now, enjoy the songs stored on this device.',
   onlineComingSoonAction: 'Got it',
+  // account deletion
+  deleteAccount: "Delete account",
+  deleteAccountTitle: "Delete your account?",
+  deleteAccountWarning: "This permanently deletes your account and removes your playlists, favourites and listening history from this device. This can't be undone.",
+  deleteAccountPasswordLabel: "Enter the password for {{email}} to confirm",
+  deleteAccountGoogleHint: "You'll be asked to choose your Google account to confirm.",
+  deleteAccountConfirm: "Delete",
+  passwordRequired: "Enter your password",
+  wrongGoogleAccount: "That Google account doesn't match the one you're signed in with.",
+  deleteAccountFailed: "Couldn't delete your account. Check your internet connection and try again.",
+  accountDeletedTitle: "Account deleted",
+  accountDeletedBody: "Your account and its data have been deleted.",
 };
 
 export const hi = {
@@ -668,6 +680,18 @@ export const hi = {
   onlineComingSoonBody:
     'स्ट्रीमिंग और ऑनलाइन कैटलॉग अगले अपडेट में आएंगे। तब तक इस डिवाइस में सहेजे गए गानों का आनंद लें।',
   onlineComingSoonAction: 'ठीक है',
+  // account deletion
+  deleteAccount: "खाता हटाएं",
+  deleteAccountTitle: "अपना खाता हटाएं?",
+  deleteAccountWarning: "इससे आपका खाता हमेशा के लिए हट जाएगा और इस डिवाइस से आपकी प्लेलिस्ट, पसंदीदा और सुनने का इतिहास मिट जाएगा। इसे वापस नहीं लाया जा सकता।",
+  deleteAccountPasswordLabel: "पुष्टि के लिए {{email}} का पासवर्ड दर्ज करें",
+  deleteAccountGoogleHint: "पुष्टि के लिए आपसे अपना Google खाता चुनने को कहा जाएगा।",
+  deleteAccountConfirm: "हटाएं",
+  passwordRequired: "अपना पासवर्ड दर्ज करें",
+  wrongGoogleAccount: "यह Google खाता उस खाते से मेल नहीं खाता जिससे आपने साइन इन किया है।",
+  deleteAccountFailed: "आपका खाता हटाया नहीं जा सका। अपना इंटरनेट कनेक्शन जांचें और फिर से प्रयास करें।",
+  accountDeletedTitle: "खाता हटा दिया गया",
+  accountDeletedBody: "आपका खाता और उसका डेटा हटा दिया गया है।",
 };
 
 export const es = {
@@ -984,6 +1008,18 @@ export const es = {
   onlineComingSoonBody:
     'La reproducción en streaming y el catálogo online llegarán en la próxima actualización. Mientras tanto, disfruta de las canciones guardadas en este dispositivo.',
   onlineComingSoonAction: 'Entendido',
+  // account deletion
+  deleteAccount: "Eliminar cuenta",
+  deleteAccountTitle: "¿Eliminar tu cuenta?",
+  deleteAccountWarning: "Esto elimina tu cuenta de forma permanente y borra tus listas de reproducción, favoritos e historial de este dispositivo. No se puede deshacer.",
+  deleteAccountPasswordLabel: "Introduce la contraseña de {{email}} para confirmar",
+  deleteAccountGoogleHint: "Se te pedirá que elijas tu cuenta de Google para confirmar.",
+  deleteAccountConfirm: "Eliminar",
+  passwordRequired: "Introduce tu contraseña",
+  wrongGoogleAccount: "Esa cuenta de Google no coincide con la cuenta con la que iniciaste sesión.",
+  deleteAccountFailed: "No se pudo eliminar tu cuenta. Comprueba tu conexión a internet e inténtalo de nuevo.",
+  accountDeletedTitle: "Cuenta eliminada",
+  accountDeletedBody: "Tu cuenta y sus datos se han eliminado.",
 };
 
 export const fr = {
@@ -1301,6 +1337,18 @@ export const fr = {
   onlineComingSoonBody:
     'Le streaming et le catalogue en ligne arriveront dans la prochaine mise à jour. En attendant, profitez des titres stockés sur cet appareil.',
   onlineComingSoonAction: 'Compris',
+  // account deletion
+  deleteAccount: "Supprimer le compte",
+  deleteAccountTitle: "Supprimer votre compte ?",
+  deleteAccountWarning: "Votre compte sera définitivement supprimé, ainsi que vos playlists, favoris et historique d’écoute sur cet appareil. Cette action est irréversible.",
+  deleteAccountPasswordLabel: "Saisissez le mot de passe de {{email}} pour confirmer",
+  deleteAccountGoogleHint: "Vous devrez choisir votre compte Google pour confirmer.",
+  deleteAccountConfirm: "Supprimer",
+  passwordRequired: "Saisissez votre mot de passe",
+  wrongGoogleAccount: "Ce compte Google ne correspond pas à celui avec lequel vous êtes connecté.",
+  deleteAccountFailed: "Impossible de supprimer votre compte. Vérifiez votre connexion Internet et réessayez.",
+  accountDeletedTitle: "Compte supprimé",
+  accountDeletedBody: "Votre compte et ses données ont été supprimés.",
 };
 
 export const de = {
@@ -1618,6 +1666,18 @@ export const de = {
   onlineComingSoonBody:
     'Streaming und der Online-Katalog kommen mit dem nächsten Update. Genieße so lange die Songs auf diesem Gerät.',
   onlineComingSoonAction: 'Verstanden',
+  // account deletion
+  deleteAccount: "Konto löschen",
+  deleteAccountTitle: "Konto löschen?",
+  deleteAccountWarning: "Dein Konto wird dauerhaft gelöscht und deine Playlists, Favoriten und dein Wiedergabeverlauf werden von diesem Gerät entfernt. Das kann nicht rückgängig gemacht werden.",
+  deleteAccountPasswordLabel: "Gib zur Bestätigung das Passwort für {{email}} ein",
+  deleteAccountGoogleHint: "Zur Bestätigung wirst du gebeten, dein Google-Konto auszuwählen.",
+  deleteAccountConfirm: "Löschen",
+  passwordRequired: "Gib dein Passwort ein",
+  wrongGoogleAccount: "Dieses Google-Konto stimmt nicht mit dem angemeldeten Konto überein.",
+  deleteAccountFailed: "Dein Konto konnte nicht gelöscht werden. Prüfe deine Internetverbindung und versuche es erneut.",
+  accountDeletedTitle: "Konto gelöscht",
+  accountDeletedBody: "Dein Konto und die zugehörigen Daten wurden gelöscht.",
 };
 
 export const pt = {
@@ -1934,6 +1994,18 @@ export const pt = {
   onlineComingSoonBody:
     'O streaming e o catálogo online chegam na próxima atualização. Até lá, aproveite as músicas guardadas neste dispositivo.',
   onlineComingSoonAction: 'Entendi',
+  // account deletion
+  deleteAccount: "Excluir conta",
+  deleteAccountTitle: "Excluir sua conta?",
+  deleteAccountWarning: "Isso exclui sua conta permanentemente e remove suas playlists, favoritos e histórico deste dispositivo. Não é possível desfazer.",
+  deleteAccountPasswordLabel: "Digite a senha de {{email}} para confirmar",
+  deleteAccountGoogleHint: "Você precisará escolher sua conta do Google para confirmar.",
+  deleteAccountConfirm: "Excluir",
+  passwordRequired: "Digite sua senha",
+  wrongGoogleAccount: "Essa conta do Google não corresponde à conta conectada.",
+  deleteAccountFailed: "Não foi possível excluir sua conta. Verifique sua conexão com a internet e tente novamente.",
+  accountDeletedTitle: "Conta excluída",
+  accountDeletedBody: "Sua conta e seus dados foram excluídos.",
 };
 
 export const ar = {
@@ -2250,6 +2322,18 @@ export const ar = {
   onlineComingSoonBody:
     'سيصل البث والكتالوج عبر الإنترنت في التحديث القادم. استمتع حتى ذلك الحين بالأغاني المحفوظة على هذا الجهاز.',
   onlineComingSoonAction: 'حسناً',
+  // account deletion
+  deleteAccount: "حذف الحساب",
+  deleteAccountTitle: "هل تريد حذف حسابك؟",
+  deleteAccountWarning: "سيؤدي هذا إلى حذف حسابك نهائيًا وإزالة قوائم التشغيل والمفضلة وسجل الاستماع من هذا الجهاز. لا يمكن التراجع عن ذلك.",
+  deleteAccountPasswordLabel: "أدخل كلمة مرور {{email}} للتأكيد",
+  deleteAccountGoogleHint: "سيُطلب منك اختيار حساب Google للتأكيد.",
+  deleteAccountConfirm: "حذف",
+  passwordRequired: "أدخل كلمة المرور",
+  wrongGoogleAccount: "حساب Google هذا لا يطابق الحساب الذي سجّلت الدخول به.",
+  deleteAccountFailed: "تعذّر حذف حسابك. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى.",
+  accountDeletedTitle: "تم حذف الحساب",
+  accountDeletedBody: "تم حذف حسابك وبياناته.",
 };
 
 export const LANGUAGES = [

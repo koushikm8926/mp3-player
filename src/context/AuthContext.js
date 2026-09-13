@@ -2,7 +2,10 @@ import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
+  EmailAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -11,14 +14,28 @@ import {
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { deleteLocalAccountData } from '../db/database';
 import { historyRepo, outboxRepo } from '../db/repositories';
 import { api, setToken } from '../services/api';
 import { authErrorKey, firebaseAuth, isFirebaseConfigured } from '../services/firebase';
-import { signOutGoogle, useGoogleSignIn } from '../services/googleAuth';
+import {
+  getGoogleCredential,
+  revokeGoogleAccess,
+  signOutGoogle,
+  useGoogleSignIn,
+} from '../services/googleAuth';
 
 const AuthContext = createContext(null);
 
 const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+
+/** How a Firebase user proves who they are again: 'password', 'google', or null. */
+function providerOf(firebaseUser) {
+  const ids = (firebaseUser?.providerData ?? []).map((entry) => entry.providerId);
+  if (ids.includes('password')) return 'password';
+  if (ids.includes('google.com')) return 'google';
+  return null;
+}
 
 /**
  * Owns the signed-in user and the reporting channel back to the admin panel.
@@ -35,6 +52,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState('loading'); // loading | authenticated | signedOut
   const [serverReachable, setServerReachable] = useState(true);
+  /** Sign-in method of the Firebase account; null for guests, who have no account to delete. */
+  const [accountProvider, setAccountProvider] = useState(null);
   const heartbeatTimer = useRef(null);
   const { signInWithGoogle: promptGoogle, ready: googleReady } = useGoogleSignIn();
 
@@ -88,6 +107,7 @@ export function AuthProvider({ children }) {
     }
 
     return onAuthStateChanged(auth, async (firebaseUser) => {
+      setAccountProvider(providerOf(firebaseUser));
       if (!firebaseUser) {
         // A guest session is not a Firebase session; don't tear it down here.
         const guestToken = await api.me();
@@ -251,6 +271,56 @@ export function AuthProvider({ children }) {
     setStatus('signedOut');
   }, []);
 
+  /**
+   * Permanently deletes the signed-in account.
+   *
+   * Firebase refuses to delete an account without a recent sign-in, so the user confirms who
+   * they are first: the password for email accounts, the Google account picker otherwise. That
+   * also stops anyone holding an unlocked phone from deleting the account with one tap.
+   *
+   * `beforeLocalWipe` runs after the account is gone and before on-device data is cleared, so
+   * the caller can stop playback; a queue save still pending would otherwise write it back.
+   */
+  const deleteAccount = useCallback(async ({ password, beforeLocalWipe } = {}) => {
+    const firebaseUser = firebaseAuth()?.currentUser;
+    const provider = providerOf(firebaseUser);
+    if (!provider) return { ok: false, errorKey: 'deleteAccountFailed' };
+
+    try {
+      if (provider === 'password') {
+        if (!password) return { ok: false, errorKey: 'passwordRequired' };
+        await reauthenticateWithCredential(
+          firebaseUser,
+          EmailAuthProvider.credential(firebaseUser.email, password)
+        );
+      } else {
+        const google = await getGoogleCredential();
+        if (!google.ok) return google;
+        await reauthenticateWithCredential(firebaseUser, google.credential);
+      }
+
+      // The server authenticates with the Firebase ID token, so this must run while the
+      // account still exists. Best-effort: v1 ships without a server, and a server failure
+      // must not leave the Firebase account alive.
+      await api.deleteAccount().catch(() => {});
+      await deleteUser(firebaseUser);
+    } catch (error) {
+      const key = authErrorKey(error?.code);
+      // The generic sign-in copy talks about signing in or continuing offline; neither fits.
+      const generic = key === 'signInFailed' || key === 'offlineNotice';
+      return { ok: false, errorKey: generic ? 'deleteAccountFailed' : key };
+    }
+
+    if (provider === 'google') await revokeGoogleAccess();
+    await setToken(null);
+    await beforeLocalWipe?.();
+    // Let React commit whatever the caller cleared, cancelling its pending saves, before wiping.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await deleteLocalAccountData().catch(() => {});
+    // onAuthStateChanged sees the deleted user and returns the app to the sign-in screen.
+    return { ok: true };
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -265,6 +335,8 @@ export function AuthProvider({ children }) {
       resetPassword,
       continueAsGuest,
       signOut,
+      deleteAccount,
+      accountProvider,
       sendHeartbeat,
       flushOutbox,
     }),
@@ -280,6 +352,8 @@ export function AuthProvider({ children }) {
       resetPassword,
       continueAsGuest,
       signOut,
+      deleteAccount,
+      accountProvider,
       sendHeartbeat,
       flushOutbox,
     ]

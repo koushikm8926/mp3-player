@@ -5,9 +5,11 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Card, Divider, GroupLabel, ScreenHeader } from '../components/common';
+import { DeleteAccountDialog } from '../components/DeleteAccountDialog';
 import { Sheet, SheetItem } from '../components/Sheet';
 import { useAuth } from '../context/AuthContext';
 import { useLibrary } from '../context/LibraryContext';
+import { usePlayer } from '../context/PlayerContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
 import { ACCENT_ORDER, ACCENTS } from '../theme';
 
@@ -19,13 +21,17 @@ export function SettingsScreen({ navigation }) {
   const theme = useTheme();
   const { t, settings, update, language } = useSettings();
   const insets = useSafeAreaInsets();
-  const { user, signOut, serverReachable } = useAuth();
+  const { user, signOut, serverReachable, accountProvider, deleteAccount } = useAuth();
   const library = useLibrary();
+  const player = usePlayer();
 
   const [themeSheet, setThemeSheet] = useState(false);
   const [crossfadeSheet, setCrossfadeSheet] = useState(false);
   const [minTrackSheet, setMinTrackSheet] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   const version = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -41,6 +47,36 @@ export function SettingsScreen({ navigation }) {
       { text: t('cancel'), style: 'cancel' },
       { text: t('signOut'), style: 'destructive', onPress: signOut },
     ]);
+  };
+
+  const openDeleteAccount = () => {
+    setDeleteError(null);
+    setDeleteDialog(true);
+  };
+
+  const closeDeleteAccount = () => {
+    if (!deleting) setDeleteDialog(false);
+  };
+
+  const confirmDeleteAccount = async (password) => {
+    setDeleting(true);
+    setDeleteError(null);
+    const result = await deleteAccount({
+      password,
+      beforeLocalWipe: () => player.clearQueue(),
+    });
+    setDeleting(false);
+
+    if (result.cancelled) return;
+    if (!result.ok) {
+      setDeleteError(t(result.errorKey ?? 'deleteAccountFailed'));
+      return;
+    }
+
+    setDeleteDialog(false);
+    // Favourites, playlists and history are gone from disk; drop the copies held in memory.
+    library.refresh().catch(() => {});
+    Alert.alert(t('accountDeletedTitle'), t('accountDeletedBody'));
   };
 
   const themeLabel = {
@@ -240,8 +276,21 @@ export function SettingsScreen({ navigation }) {
             onPress={() => navigation.navigate('About')}
           />
           <Row icon="log-out-outline" label={t('signOut')} destructive onPress={confirmSignOut} />
+          {accountProvider ? (
+            <Row icon="trash-outline" label={t('deleteAccount')} destructive onPress={openDeleteAccount} />
+          ) : null}
         </Section>
       </ScrollView>
+
+      <DeleteAccountDialog
+        visible={deleteDialog}
+        needsPassword={accountProvider === 'password'}
+        email={user?.email}
+        loading={deleting}
+        error={deleteError}
+        onCancel={closeDeleteAccount}
+        onConfirm={confirmDeleteAccount}
+      />
 
       <Sheet visible={themeSheet} onClose={() => setThemeSheet(false)} title={t('theme')}>
         {[

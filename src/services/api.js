@@ -118,6 +118,8 @@ export const api = {
   guest: (payload) => request('/guest', { method: 'POST', body: payload, auth: false }),
   me: () => request('/me'),
   updateProfile: (payload) => request('/me', { method: 'PATCH', body: payload }),
+  /** Removes the caller's account, with its devices, sessions and events, from the admin panel. */
+  deleteAccount: () => request('/me', { method: 'DELETE' }),
   heartbeat: (payload) => request('/heartbeat', { method: 'POST', body: payload }),
   syncEvents: (events) => request('/events', { method: 'POST', body: { events } }),
   checkVersion: (payload) =>
