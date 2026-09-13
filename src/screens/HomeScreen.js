@@ -24,7 +24,9 @@ import { useAuth } from '../context/AuthContext';
 import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useSettings, useTheme } from '../context/SettingsContext';
+import { ONLINE_FEATURES_ENABLED } from '../config/features';
 import { api, getBaseUrl } from '../services/api';
+import { showOnlineComingSoon } from '../utils/comingSoon';
 
 const CATEGORY_CHIPS = [
   { id: 'all', title: 'All', icon: 'musical-notes' },
@@ -502,7 +504,9 @@ export function HomeScreen({ navigation }) {
 
           {/* Offline / Online Pill Switch in Light Theme */}
           <Pressable
-            onPress={() => setAdminMode(true)}
+            onPress={() =>
+              ONLINE_FEATURES_ENABLED ? setAdminMode(true) : showOnlineComingSoon(t)
+            }
             style={[
               styles.togglePillLight,
               {

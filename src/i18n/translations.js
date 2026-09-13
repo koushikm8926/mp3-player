@@ -347,6 +347,11 @@ export const en = {
   adminSongsEmptyTitle: 'No songs published yet',
   adminSongsEmptyBody: "Nothing has been published from the admin panel yet. Turn the mode off to play the songs on this device.",
   adminSongsTurnOff: 'Turn off Admin songs mode',
+  // online mode (ships in v2)
+  onlineComingSoonTitle: 'Online songs are coming soon',
+  onlineComingSoonBody:
+    'Streaming and the online catalogue arrive in the next update. For now, enjoy the songs stored on this device.',
+  onlineComingSoonAction: 'Got it',
 };
 
 export const hi = {
@@ -658,6 +663,11 @@ export const hi = {
   adminSongsEmptyTitle: 'अभी कोई गाना प्रकाशित नहीं',
   adminSongsEmptyBody: "एडमिन पैनल से अभी तक कुछ भी प्रकाशित नहीं हुआ है। इस डिवाइस के गाने चलाने के लिए मोड बंद करें।",
   adminSongsTurnOff: 'एडमिन गाने मोड बंद करें',
+  // online mode (ships in v2)
+  onlineComingSoonTitle: 'ऑनलाइन गाने जल्द आ रहे हैं',
+  onlineComingSoonBody:
+    'स्ट्रीमिंग और ऑनलाइन कैटलॉग अगले अपडेट में आएंगे। तब तक इस डिवाइस में सहेजे गए गानों का आनंद लें।',
+  onlineComingSoonAction: 'ठीक है',
 };
 
 export const es = {
@@ -969,6 +979,11 @@ export const es = {
   adminSongsEmptyTitle: 'Aún no hay canciones publicadas',
   adminSongsEmptyBody: "Todavía no se ha publicado nada desde el panel de administración. Desactiva el modo para reproducir las canciones de este dispositivo.",
   adminSongsTurnOff: 'Desactivar el modo canciones del admin',
+  // online mode (ships in v2)
+  onlineComingSoonTitle: 'Las canciones online llegan pronto',
+  onlineComingSoonBody:
+    'La reproducción en streaming y el catálogo online llegarán en la próxima actualización. Mientras tanto, disfruta de las canciones guardadas en este dispositivo.',
+  onlineComingSoonAction: 'Entendido',
 };
 
 export const fr = {
@@ -1281,6 +1296,11 @@ export const fr = {
   adminSongsEmptyTitle: 'Aucun titre publié pour l’instant',
   adminSongsEmptyBody: "Rien n’a encore été publié depuis le panneau d’administration. Désactivez le mode pour écouter les titres de cet appareil.",
   adminSongsTurnOff: 'Désactiver le mode titres de l’admin',
+  // online mode (ships in v2)
+  onlineComingSoonTitle: 'Les titres en ligne arrivent bientôt',
+  onlineComingSoonBody:
+    'Le streaming et le catalogue en ligne arriveront dans la prochaine mise à jour. En attendant, profitez des titres stockés sur cet appareil.',
+  onlineComingSoonAction: 'Compris',
 };
 
 export const de = {
@@ -1593,6 +1613,11 @@ export const de = {
   adminSongsEmptyTitle: 'Noch keine Songs veröffentlicht',
   adminSongsEmptyBody: "Aus dem Admin-Panel wurde noch nichts veröffentlicht. Schalte den Modus aus, um die Songs auf diesem Gerät zu hören.",
   adminSongsTurnOff: 'Admin-Songs-Modus ausschalten',
+  // online mode (ships in v2)
+  onlineComingSoonTitle: 'Online-Songs kommen bald',
+  onlineComingSoonBody:
+    'Streaming und der Online-Katalog kommen mit dem nächsten Update. Genieße so lange die Songs auf diesem Gerät.',
+  onlineComingSoonAction: 'Verstanden',
 };
 
 export const pt = {
@@ -1904,6 +1929,11 @@ export const pt = {
   adminSongsEmptyTitle: 'Ainda não há músicas publicadas',
   adminSongsEmptyBody: "Ainda não foi publicado nada no painel de administração. Desative o modo para ouvir as músicas deste dispositivo.",
   adminSongsTurnOff: 'Desativar o modo músicas do admin',
+  // online mode (ships in v2)
+  onlineComingSoonTitle: 'As músicas online chegam em breve',
+  onlineComingSoonBody:
+    'O streaming e o catálogo online chegam na próxima atualização. Até lá, aproveite as músicas guardadas neste dispositivo.',
+  onlineComingSoonAction: 'Entendi',
 };
 
 export const ar = {
@@ -2215,6 +2245,11 @@ export const ar = {
   adminSongsEmptyTitle: 'لم يتم نشر أي أغانٍ بعد',
   adminSongsEmptyBody: "لم يتم نشر أي شيء من لوحة التحكم بعد. أوقف الوضع لتشغيل الأغاني الموجودة على هذا الجهاز.",
   adminSongsTurnOff: 'إيقاف وضع أغاني المشرف',
+  // online mode (ships in v2)
+  onlineComingSoonTitle: 'الأغاني عبر الإنترنت قريباً',
+  onlineComingSoonBody:
+    'سيصل البث والكتالوج عبر الإنترنت في التحديث القادم. استمتع حتى ذلك الحين بالأغاني المحفوظة على هذا الجهاز.',
+  onlineComingSoonAction: 'حسناً',
 };
 
 export const LANGUAGES = [

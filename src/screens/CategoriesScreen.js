@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ONLINE_FEATURES_ENABLED } from '../config/features';
 import { useLibrary } from '../context/LibraryContext';
-import { useTheme } from '../context/SettingsContext';
+import { useSettings, useTheme } from '../context/SettingsContext';
+import { showOnlineComingSoon } from '../utils/comingSoon';
 
 const CATEGORY_PRESETS = [
   {
@@ -170,6 +172,7 @@ const MOODS = [
 
 export function CategoriesScreen({ navigation }) {
   const theme = useTheme();
+  const { t } = useSettings();
   const insets = useSafeAreaInsets();
   const library = useLibrary();
   const { adminMode, setAdminMode, tracks, genres } = library;
@@ -270,7 +273,11 @@ export function CategoriesScreen({ navigation }) {
 
             {/* Offline / Online Pill Switch */}
             <Pressable
-              onPress={() => setAdminMode(!adminMode)}
+              onPress={() =>
+                !adminMode && !ONLINE_FEATURES_ENABLED
+                  ? showOnlineComingSoon(t)
+                  : setAdminMode(!adminMode)
+              }
               style={[
                 styles.togglePill,
                 {

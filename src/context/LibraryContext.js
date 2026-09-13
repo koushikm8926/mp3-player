@@ -11,6 +11,7 @@ import React, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import * as MusicCore from '../../modules/expo-music-core';
+import { ONLINE_FEATURES_ENABLED } from '../config/features';
 import {
   favoritesRepo,
   HIDDEN_KIND,
@@ -233,15 +234,25 @@ export function LibraryProvider({ children }) {
 
   const setAdminMode = useCallback(
     async (enabled) => {
-      setAdminModeState(enabled);
-      await AsyncStorage.setItem(ADMIN_MODE_KEY, enabled ? '1' : '0').catch(() => {});
-      if (enabled) await refreshAdminSongs();
+      // Online mode ships in v2. Until the flag is on, the only reachable state is off —
+      // callers still show the "coming soon" alert, this is the safety net behind it.
+      const next = ONLINE_FEATURES_ENABLED ? enabled : false;
+      setAdminModeState(next);
+      await AsyncStorage.setItem(ADMIN_MODE_KEY, next ? '1' : '0').catch(() => {});
+      if (next) await refreshAdminSongs();
     },
     [refreshAdminSongs]
   );
 
   // Restore the mode across restarts, and fetch once if it was left on.
   useEffect(() => {
+    // Someone who left the mode on before the flag was turned off would otherwise come
+    // back into an online screen they can no longer leave via the switch.
+    if (!ONLINE_FEATURES_ENABLED) {
+      AsyncStorage.removeItem(ADMIN_MODE_KEY).catch(() => {});
+      return undefined;
+    }
+
     let cancelled = false;
     AsyncStorage.getItem(ADMIN_MODE_KEY)
       .then((stored) => {
