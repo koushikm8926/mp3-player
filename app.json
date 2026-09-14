@@ -2,7 +2,7 @@
   "expo": {
     "name": "Melophile",
     "slug": "mp3player",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "minaxmusic",
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.minaxdigital.mp3player",
-      "versionCode": 2,
+      "versionCode": 4,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
