@@ -267,13 +267,23 @@ export function SettingsScreen({ navigation }) {
           />
         </Section>
 
-        {/* ------------------------------------------------------------ about */}
+        {/* ------------------------------------------------------------ about & legal */}
         <Section title={t('aboutSection')}>
           <Row
             icon="information-circle-outline"
             label={t('about')}
             value={`v${version}`}
             onPress={() => navigation.navigate('About')}
+          />
+          <Row
+            icon="shield-checkmark-outline"
+            label={t('privacyPolicy')}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          />
+          <Row
+            icon="document-text-outline"
+            label={t('termsOfService')}
+            onPress={() => navigation.navigate('Terms')}
           />
           <Row icon="log-out-outline" label={t('signOut')} destructive onPress={confirmSignOut} />
           {accountProvider ? (

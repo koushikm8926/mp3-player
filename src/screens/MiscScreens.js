@@ -136,22 +136,12 @@ export function AboutScreen({ navigation }) {
           <Row
             icon="shield-checkmark-outline"
             label={t('privacyPolicy')}
-            onPress={() =>
-              Alert.alert(
-                t('privacyPolicy'),
-                'Minax Music reads audio files from this device to build your library. Playlists, favourites and listening history stay on the device. Only account details and anonymous usage counters are sent to the admin server you configure.'
-              )
-            }
+            onPress={() => navigation.navigate('PrivacyPolicy')}
           />
           <Row
             icon="document-text-outline"
             label={t('termsOfService')}
-            onPress={() =>
-              Alert.alert(
-                t('termsOfService'),
-                'This application is provided for playback of audio files you already own or are licensed to use.'
-              )
-            }
+            onPress={() => navigation.navigate('Terms')}
           />
         </Section>
 

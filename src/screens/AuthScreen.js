@@ -28,7 +28,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
  * Registration is what populates the admin panel's user list, but the player itself works
  * without an account — hence the always-available "continue without an account" escape hatch.
  */
-export function AuthScreen() {
+export function AuthScreen({ navigation }) {
   const theme = useTheme();
   const { t } = useSettings();
   const {
@@ -283,6 +283,30 @@ export function AuthScreen() {
             loading={guestBusy}
             style={{ marginTop: 12 }}
           />
+
+          <View style={styles.legalFooter}>
+            <Text
+              style={[
+                theme.font.caption,
+                { color: theme.colors.textTertiary, textAlign: 'center', lineHeight: 18 },
+              ]}
+            >
+              By continuing, you agree to our{' '}
+              <Text
+                style={{ color: theme.colors.accent, fontWeight: '600' }}
+                onPress={() => navigation?.navigate('Terms')}
+              >
+                {t('termsOfService')}
+              </Text>{' '}
+              and{' '}
+              <Text
+                style={{ color: theme.colors.accent, fontWeight: '600' }}
+                onPress={() => navigation?.navigate('PrivacyPolicy')}
+              >
+                {t('privacyPolicy')}
+              </Text>
+            </Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -335,5 +359,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderWidth: 1.5,
+  },
+  legalFooter: {
+    marginTop: 24,
+    paddingHorizontal: 12,
   },
 });

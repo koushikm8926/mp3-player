@@ -35,6 +35,7 @@ import {
 import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { SongsScreen } from '../screens/library/SongsScreen';
 import { AboutScreen, LanguageScreen } from '../screens/MiscScreens';
+import { PrivacyPolicyScreen, TermsScreen } from '../screens/LegalScreens';
 import { NowPlayingScreen } from '../screens/NowPlayingScreen';
 import { PermissionScreen } from '../screens/PermissionScreen';
 import { PlaylistsScreen } from '../screens/PlaylistsScreen';
@@ -143,7 +144,14 @@ function MainTabs() {
 }
 
 /** Routes that own the whole screen and must not have the mini player floating over them. */
-const MINI_PLAYER_HIDDEN_ON = new Set(['NowPlaying', 'Queue', 'Auth', 'Permission']);
+const MINI_PLAYER_HIDDEN_ON = new Set([
+  'NowPlaying',
+  'Queue',
+  'Auth',
+  'Permission',
+  'PrivacyPolicy',
+  'Terms',
+]);
 
 /** The active top-level route, or undefined before the navigator has mounted. */
 function topLevelRouteName(state) {
@@ -252,9 +260,17 @@ export function RootNavigator() {
         }}
       >
         {status !== 'authenticated' ? (
-          <Stack.Screen name="Auth" component={AuthScreen} options={{ animation: 'fade' }} />
+          <>
+            <Stack.Screen name="Auth" component={AuthScreen} options={{ animation: 'fade' }} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            <Stack.Screen name="Terms" component={TermsScreen} />
+          </>
         ) : library.permission !== 'granted' ? (
-          <Stack.Screen name="Permission" component={PermissionScreen} options={{ animation: 'fade' }} />
+          <>
+            <Stack.Screen name="Permission" component={PermissionScreen} options={{ animation: 'fade' }} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            <Stack.Screen name="Terms" component={TermsScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Main" component={MainTabs} options={{ animation: 'fade' }} />
@@ -291,6 +307,8 @@ export function RootNavigator() {
             <Stack.Screen name="HiddenMusic" component={HiddenMusicScreen} />
             <Stack.Screen name="BackupRestore" component={BackupRestoreScreen} />
             <Stack.Screen name="About" component={AboutScreen} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+            <Stack.Screen name="Terms" component={TermsScreen} />
           </>
         )}
       </Stack.Navigator>
