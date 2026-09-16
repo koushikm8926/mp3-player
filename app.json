@@ -93,6 +93,7 @@
       "@react-native-google-signin/google-signin"
     ],
     "extra": {
+      "adminApiUrl": "https://api.kogilu.com",
       "firebase": {
         "apiKey": "AIzaSyCJdNu6FpNpS_ZtihrCzhyyGQZyg29lWTM",
         "authDomain": "melophile-ca73f.firebaseapp.com",
