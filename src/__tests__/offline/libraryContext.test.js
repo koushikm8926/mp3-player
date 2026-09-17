@@ -231,26 +231,57 @@ describe('listening history', () => {
   });
 });
 
-describe('online mode is locked for v1', () => {
-  it('refuses to switch to online mode and never calls the server', async () => {
+describe('online mode', () => {
+  it('switches to online mode and fetches published songs from server', async () => {
+    mockApiSongs.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        songs: [
+          {
+            id: 'admin-1',
+            title: 'Cloud Song',
+            artist: 'Server Artist',
+            album: 'Online Album',
+            category: 'Pop',
+            url: 'https://api.kogilu.com/stream/1',
+            durationMs: 180000,
+          },
+        ],
+      },
+    });
+
     const { result } = await renderLibrary();
     await act(async () => {
       await result.current.setAdminMode(true);
     });
-    expect(result.current.adminMode).toBe(false);
-    expect(await AsyncStorage.getItem(ADMIN_MODE_KEY)).toBe('0');
-    expect(mockApiSongs).not.toHaveBeenCalled();
-    expect(result.current.tracks).toHaveLength(4);
+
+    expect(result.current.adminMode).toBe(true);
+    expect(await AsyncStorage.getItem(ADMIN_MODE_KEY)).toBe('1');
+    expect(mockApiSongs).toHaveBeenCalledTimes(1);
+    expect(titles(result.current.tracks)).toEqual(['Cloud Song']);
   });
 
-  it('drops an "online" choice saved by an older build', async () => {
+  it('restores online mode choice across restarts and refreshes songs', async () => {
+    mockApiSongs.mockResolvedValue({
+      ok: true,
+      data: {
+        songs: [
+          {
+            id: 'admin-1',
+            title: 'Cloud Song',
+            artist: 'Server Artist',
+            album: 'Online Album',
+            category: 'Pop',
+            url: 'https://api.kogilu.com/stream/1',
+            durationMs: 180000,
+          },
+        ],
+      },
+    });
+
     await AsyncStorage.setItem(ADMIN_MODE_KEY, '1');
     const { result } = await renderLibrary();
-    await act(async () => {
-      await tick();
-    });
-    expect(result.current.adminMode).toBe(false);
-    expect(await AsyncStorage.getItem(ADMIN_MODE_KEY)).toBeNull();
-    expect(mockApiSongs).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.adminMode).toBe(true));
+    expect(mockApiSongs).toHaveBeenCalled();
   });
 });

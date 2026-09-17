@@ -6,4 +6,4 @@
  * stays off: the Offline/Online switch then only announces the feature instead
  * of turning it on.
  */
-export const ONLINE_FEATURES_ENABLED = false;
+export const ONLINE_FEATURES_ENABLED = true;

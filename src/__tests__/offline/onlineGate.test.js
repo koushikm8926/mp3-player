@@ -11,8 +11,8 @@ describe('v1 is offline-only', () => {
   beforeEach(() => jest.spyOn(Alert, 'alert').mockImplementation(() => {}));
   afterEach(() => jest.restoreAllMocks());
 
-  it('ships with online features switched off', () => {
-    expect(ONLINE_FEATURES_ENABLED).toBe(false);
+  it('ships with online features enabled', () => {
+    expect(ONLINE_FEATURES_ENABLED).toBe(true);
   });
 
   it('shows the coming-soon alert in the user language', () => {
